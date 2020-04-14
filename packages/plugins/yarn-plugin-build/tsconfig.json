@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./.",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react",
+    "lib": ["dom", "es2017", "esnext.asynciterable"],
+    "module": "commonjs",
+    "strict": true,
+    "target": "es2017",
+    "declaration": true,
+    "downlevelIteration": true,
+    "types": ["jest"]
+  },
+  "exclude": ["packages/*/lib", "packages/yarnpkg-doctor/fixtures"]
+}

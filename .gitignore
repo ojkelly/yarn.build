@@ -1,0 +1,22 @@
+node_modules
+dist
+.dist
+.cache
+build
+**/build
+
+yarn-error.log
+
+# Yarn plug n play
+.yarn/*
+!.yarn/cache
+!.yarn/releases
+!.yarn/plugins
+
+.DS_Store
+.env
+
+bundle.tgz
+
+build.log
+build-error.log

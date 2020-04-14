@@ -1,0 +1,47 @@
+{
+  "name": "@kablamo/yarn-plugins",
+  "version": "1.0.0",
+  "author": "kablamo.com.au",
+  "workspaces": {
+    "packages": [
+      "packages/plugins/*",
+      "packages/examples/*",
+      "packages/examples/words/*",
+      "packages/examples/phrases/*"
+    ]
+  },
+  "installConfig": {
+    "pnp": true
+  },
+  "private": true,
+  "scripts": {
+    "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('This project uses Yarn. Things wil not work properly with npm. Use yarn: https://yarnpkg.com/en/docs/install')\""
+  },
+  "devDependencies": {
+    "@kablamo/eslint-plugin": "^1.0.1",
+    "@types/node": "^13.11.0",
+    "@typescript-eslint/eslint-plugin": "^2.23.0",
+    "@typescript-eslint/parser": "^2.23.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-import-resolver-parcel": "^1.10.3",
+    "eslint-plugin-cypress": "^2.10.3",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-react": "^7.19.0",
+    "jest-pnp-resolver": "^1.2.1",
+    "prettier": "^2.0.3",
+    "ts-jest": "^25.3.1",
+    "ts-pnp": "^1.2.0",
+    "typescript": "^3.8.3"
+  },
+  "resolutions": {
+    "typescript": "^3.8.3"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=13.10.0"
+  },
+  "dependencies": {
+    "@yarnpkg/pnpify": "^2.0.0-rc.20"
+  }
+}

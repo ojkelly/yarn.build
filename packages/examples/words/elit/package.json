@@ -1,0 +1,13 @@
+{
+  "name": "@internal/elit",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@internal/phrase-nullam-risus",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@internal/adipiscing": "workspace:*",
+    "@internal/dolor": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}

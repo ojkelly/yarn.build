@@ -1,0 +1,25 @@
+{
+  "name": "@internal/phrase-lorem-ipsum",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@internal/adipiscing": "workspace:*",
+    "@internal/amet": "workspace:*",
+    "@internal/consectetur": "workspace:*",
+    "@internal/dolor": "workspace:*",
+    "@internal/elit": "workspace:*",
+    "@internal/ipsum": "workspace:*",
+    "@internal/lorem": "workspace:*",
+    "@internal/phrase-in-hac": "workspace:*",
+    "@internal/phrase-nullam-risus": "workspace:*",
+    "@internal/sit": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}
