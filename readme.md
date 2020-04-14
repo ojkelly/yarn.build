@@ -1,11 +1,15 @@
+# Yarn Build
+
+For yarn v2.
+
+To install:
+
+```
+yarn plugin import https://github.com/KablamoOSS/yarn-build/releases/download/0.9.1/plugin-build.js
+```
+
+## Commands
+
 `build`: build your package and all dependencies
 
-`dev`: build all your package dependencies and run the `"dev"` command for your
-package.
-
-## TODO:
-
-- [ ] Deal with cyclic dependencies (currently we just break the loop and continue, but realy this should be a hard fail)
-- [ ] get yarn.build website up with some docs
-- [ ] investigate is a full on DAG is needed, especially for the more complicated dependency chains
-  - works for `packages/example/counter`, but not well for `.`
+`bundle`: bundle a package and its local dependencies, designed for containers and AWS lambda.
