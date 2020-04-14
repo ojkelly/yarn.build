@@ -3,15 +3,7 @@
 To install:
 
 ```
-yarn add -D @kablamo/yarn-plugin-build
-```
-
-then add the following to your `.yarnrc.yml`
-
-```
-plugins:
- - path: .yarn/plugins/plugin-build.js
-   spec: "@kablamo/yarn-plugin-build"
+yarn plugin import https://github.com/KablamoOSS/yarn-build/releases/download/0.9.1/plugin-build.js
 ```
 
 ## For yarn v2
