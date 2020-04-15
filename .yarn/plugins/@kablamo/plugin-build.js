@@ -1,6 +1,6 @@
 /* eslint-disable*/
 module.exports = {
-  name: "@yarnpkg/plugin-build",
+  name: "@kablamo/plugin-build",
   factory: function (require) {
                           var plugin =
   /******/ (function(modules) { // webpackBootstrap
