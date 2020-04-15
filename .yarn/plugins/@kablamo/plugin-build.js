@@ -272,21 +272,8 @@ module.exports = {
         if ((_b = (_a = workspace === null || workspace === void 0 ? void 0 : workspace.manifest) === null || _a === void 0 ? void 0 : _a.raw) === null || _b === void 0 ? void 0 : _b.main) {
           // Add entrypoint
           // TODO: make mainFile configurable
-          // BUG: this didn't quite work. Can we drop the entrypoint (with the pnp require)
-          // in the package, and symlink it's build file to the root?
-          const mainFile = workspace.relativeCwd + path_1.default.sep + ((_d = (_c = workspace === null || workspace === void 0 ? void 0 : workspace.manifest) === null || _c === void 0 ? void 0 : _c.raw) === null || _d === void 0 ? void 0 : _d.main); //   ${mainFile
-          //   .split(path.sep)
-          //   .slice(1, mainFile.length)
-          //   .map(() => "..")
-          //   .reduce((prev, cur) => `${prev}${path.sep}${cur}`)}${
-          //   path.sep
-          // }
-
-          const pnp = `./.pnp.js`; // {mainFile.substring(
-          //     0,
-          //     mainFile.lastIndexOf("/")
-          //   )}${path.sep}
-
+          const mainFile = workspace.relativeCwd + path_1.default.sep + ((_d = (_c = workspace === null || workspace === void 0 ? void 0 : workspace.manifest) === null || _c === void 0 ? void 0 : _c.raw) === null || _d === void 0 ? void 0 : _d.main);
+          const pnp = `./.pnp.js`;
           fslib_1.xfs.writeFilePromise(`${tmpDir}${path_1.default.sep}entrypoint.js`, generateEntrypointFile(mainFile, pnp));
         }
 
