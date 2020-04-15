@@ -272,8 +272,22 @@ module.exports = {
         if ((_b = (_a = workspace === null || workspace === void 0 ? void 0 : workspace.manifest) === null || _a === void 0 ? void 0 : _a.raw) === null || _b === void 0 ? void 0 : _b.main) {
           // Add entrypoint
           // TODO: make mainFile configurable
-          const mainFile = workspace.relativeCwd + path_1.default.sep + ((_d = (_c = workspace === null || workspace === void 0 ? void 0 : workspace.manifest) === null || _c === void 0 ? void 0 : _c.raw) === null || _d === void 0 ? void 0 : _d.main);
-          fslib_1.xfs.writeFilePromise(`${tmpDir}/entrypoint.js`, generateEntrypointFile(mainFile));
+          // BUG: this didn't quite work. Can we drop the entrypoint (with the pnp require)
+          // in the package, and symlink it's build file to the root?
+          const mainFile = workspace.relativeCwd + path_1.default.sep + ((_d = (_c = workspace === null || workspace === void 0 ? void 0 : workspace.manifest) === null || _c === void 0 ? void 0 : _c.raw) === null || _d === void 0 ? void 0 : _d.main); //   ${mainFile
+          //   .split(path.sep)
+          //   .slice(1, mainFile.length)
+          //   .map(() => "..")
+          //   .reduce((prev, cur) => `${prev}${path.sep}${cur}`)}${
+          //   path.sep
+          // }
+
+          const pnp = `./.pnp.js`; // {mainFile.substring(
+          //     0,
+          //     mainFile.lastIndexOf("/")
+          //   )}${path.sep}
+
+          fslib_1.xfs.writeFilePromise(`${tmpDir}${path_1.default.sep}entrypoint.js`, generateEntrypointFile(mainFile, pnp));
         }
 
         const report = await core_1.StreamReport.start({
@@ -353,12 +367,12 @@ module.exports = {
   exports.default = Bundler; // Generates an entrypoint file that's placed at the root of the repository,
   // and can be called to run the bundled package.
 
-  const generateEntrypointFile = main => `
+  const generateEntrypointFile = (main, pnp) => `
   "use strict";
 
-  const pnp = require("./.pnp.js").setup();
+  const pnp = require("${pnp}").setup();
 
-  const index = require(${main});
+  const index = require("./${main}");
 
   Object.defineProperty(exports, "__esModule", { value: true });
 

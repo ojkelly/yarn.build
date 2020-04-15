@@ -17,8 +17,8 @@ import {
   Filename,
 } from "@yarnpkg/fslib";
 import { Command, Usage } from "clipanion";
+import path from "path";
 
-// TODO: Add entrypoint.js
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
   @Command.Boolean(`--json`)
@@ -207,6 +207,21 @@ export default class Bundler extends BaseCommand {
         workspace.manifest.dependencies.clear();
         workspace.manifest.peerDependencies.clear();
       }
+
+      if (workspace?.manifest?.raw?.main) {
+        // Add entrypoint
+        // TODO: make mainFile configurable
+        const mainFile =
+          workspace.relativeCwd + path.sep + workspace?.manifest?.raw?.main;
+
+        const pnp = `./.pnp.js`;
+
+        xfs.writeFilePromise(
+          `${tmpDir}${path.sep}entrypoint.js` as PortablePath,
+          generateEntrypointFile(mainFile, pnp)
+        );
+      }
+
       const report = await StreamReport.start(
         {
           configuration,
@@ -246,3 +261,17 @@ export default class Bundler extends BaseCommand {
     });
   }
 }
+
+// Generates an entrypoint file that's placed at the root of the repository,
+// and can be called to run the bundled package.
+const generateEntrypointFile = (main: string, pnp: string): string => `
+"use strict";
+
+const pnp = require("${pnp}").setup();
+
+const index = require("./${main}");
+
+Object.defineProperty(exports, "__esModule", { value: true });
+
+exports.default = index;
+`;

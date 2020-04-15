@@ -34,9 +34,9 @@
     "strip-ansi": "^6.0.0"
   },
   "scripts": {
-    "build:plugin-stage": "builder build plugin  && mv ./bin/@yarnpkg ./bin/@kablamo",
+    "build:plugin-stage": "builder build plugin",
     "update-local": "yarn build:plugin-stage && rsync -a --delete bundles/ bin/",
-    "update-workspace": "mkdir -p ../../../.yarn/plugins/@yarnpkg && cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/plugin-build.js",
+    "update-workspace": "mkdir -p ../../../.yarn/plugins/@kablamo && cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@kablamo/plugin-build.js",
     "update": "yarn update-local && yarn update-workspace",
     "build": "update",
     "clean": "rimraf build bin",
