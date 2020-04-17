@@ -714,9 +714,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kablamo/yarn-plugin-build@workspace:packages/plugins/yarn-plugin-build":
+"@kablamo/yarn-plugin-build@workspace:packages/plugins/plugin-build":
   version: 0.0.0-use.local
-  resolution: "@kablamo/yarn-plugin-build@workspace:packages/plugins/yarn-plugin-build"
+  resolution: "@kablamo/yarn-plugin-build@workspace:packages/plugins/plugin-build"
   dependencies:
     "@types/is-ci": ^2.0.0
     "@types/jest": ^25.2.1
