@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "exit 0"
   },
   "dependencies": {
     "@internal/consectetur": "workspace:*",

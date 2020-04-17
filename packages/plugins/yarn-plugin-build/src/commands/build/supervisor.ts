@@ -6,7 +6,7 @@ import {
   Workspace,
   FormatType,
 } from "@yarnpkg/core";
-
+import isCI from "is-ci";
 import { cpus } from "os";
 import { PortablePath, NodeFS } from "@yarnpkg/fslib";
 
@@ -17,7 +17,7 @@ import PLimit, { Limit } from "p-limit";
 import { Mutex } from "await-semaphore";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
-
+import readline from "readline";
 import { Graph, Node } from "./graph";
 
 type BuildPlan = {
@@ -468,7 +468,7 @@ class BuildSupervisor {
     this.buildReport.buildStart = Date.now();
 
     // Print our buildReporter output
-    if (!this.dryRun) {
+    if (!this.dryRun && !isCI) {
       this.raf(this.waitUntilDone);
     }
 
@@ -483,6 +483,7 @@ class BuildSupervisor {
 
     const header = this.generateHeaderString();
 
+    // build
     await this.buildGraph.build(this.entrypoints);
 
     const release = await this.buildReport.mutex.acquire();
@@ -491,10 +492,16 @@ class BuildSupervisor {
 
     release();
 
-    // Cleanup the processing lines
-    process.stdout.moveCursor(0, -this.buildReport.previousOutputNumLines);
-    process.stdout.clearScreenDown();
-    process.stdout.cursorTo(0);
+    if (!isCI) {
+      // Cleanup the processing lines
+      readline.moveCursor(
+        process.stdout,
+        0,
+        -this.buildReport.previousOutputNumLines
+      );
+      readline.clearScreenDown(process.stdout);
+      process.stdout.cursorTo(0);
+    }
 
     const finalLine = this.generateFinalReport();
 
@@ -589,8 +596,12 @@ class BuildSupervisor {
       return;
     }
 
-    process.stdout.moveCursor(0, -this.buildReport.previousOutputNumLines);
-    process.stdout.clearScreenDown();
+    readline.moveCursor(
+      process.stdout,
+      0,
+      -this.buildReport.previousOutputNumLines
+    );
+    readline.clearScreenDown(process.stdout);
     process.stdout.cursorTo(0);
 
     const output = this.generateProgressString(timestamp);

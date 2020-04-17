@@ -5121,7 +5121,7 @@ module.exports = {
 
           try {
             const exitCode = 0;
-            (await this.cli.run([command], {
+            (await this.cli.run(["run", "build"], {
               cwd,
               stdout,
               stderr
@@ -5249,25 +5249,29 @@ module.exports = {
 
   const core_1 = __webpack_require__(3);
 
-  const os_1 = __webpack_require__(14);
+  const is_ci_1 = __importDefault(__webpack_require__(14));
+
+  const os_1 = __webpack_require__(17);
 
   const fslib_1 = __webpack_require__(10);
 
-  const events_1 = __webpack_require__(15);
+  const events_1 = __webpack_require__(18);
 
-  const p_queue_1 = __importDefault(__webpack_require__(16));
+  const p_queue_1 = __importDefault(__webpack_require__(19));
 
   const path_1 = __importDefault(__webpack_require__(8));
 
-  const p_limit_1 = __importDefault(__webpack_require__(22));
+  const p_limit_1 = __importDefault(__webpack_require__(25));
 
-  const await_semaphore_1 = __webpack_require__(24);
+  const await_semaphore_1 = __webpack_require__(27);
 
   const fs_1 = __importDefault(__webpack_require__(7));
 
-  const strip_ansi_1 = __importDefault(__webpack_require__(25));
+  const strip_ansi_1 = __importDefault(__webpack_require__(28));
 
-  const graph_1 = __webpack_require__(27);
+  const readline_1 = __importDefault(__webpack_require__(30));
+
+  const graph_1 = __webpack_require__(31);
 
   var BuildStatus;
 
@@ -5436,7 +5440,7 @@ module.exports = {
 
         this.buildReport.buildStart = Date.now(); // Print our buildReporter output
 
-        if (!this.dryRun) {
+        if (!this.dryRun && !is_ci_1.default) {
           this.raf(this.waitUntilDone);
         }
 
@@ -5445,15 +5449,20 @@ module.exports = {
         }
 
         this.currentBuildTarget = this.buildTargets.length > 1 ? "All" : (_b = (_a = this.buildTargets[0]) === null || _a === void 0 ? void 0 : _a.relativeCwd) !== null && _b !== void 0 ? _b : "Nothing to build";
-        const header = this.generateHeaderString();
+        const header = this.generateHeaderString(); // build
+
         await this.buildGraph.build(this.entrypoints);
         const release = await this.buildReport.mutex.acquire();
         this.buildReport.done = true;
-        release(); // Cleanup the processing lines
+        release();
 
-        process.stdout.moveCursor(0, -this.buildReport.previousOutputNumLines);
-        process.stdout.clearScreenDown();
-        process.stdout.cursorTo(0);
+        if (!is_ci_1.default) {
+          // Cleanup the processing lines
+          readline_1.default.moveCursor(process.stdout, 0, -this.buildReport.previousOutputNumLines);
+          readline_1.default.clearScreenDown(process.stdout);
+          process.stdout.cursorTo(0);
+        }
+
         const finalLine = this.generateFinalReport();
         process.stdout.write(finalLine); // Check if there were errors, and print them out
 
@@ -5501,8 +5510,8 @@ module.exports = {
           return;
         }
 
-        process.stdout.moveCursor(0, -this.buildReport.previousOutputNumLines);
-        process.stdout.clearScreenDown();
+        readline_1.default.moveCursor(process.stdout, 0, -this.buildReport.previousOutputNumLines);
+        readline_1.default.clearScreenDown(process.stdout);
         process.stdout.cursorTo(0);
         const output = this.generateProgressString(timestamp);
         process.stdout.write(output);
@@ -5845,26 +5854,115 @@ module.exports = {
 
   /***/ }),
   /* 14 */
+  /***/ (function(module, exports, __webpack_require__) {
+
+  "use strict";
+
+
+  module.exports = __webpack_require__(15).isCI
+
+
+  /***/ }),
+  /* 15 */
+  /***/ (function(module, exports, __webpack_require__) {
+
+  "use strict";
+
+
+  var vendors = __webpack_require__(16)
+
+  var env = process.env
+
+  // Used for testing only
+  Object.defineProperty(exports, '_vendors', {
+    value: vendors.map(function (v) { return v.constant })
+  })
+
+  exports.name = null
+  exports.isPR = null
+
+  vendors.forEach(function (vendor) {
+    var envs = Array.isArray(vendor.env) ? vendor.env : [vendor.env]
+    var isCI = envs.every(function (obj) {
+      return checkEnv(obj)
+    })
+
+    exports[vendor.constant] = isCI
+
+    if (isCI) {
+      exports.name = vendor.name
+
+      switch (typeof vendor.pr) {
+        case 'string':
+          // "pr": "CIRRUS_PR"
+          exports.isPR = !!env[vendor.pr]
+          break
+        case 'object':
+          if ('env' in vendor.pr) {
+            // "pr": { "env": "BUILDKITE_PULL_REQUEST", "ne": "false" }
+            exports.isPR = vendor.pr.env in env && env[vendor.pr.env] !== vendor.pr.ne
+          } else if ('any' in vendor.pr) {
+            // "pr": { "any": ["ghprbPullId", "CHANGE_ID"] }
+            exports.isPR = vendor.pr.any.some(function (key) {
+              return !!env[key]
+            })
+          } else {
+            // "pr": { "DRONE_BUILD_EVENT": "pull_request" }
+            exports.isPR = checkEnv(vendor.pr)
+          }
+          break
+        default:
+          // PR detection not supported for this vendor
+          exports.isPR = null
+      }
+    }
+  })
+
+  exports.isCI = !!(
+    env.CI || // Travis CI, CircleCI, Cirrus CI, Gitlab CI, Appveyor, CodeShip, dsari
+    env.CONTINUOUS_INTEGRATION || // Travis CI, Cirrus CI
+    env.BUILD_NUMBER || // Jenkins, TeamCity
+    env.RUN_ID || // TaskCluster, dsari
+    exports.name ||
+    false
+  )
+
+  function checkEnv (obj) {
+    if (typeof obj === 'string') return !!env[obj]
+    return Object.keys(obj).every(function (k) {
+      return env[k] === obj[k]
+    })
+  }
+
+
+  /***/ }),
+  /* 16 */
+  /***/ (function(module) {
+
+  module.exports = JSON.parse("[{\"name\":\"AppVeyor\",\"constant\":\"APPVEYOR\",\"env\":\"APPVEYOR\",\"pr\":\"APPVEYOR_PULL_REQUEST_NUMBER\"},{\"name\":\"Azure Pipelines\",\"constant\":\"AZURE_PIPELINES\",\"env\":\"SYSTEM_TEAMFOUNDATIONCOLLECTIONURI\",\"pr\":\"SYSTEM_PULLREQUEST_PULLREQUESTID\"},{\"name\":\"Bamboo\",\"constant\":\"BAMBOO\",\"env\":\"bamboo_planKey\"},{\"name\":\"Bitbucket Pipelines\",\"constant\":\"BITBUCKET\",\"env\":\"BITBUCKET_COMMIT\",\"pr\":\"BITBUCKET_PR_ID\"},{\"name\":\"Bitrise\",\"constant\":\"BITRISE\",\"env\":\"BITRISE_IO\",\"pr\":\"BITRISE_PULL_REQUEST\"},{\"name\":\"Buddy\",\"constant\":\"BUDDY\",\"env\":\"BUDDY_WORKSPACE_ID\",\"pr\":\"BUDDY_EXECUTION_PULL_REQUEST_ID\"},{\"name\":\"Buildkite\",\"constant\":\"BUILDKITE\",\"env\":\"BUILDKITE\",\"pr\":{\"env\":\"BUILDKITE_PULL_REQUEST\",\"ne\":\"false\"}},{\"name\":\"CircleCI\",\"constant\":\"CIRCLE\",\"env\":\"CIRCLECI\",\"pr\":\"CIRCLE_PULL_REQUEST\"},{\"name\":\"Cirrus CI\",\"constant\":\"CIRRUS\",\"env\":\"CIRRUS_CI\",\"pr\":\"CIRRUS_PR\"},{\"name\":\"AWS CodeBuild\",\"constant\":\"CODEBUILD\",\"env\":\"CODEBUILD_BUILD_ARN\"},{\"name\":\"Codeship\",\"constant\":\"CODESHIP\",\"env\":{\"CI_NAME\":\"codeship\"}},{\"name\":\"Drone\",\"constant\":\"DRONE\",\"env\":\"DRONE\",\"pr\":{\"DRONE_BUILD_EVENT\":\"pull_request\"}},{\"name\":\"dsari\",\"constant\":\"DSARI\",\"env\":\"DSARI\"},{\"name\":\"GitLab CI\",\"constant\":\"GITLAB\",\"env\":\"GITLAB_CI\"},{\"name\":\"GoCD\",\"constant\":\"GOCD\",\"env\":\"GO_PIPELINE_LABEL\"},{\"name\":\"Hudson\",\"constant\":\"HUDSON\",\"env\":\"HUDSON_URL\"},{\"name\":\"Jenkins\",\"constant\":\"JENKINS\",\"env\":[\"JENKINS_URL\",\"BUILD_ID\"],\"pr\":{\"any\":[\"ghprbPullId\",\"CHANGE_ID\"]}},{\"name\":\"Magnum CI\",\"constant\":\"MAGNUM\",\"env\":\"MAGNUM\"},{\"name\":\"Netlify CI\",\"constant\":\"NETLIFY\",\"env\":\"NETLIFY_BUILD_BASE\",\"pr\":{\"env\":\"PULL_REQUEST\",\"ne\":\"false\"}},{\"name\":\"Sail CI\",\"constant\":\"SAIL\",\"env\":\"SAILCI\",\"pr\":\"SAIL_PULL_REQUEST_NUMBER\"},{\"name\":\"Semaphore\",\"constant\":\"SEMAPHORE\",\"env\":\"SEMAPHORE\",\"pr\":\"PULL_REQUEST_NUMBER\"},{\"name\":\"Shippable\",\"constant\":\"SHIPPABLE\",\"env\":\"SHIPPABLE\",\"pr\":{\"IS_PULL_REQUEST\":\"true\"}},{\"name\":\"Solano CI\",\"constant\":\"SOLANO\",\"env\":\"TDDIUM\",\"pr\":\"TDDIUM_PR_ID\"},{\"name\":\"Strider CD\",\"constant\":\"STRIDER\",\"env\":\"STRIDER\"},{\"name\":\"TaskCluster\",\"constant\":\"TASKCLUSTER\",\"env\":[\"TASK_ID\",\"RUN_ID\"]},{\"name\":\"TeamCity\",\"constant\":\"TEAMCITY\",\"env\":\"TEAMCITY_VERSION\"},{\"name\":\"Travis CI\",\"constant\":\"TRAVIS\",\"env\":\"TRAVIS\",\"pr\":{\"env\":\"TRAVIS_PULL_REQUEST\",\"ne\":\"false\"}}]");
+
+  /***/ }),
+  /* 17 */
   /***/ (function(module, exports) {
 
   module.exports = require("os");
 
   /***/ }),
-  /* 15 */
+  /* 18 */
   /***/ (function(module, exports) {
 
   module.exports = require("events");
 
   /***/ }),
-  /* 16 */
+  /* 19 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
 
   Object.defineProperty(exports, "__esModule", { value: true });
-  const EventEmitter = __webpack_require__(17);
-  const p_timeout_1 = __webpack_require__(18);
-  const priority_queue_1 = __webpack_require__(20);
+  const EventEmitter = __webpack_require__(20);
+  const p_timeout_1 = __webpack_require__(21);
+  const priority_queue_1 = __webpack_require__(23);
   const empty = () => { };
   const timeoutError = new p_timeout_1.TimeoutError();
   /**
@@ -6232,7 +6330,7 @@ module.exports = {
 
 
   /***/ }),
-  /* 17 */
+  /* 20 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
@@ -6575,13 +6673,13 @@ module.exports = {
 
 
   /***/ }),
-  /* 18 */
+  /* 21 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
 
 
-  const pFinally = __webpack_require__(19);
+  const pFinally = __webpack_require__(22);
 
   class TimeoutError extends Error {
   	constructor(message) {
@@ -6639,7 +6737,7 @@ module.exports = {
 
 
   /***/ }),
-  /* 19 */
+  /* 22 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
@@ -6661,13 +6759,13 @@ module.exports = {
 
 
   /***/ }),
-  /* 20 */
+  /* 23 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
 
   Object.defineProperty(exports, "__esModule", { value: true });
-  const lower_bound_1 = __webpack_require__(21);
+  const lower_bound_1 = __webpack_require__(24);
   class PriorityQueue {
       constructor() {
           Object.defineProperty(this, "_queue", {
@@ -6705,7 +6803,7 @@ module.exports = {
 
 
   /***/ }),
-  /* 21 */
+  /* 24 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
@@ -6733,12 +6831,12 @@ module.exports = {
 
 
   /***/ }),
-  /* 22 */
+  /* 25 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
 
-  const pTry = __webpack_require__(23);
+  const pTry = __webpack_require__(26);
 
   const pLimit = concurrency => {
   	if (!((Number.isInteger(concurrency) || concurrency === Infinity) && concurrency > 0)) {
@@ -6797,7 +6895,7 @@ module.exports = {
 
 
   /***/ }),
-  /* 23 */
+  /* 26 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
@@ -6813,7 +6911,7 @@ module.exports = {
 
 
   /***/ }),
-  /* 24 */
+  /* 27 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
@@ -6879,18 +6977,18 @@ module.exports = {
   //# sourceMappingURL=index.js.map
 
   /***/ }),
-  /* 25 */
+  /* 28 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
 
-  const ansiRegex = __webpack_require__(26);
+  const ansiRegex = __webpack_require__(29);
 
   module.exports = string => typeof string === 'string' ? string.replace(ansiRegex(), '') : string;
 
 
   /***/ }),
-  /* 26 */
+  /* 29 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";
@@ -6907,7 +7005,13 @@ module.exports = {
 
 
   /***/ }),
-  /* 27 */
+  /* 30 */
+  /***/ (function(module, exports) {
+
+  module.exports = require("readline");
+
+  /***/ }),
+  /* 31 */
   /***/ (function(module, exports, __webpack_require__) {
 
   "use strict";

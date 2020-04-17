@@ -106,7 +106,7 @@ export default class Build extends BaseCommand {
 
           try {
             const exitCode = 0;
-            (await this.cli.run([command], {
+            (await this.cli.run(["run", "build"], {
               cwd,
               stdout,
               stderr,

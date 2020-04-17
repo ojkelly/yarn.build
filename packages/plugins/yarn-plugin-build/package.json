@@ -3,8 +3,8 @@
   "version": "0.9.1",
   "main": "./src/index.ts",
   "homepage": "https://yarn.build",
-  "private": false,
   "devDependencies": {
+    "@types/is-ci": "^2.0.0",
     "@types/jest": "^25.2.1",
     "@types/yup": "0.26.12",
     "@yarnpkg/builder": "^2.0.0-rc.19",
@@ -29,15 +29,17 @@
     "await-semaphore": "0.1.3",
     "clipanion": "^2.1.5",
     "date-fns": "^2.12.0",
+    "is-ci": "^2.0.0",
     "p-limit": "^2.3.0",
     "p-queue": "^6.3.0",
     "strip-ansi": "^6.0.0"
   },
   "scripts": {
     "build:plugin-stage": "builder build plugin",
-    "update-local": "yarn build:plugin-stage && rsync -a --delete bundles/ bin/",
-    "update-workspace": "mkdir -p ../../../.yarn/plugins/@kablamo && cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@kablamo/plugin-build.js",
-    "update": "yarn update-local && yarn update-workspace",
+    "update:local": "yarn build:plugin-stage && rsync -a --delete bundles/ bin/",
+    "update:workspace": "mkdir -p ../../../.yarn/plugins/@kablamo && cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@kablamo/plugin-build.js",
+    "update:patch-name": "sed -i '' 's|@yarnpkg/plugin-build|@kablamo/plugin-build|g' ./bundles/@yarnpkg/plugin-build.js",
+    "update": "yarn update:local && yarn update:patch-name && yarn update:workspace",
     "build": "update",
     "clean": "rimraf build bin",
     "test": "jest --watch"
