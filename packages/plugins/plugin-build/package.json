@@ -37,12 +37,12 @@
   "scripts": {
     "build:plugin-stage": "builder build plugin && yarn update:patch-name",
     "update:local": "yarn build:plugin-stage",
-    "update:workspace": "mkdir -p ../../../.yarn/plugins/@kablamo && cp ./bin/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@kablamo/plugin-build.js",
-    "update:patch-name": "sed -i '' 's|@yarnpkg/plugin-build|@kablamo/plugin-build|g' ./bin/@yarnpkg/plugin-build.js",
+    "update:workspace": "mkdir -p ../../../.yarn/plugins/@kablamo && cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@kablamo/plugin-build.js",
+    "update:patch-name": "sed -i '' 's|@yarnpkg/plugin-build|@kablamo/plugin-build|g' ./bundles/@yarnpkg/plugin-build.js",
     "update": "yarn update:local  && yarn update:workspace",
     "release": "yarn build:plugin-stage",
     "build": "update",
-    "clean": "rimraf build bin",
+    "clean": "rimraf build bundles",
     "test": "jest --watch"
   },
   "repository": {
@@ -50,9 +50,9 @@
     "url": "ssh://git@github.com/KablamoOSS/yarn-build.git"
   },
   "publishConfig": {
-    "main": "./bin/@kablamo/plugin-build.js"
+    "main": "./bundles/@kablamo/plugin-build.js"
   },
   "files": [
-    "/bin/**/*"
+    "/bundles/**/*"
   ]
 }
