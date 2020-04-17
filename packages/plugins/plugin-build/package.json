@@ -1,5 +1,5 @@
 {
-  "name": "@kablamo/plugin-build",
+  "name": "@kablamo/yarn-plugin-build",
   "version": "0.9.1",
   "main": "./bundle/@yarnpkg/plugin-build.js",
   "homepage": "https://yarn.build",
