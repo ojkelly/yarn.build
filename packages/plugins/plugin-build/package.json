@@ -1,7 +1,7 @@
 {
-  "name": "@kablamo/yarn-plugin-build",
+  "name": "@kablamo/plugin-build",
   "version": "0.9.1",
-  "main": "./src/index.ts",
+  "main": "./bundle/@yarnpkg/plugin-build.js",
   "homepage": "https://yarn.build",
   "devDependencies": {
     "@types/is-ci": "^2.0.0",
