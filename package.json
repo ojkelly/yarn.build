@@ -2,6 +2,7 @@
   "name": "yarn.build",
   "version": "1.0.0",
   "author": "Owen Kelly",
+  "license": "MIT",
   "workspaces": {
     "packages": [
       "packages/plugins/*",
