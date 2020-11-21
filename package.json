@@ -1,7 +1,7 @@
 {
-  "name": "@kablamo/yarn-plugins",
+  "name": "yarn.build",
   "version": "1.0.0",
-  "author": "kablamo.com.au",
+  "author": "Owen Kelly",
   "workspaces": {
     "packages": [
       "packages/plugins/*",

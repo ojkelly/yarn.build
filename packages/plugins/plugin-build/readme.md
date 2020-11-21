@@ -1,11 +1,12 @@
-# Yarn Build
+# Building yarn.build
 
-To install:
+Clone this repo, and install the dependencies `yarn install`
 
-```
-yarn plugin import https://github.com/KablamoOSS/yarn-build/releases/download/0.9.1/plugin-build.js
-```
+To test run `yarn build` to build everything in the `packages/example` folder.
 
-## For yarn v2
+To update the plugin run `yarn update` in `packages/plugins/plugin-build`.
 
-This plugin only works with yarn v2.
+## Releases
+
+Releases are automatic with the workflow at `.github/workflows/main.yml`
+and build off of SemVer tags in the format `v*`

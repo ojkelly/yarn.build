@@ -16,3 +16,11 @@ yarn plugin import https://github.com/KablamoOSS/yarn-build/releases/download/0.
 
 Bundle will drop a file `./entrypoint.js` that loads the pnp modules and re-exports the file listed in
 `package.json.main` if listed. You should add the path to your compiled file there.
+
+## Developing yarn.build
+
+Clone this repo, and install the dependencies `yarn install`
+
+To test run `yarn build` to build everything in the `packages/example` folder.
+
+To update the plugin run `yarn update` in `packages/plugins/plugin-build`.
