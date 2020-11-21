@@ -1,0 +1,12 @@
+[[redirects]]
+ from = "/latest"
+to = "https://github.com/ojkelly/yarn.build/releases/download/${{ github.ref }}/plugin-build.js"
+ status = 200
+ force = true
+
+
+[[redirects]]
+ from = "/release/*"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/:splat/plugin-build.js"
+ status = 200
+ force = true

@@ -59,7 +59,7 @@ hr {
 }
 
 main > hr {
-  width: 50%;
+  width: 80%;
   min-width: 300px;
   height: 2px;
   margin: 4rem auto;

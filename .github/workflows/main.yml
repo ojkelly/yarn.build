@@ -44,5 +44,21 @@ jobs:
           asset_path: ./packages/plugins/plugin-build/bundles/@yarnpkg/plugin-build.js
           asset_name: "plugin-build.js"
           asset_content_type: text/javascript
-      # - name: Update Version
-      # TODO
+
+      - name: Update Version
+        uses: actions/checkout@v2
+        run: |
+          sed -i'' '3s|.*| to = "https://github.com/ojkelly/yarn.build/releases/download/${{ github.ref }}/plugin-build.js"|' netlify.toml
+
+      # Commit new version
+      - uses: EndBug/add-and-commit@v5]
+        with:
+          add: "netlify.toml"
+          author_name: yarn.BUILD Actions
+          author_email: actions@yarn.build
+          branch: trunk
+          message: "[Action] Update the release version"
+          push: true
+        env:
+          # This is necessary in order to push a commit to the repo
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Leave this line unchanged
