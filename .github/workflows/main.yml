@@ -13,6 +13,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Build project # This would actually build your project, using zip for an example artifact
         run: |
           yarn install && \
@@ -45,8 +46,7 @@ jobs:
           asset_name: "plugin-build.js"
           asset_content_type: text/javascript
 
-      - name: Update Version
-        uses: actions/checkout@v2
+      - name: Update release
         run: |
           sed -i'' '3s|.*| to = "https://github.com/ojkelly/yarn.build/releases/download/${{ github.ref }}/plugin-build.js"|' netlify.toml
 
