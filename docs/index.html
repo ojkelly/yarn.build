@@ -15,6 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@700&family=IBM+Plex+Serif:ital,wght@0,400;0,700;1,400&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" type="text/css" href="/asciinema-player.css" />
     <title>
       yarn.BUILD
     </title>
@@ -44,6 +45,19 @@
         your local workspaces.<br />
         It's like Bazel, Buck and Pants <em>but for Yarn</em>.
       </p>
+      <br />
+      <br />
+      <section id="asciicinema" style="min-height: 220px;">
+        <asciinema-player
+          src="/command.cast"
+          cols="99"
+          rows="12"
+          autoplay
+          preload
+          loop
+          idle-time-limit="1"
+        ></asciinema-player>
+      </section>
     </header>
     <hr />
     <main>
@@ -204,7 +218,7 @@
             style="
               font-size: 15rem;
               line-height: 3rem;
-              margin: 2rem auto 0 auto;
+              margin: 4rem auto 0 auto;
               color: var(--color-accent);
             "
           >
@@ -264,5 +278,6 @@
     <footer>
       <p>Made by <a href="https://owenkelly.com.au">Owen Kelly</a></p>
     </footer>
+    <script src="/asciinema-player.js"></script>
   </body>
 </html>
