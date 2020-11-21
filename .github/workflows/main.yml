@@ -48,7 +48,8 @@ jobs:
 
       - name: Update release
         run: |
-          sed -i'' '3s|.*| to = "https://github.com/ojkelly/yarn.build/releases/download/${{ github.ref }}/plugin-build.js"|' netlify.toml
+          export TAGNAME=$(echo "${{ github.ref }}" | sed 's|refs/tags/||g')
+          sed -i'' '3s|.*| to = "https://github.com/ojkelly/yarn.build/releases/download/${TAGNAME}/plugin-build.js"|' netlify.toml
 
       # Commit new version
       - uses: EndBug/add-and-commit@v5
