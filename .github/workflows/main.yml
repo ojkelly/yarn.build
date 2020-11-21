@@ -32,7 +32,7 @@ jobs:
           # body: |
           #   To install:
           #   ```
-          #   yarn plugin import https://github.com/KablamoOSS/yarn-build/releases/download/${{ github.ref }}/plugin-build.js
+          #   yarn plugin import https://github.com/ojkelly/yarn-build/releases/download/${{ github.ref }}/plugin-build.js
           #   ```
       - name: Upload Release Asset
         id: upload-release-asset
@@ -44,3 +44,5 @@ jobs:
           asset_path: ./packages/plugins/plugin-build/bundles/@yarnpkg/plugin-build.js
           asset_name: "plugin-build.js"
           asset_content_type: text/javascript
+      # - name: Update Version
+      # TODO
