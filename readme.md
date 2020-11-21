@@ -5,7 +5,7 @@ For yarn v2.
 To install:
 
 ```
-yarn plugin import https://github.com/KablamoOSS/yarn-build/releases/download/0.9.2/plugin-build.js
+yarn plugin import https://github.com/ojkelly/yarn.build/releases/download/0.9.2/plugin-build.js
 ```
 
 ## Commands

@@ -10,12 +10,11 @@
       "packages/examples/phrases/*"
     ]
   },
-  "installConfig": {
-    "pnp": true
-  },
   "private": true,
   "scripts": {
-    "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('This project uses Yarn. Things wil not work properly with npm. Use yarn: https://yarnpkg.com/en/docs/install')\""
+    "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('This project uses Yarn. Things wil not work properly with npm. Use yarn: https://yarnpkg.com/en/docs/install')\"",
+    "clear:build-cache": "rimraf .yarn/local-build-cache.json",
+    "test": "yarn clear:build-cache && yarn build"
   },
   "devDependencies": {
     "@kablamo/eslint-plugin": "^1.0.1",
@@ -30,6 +29,7 @@
     "eslint-plugin-react": "^7.19.0",
     "jest-pnp-resolver": "^1.2.1",
     "prettier": "^2.0.3",
+    "rimraf": "^3.0.2",
     "ts-jest": "^25.3.1",
     "ts-pnp": "^1.2.0",
     "typescript": "^3.8.3"

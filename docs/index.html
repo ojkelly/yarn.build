@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <!-- MVP.css is really good: https://github.com/andybrewer/mvp/ -->
+    <link rel="stylesheet" href="/mvp.css" />
+
+    <meta
+      name="description"
+      content="Projects I've made that seemed worth sharing."
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@700&family=IBM+Plex+Serif:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <title>
+      Yarn.build
+    </title>
+  </head>
+
+  <body>
+    <header>
+      <h1 style="color: var(--color); font-size: 4rem; margin: 0.1em;">
+        <span style="font-family: var(--font-family); font-weight: 100;"
+          >yarn</span
+        ><span
+          style="
+            color: var(--color-secondary);
+            font-size: 0.8em;
+            font-family: var(--font-family-alt);
+          "
+          >.BUILD</span
+        >
+      </h1>
+      <br />
+      <p>
+        <a href="#build" style="font-family: var(--font-family-alt);">BUILD</a>
+        and
+        <a href="#bundle" style="font-family: var(--font-family-alt);"
+          >BUNDLE</a
+        >
+        your local workspaces.<br />
+        It's like Bazel, Buck and Pants <em>but for Yarn</em>.
+      </p>
+    </header>
+    <hr />
+    <main>
+      <section id="install">
+        <header>
+          <h2>Install</h2>
+          <p>
+            Run this command in your Yarn workspace <br />to install (or upgrade
+            to) the latest version.
+          </p>
+        </header>
+        <p>
+          <code style="overflow: scroll; padding: 0.2rem 0.4rem;">
+            yarn plugin import
+            https://github.com/ojkelly/yarn.build/releases/download/{{VERSION}}/plugin-build.js
+          </code>
+        </p>
+      </section>
+      <hr />
+      <section id="about">
+        <header>
+          <h2>What is this?</h2>
+          <p>
+            <a href="https://yarn.build"
+              ><span style="font-family: var(--font-family); font-weight: 100;"
+                >yarn</span
+              ><span
+                style="
+                  color: var(--color-secondary);
+                  font-size: 0.8em;
+                  font-family: var(--font-family-alt);
+                "
+                >.BUILD</span
+              ></a
+            >
+            is a plugin for <a href="https://yarnpkg.com">Yarn v2</a>
+            <small>(berry)</small>.
+          </p>
+        </header>
+
+        <aside>
+          <h3>Built for Monorepo's</h3>
+          <a href="https://yarn.build"
+            ><span style="font-family: var(--font-family); font-weight: 100;"
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            ></a
+          >
+          is designed for monorepo's that use yarn workspaces.
+        </aside>
+        <aside>
+          <h3>Uses your Dependency Graph</h3>
+          <a href="https://yarn.build"
+            ><span style="font-family: var(--font-family); font-weight: 100;"
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            ></a
+          >
+          uses the dependency graph you have already defined between your local
+          packages.
+        </aside>
+        <aside>
+          <h3>Super Fast Builds</h3>
+          With
+          <a href="https://yarn.build"
+            ><span style="font-family: var(--font-family); font-weight: 100;"
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            ></a
+          >, builds are run in parallel just like other modern build tools.
+        </aside>
+
+        <aside>
+          <h3>Built in Bundler</h3>
+          <a href="https://yarn.build"
+            ><span style="font-family: var(--font-family); font-weight: 100;"
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            ></a
+          >
+          also includes a powerful bundle command that can create zips ready for
+          <em>AWS Lambda</em>, <em>Docker</em> or really anywhere you can run
+          node.
+        </aside>
+        <aside>
+          <h3>Yarn Plugin</h3>
+          <p>
+            <span
+              style="
+                font-family: var(--font-family);
+                font-weight: 100;
+                color: var(--color);
+              "
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            >
+            is installed as a Yarn plugin. It is vendored with your repository,
+            so that you always have a copy of it.
+          </p>
+        </aside>
+        <aside>
+          <h3>Works with any language</h3>
+          <p>
+            <span
+              style="
+                font-family: var(--font-family);
+                font-weight: 100;
+                color: var(--color);
+              "
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            >
+            runs the build command you put in <code>package.json</code>. If you
+            have a polyglot repository you can build your other packages too.
+          </p>
+        </aside>
+      </section>
+
+      <hr />
+      <section id="testimonials">
+        <blockquote>
+          <div
+            style="
+              font-size: 15rem;
+              line-height: 3rem;
+              margin: 2rem auto 0 auto;
+              color: var(--color-accent);
+            "
+          >
+            &ldquo;
+          </div>
+          &ldquo;This is by far <strong>my favourite way</strong> to build
+          Javascript and Typescript applications.&rdquo;
+          <footer>
+            Owen Kelly,<br />
+            <em>Creator</em>
+            <span
+              style="
+                font-family: var(--font-family);
+                font-weight: 100;
+                color: var(--color);
+              "
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            >
+          </footer>
+        </blockquote>
+      </section>
+      <hr />
+      <section id="build">
+        <header>
+          <h2>Build</h2>
+          <p>
+            Build a single package (and its dependencies) or all packages in
+            your workspace.
+          </p>
+        </header>
+        <article>
+          <p>Run <code>yarn build</code></p>
+          <p>Documentation coming</p>
+        </article>
+      </section>
+      <hr />
+      <section id="bundle">
+        <header>
+          <h2>Bundle</h2>
+          <p>
+            Create a zip file of your package, bundled up ready to be deployed.
+          </p>
+        </header>
+        <article>
+          <p>Documentation coming</p>
+        </article>
+      </section>
+    </main>
+    <hr />
+    <footer>
+      <p>Made by <a href="https://owenkelly.com.au">Owen Kelly</a></p>
+    </footer>
+  </body>
+</html>
