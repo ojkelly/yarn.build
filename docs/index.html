@@ -46,10 +46,9 @@
         It's like Bazel, Buck and Pants <em>but for Yarn</em>.
       </p>
       <br />
-      <br />
       <section id="asciicinema" style="min-height: 220px;">
         <asciinema-player
-          src="/command.cast"
+          src="/build.cast"
           cols="99"
           rows="12"
           autoplay
@@ -58,6 +57,8 @@
           idle-time-limit="1"
         ></asciinema-player>
       </section>
+      <br />
+      <p><a href="#how">How it works.</a></p>
     </header>
     <hr />
     <main>
@@ -111,7 +112,10 @@
               >.BUILD</span
             ></a
           >
-          is designed for monorepo's that use yarn workspaces.
+          is designed for monorepo's that use
+          <a href="https://yarnpkg.com/features/workspaces" target="_blank"
+            >yarn workspaces</a
+          >.
         </aside>
         <aside>
           <h3>Uses your Dependency Graph</h3>
@@ -130,6 +134,7 @@
           uses the dependency graph you have already defined between your local
           packages.
         </aside>
+
         <aside>
           <h3>Super Fast Builds</h3>
           With
@@ -148,6 +153,24 @@
         </aside>
 
         <aside>
+          <h3>Only Builds What's Changed</h3>
+          <a href="https://yarn.build"
+            ><span style="font-family: var(--font-family); font-weight: 100;"
+              >yarn</span
+            ><span
+              style="
+                color: var(--color-secondary);
+                font-size: 0.8em;
+                font-family: var(--font-family-alt);
+              "
+              >.BUILD</span
+            ></a
+          >
+          keeps track of whats changed, and will only rebuild packages with
+          changes, that are also dependencies.
+        </aside>
+
+        <aside>
           <h3>Built in Bundler</h3>
           <a href="https://yarn.build"
             ><span style="font-family: var(--font-family); font-weight: 100;"
@@ -162,8 +185,8 @@
             ></a
           >
           also includes a powerful bundle command that can create zips ready for
-          <em>AWS Lambda</em>, <em>Docker</em> or really anywhere you can run
-          node.
+          <em>AWS Lambda</em>, <em>Kubernetes</em>, <em>Docker</em> or really
+          anywhere you can run node.
         </aside>
         <aside>
           <h3>Yarn Plugin</h3>
@@ -248,31 +271,95 @@
         </blockquote>
       </section>
       <hr />
-      <section id="build">
-        <header>
-          <h2>Build</h2>
-          <p>
-            Build a single package (and its dependencies) or all packages in
-            your workspace.
-          </p>
-        </header>
-        <article>
-          <p>Run <code>yarn build</code></p>
-          <p>Documentation coming</p>
-        </article>
-      </section>
+      <article id="how">
+        <h2>How it works</h2>
+        <p>
+          <span
+            style="
+              font-family: var(--font-family);
+              font-weight: 100;
+              color: var(--color);
+            "
+            >yarn</span
+          ><span
+            style="
+              color: var(--color-secondary);
+              font-size: 0.8em;
+              font-family: var(--font-family-alt);
+            "
+            >.BUILD</span
+          >
+          doesn't build anything itself. It keeps track of what has been built,
+          and what order packages need to be built in.
+        </p>
+        <p>
+          When you run <code>yarn build</code> in the directory of a package, it
+          will call the <code>build</code> script in <code>package.json</code>.
+        </p>
+        <p>
+          If you run <code>yarn build</code> from any other directory in your
+          yarn workspace, your whole workspace will be built.
+        </p>
+        <p>
+          Because of this, it's easy to integrate into your existing yarn
+          workspace. And to build packages in langauges other than Javascript.
+        </p>
+      </article>
       <hr />
-      <section id="bundle">
-        <header>
-          <h2>Bundle</h2>
-          <p>
-            Create a zip file of your package, bundled up ready to be deployed.
-          </p>
-        </header>
-        <article>
-          <p>Documentation coming</p>
-        </article>
-      </section>
+      <article id="build">
+        <h2>Build</h2>
+        <p>
+          Build a single package (and its dependencies) or all packages in your
+          workspace.
+        </p>
+        <p>Run <code>yarn build</code></p>
+        <asciinema-player
+          src="/build.cast"
+          cols="99"
+          rows="16"
+          autoplay
+          preload
+          loop
+          idle-time-limit="1"
+        ></asciinema-player>
+        <p>Documentation coming</p>
+      </article>
+      <hr />
+      <article id="bundle">
+        <h2>Bundle</h2>
+        <p>
+          Create a zip file of your package, bundled up ready to be deployed.
+        </p>
+        <p>
+          Run <code>yarn bundle</code> in the directory of the package you want
+          to bundle
+        </p>
+
+        <asciinema-player
+          src="/bundle.cast"
+          cols="99"
+          rows="16"
+          autoplay
+          preload
+          loop
+          idle-time-limit="1"
+        ></asciinema-player>
+        <p>
+          Everything not required (as described in
+          <code>package.json#dependencies</code>) is removed, and bundled node
+          modules are trimmed to just what's required.
+        </p>
+        <p>
+          A new file is added to the root directory <code>entrypoint.js</code>.
+          Running this file will automatically link up Yarn PnP and point to
+          your main file in the package that was bundled.
+        </p>
+        <p>
+          This has been specifically designed to allow easy bundling of packages
+          for AWS Lambda, but works equally well with Kubernetes and Docker and
+          other deployment systems where you can run node.
+        </p>
+      </article>
       <hr />
       <footer>
         <p style="text-align: center;">
