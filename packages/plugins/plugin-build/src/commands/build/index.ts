@@ -91,26 +91,26 @@ export default class Build extends BaseCommand {
             buildReporter?.emit(
               BuildReporterEvents.info,
               prefix,
-              chunk.toString()
+              chunk && chunk.toString()
             )
           );
 
           const stderr = new miscUtils.BufferStream();
-          stdout.on("data", (chunk) =>
+          stderr.on("data", (chunk) =>
             buildReporter?.emit(
               BuildReporterEvents.error,
               prefix,
-              chunk.toString()
+              chunk && chunk.toString()
             )
           );
 
           try {
-            const exitCode = 0;
-            (await this.cli.run(["run", "build"], {
-              cwd,
-              stdout,
-              stderr,
-            })) || 0;
+            const exitCode =
+              (await this.cli.run(["run", "build"], {
+                cwd,
+                stdout,
+                stderr,
+              })) || 0;
 
             stdout.end();
             stderr.end();

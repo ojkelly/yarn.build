@@ -6,6 +6,7 @@
     "module": "commonjs",
     "pretty": true,
     "baseUrl": ".",
+    "types": ["node"],
     "paths": {
       "@src/*": ["./src/*"]
     }

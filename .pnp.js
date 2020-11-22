@@ -103,7 +103,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",
           "packageDependencies": [
             ["@kablamo/eslint-plugin", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.0.1"],
-            ["@types/node", "npm:13.11.1"],
             ["@typescript-eslint/eslint-plugin", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:2.27.0"],
             ["@typescript-eslint/parser", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:2.27.0"],
             ["@yarnpkg/pnpify", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:2.0.0-rc.20"],
@@ -800,6 +799,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./packages/examples/words/consectetur/",
           "packageDependencies": [
             ["@internal/consectetur", "workspace:packages/examples/words/consectetur"],
+            ["@types/node", "npm:14.14.9"],
             ["typescript", "patch:typescript@npm%3A3.8.3#builtin<compat/typescript>::version=3.8.3&hash=cc6730"]
           ],
           "linkType": "SOFT",
@@ -830,6 +830,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./packages/examples/words/ipsum/",
           "packageDependencies": [
             ["@internal/ipsum", "workspace:packages/examples/words/ipsum"],
+            ["@types/node", "npm:14.14.9"],
             ["typescript", "patch:typescript@npm%3A3.8.3#builtin<compat/typescript>::version=3.8.3&hash=cc6730"]
           ],
           "linkType": "SOFT",
@@ -840,6 +841,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./packages/examples/words/lorem/",
           "packageDependencies": [
             ["@internal/lorem", "workspace:packages/examples/words/lorem"],
+            ["@types/node", "npm:14.14.9"],
             ["typescript", "patch:typescript@npm%3A3.8.3#builtin<compat/typescript>::version=3.8.3&hash=cc6730"]
           ],
           "linkType": "SOFT",
@@ -905,6 +907,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./packages/examples/words/sit/",
           "packageDependencies": [
             ["@internal/sit", "workspace:packages/examples/words/sit"],
+            ["@types/node", "npm:14.14.9"],
             ["typescript", "patch:typescript@npm%3A3.8.3#builtin<compat/typescript>::version=3.8.3&hash=cc6730"]
           ],
           "linkType": "SOFT",
@@ -1451,6 +1454,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-node-npm-13.11.1-ea46d1204d-0ced8498fb.zip/node_modules/@types/node/",
           "packageDependencies": [
             ["@types/node", "npm:13.11.1"]
+          ],
+          "linkType": "HARD",
+        }],
+        ["npm:14.14.9", {
+          "packageLocation": "./.yarn/cache/@types-node-npm-14.14.9-7ed4d3e449-df0405c708.zip/node_modules/@types/node/",
+          "packageDependencies": [
+            ["@types/node", "npm:14.14.9"]
           ],
           "linkType": "HARD",
         }]
@@ -10490,7 +10500,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["yarn.build", "workspace:."],
             ["@kablamo/eslint-plugin", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.0.1"],
-            ["@types/node", "npm:13.11.1"],
             ["@typescript-eslint/eslint-plugin", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:2.27.0"],
             ["@typescript-eslint/parser", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:2.27.0"],
             ["@yarnpkg/pnpify", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:2.0.0-rc.20"],

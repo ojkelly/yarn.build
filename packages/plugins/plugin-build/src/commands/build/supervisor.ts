@@ -369,9 +369,6 @@ class BuildSupervisor {
         }
 
         if (depNeedsBuild || depsOfDepsNeedRebuild) {
-          this.logError(
-            `${workspace.relativeCwd}/${depWorkspace.relativeCwd}: ${rebuildParent} || ${depNeedsBuild} || ${depsOfDepsNeedRebuild})`
-          );
           rebuildParent = true;
           dep.addBuildCallback(this.build(depWorkspace));
         }
@@ -383,9 +380,6 @@ class BuildSupervisor {
     }
     this.buildReporter.emit(BuildReporterEvents.pending, workspace.relativeCwd);
     if (rebuildParent || hasChanges) {
-      this.logError(
-        `${workspace.relativeCwd}: ${rebuildParent} || ${hasChanges})`
-      );
       this.buildReporter.emit(
         BuildReporterEvents.pending,
         workspace.relativeCwd,
@@ -454,7 +448,7 @@ class BuildSupervisor {
     } finally {
       release();
     }
-    this.logError(`${workspace.relativeCwd} needsBuild ${needsBuild}`);
+
     return needsBuild;
   }
 
@@ -503,84 +497,109 @@ class BuildSupervisor {
       process.stdout.cursorTo(0);
     }
 
-    const finalLine = this.generateFinalReport();
-
-    process.stdout.write(finalLine);
-
     // Check if there were errors, and print them out
     if (this.buildReport.failCount !== 0) {
       this.logError(header);
-
+      process.stdout.write(header + "\n");
       // print out any build errors
       for (const relativePath in this.buildReport.workspaces) {
         const workspace = this.buildReport.workspaces[relativePath];
 
         if (workspace.stdout.length !== 0) {
-          this.logError(
-            `${this.configuration.format(
-              `➤`,
-              `blueBright`
-            )} ${this.configuration.format(
-              `YN0000:`,
-              `grey`
-            )} │ ┌ Output ${this.configuration.format(
-              relativePath,
-              FormatType.PATH
-            )}\n`
-          );
+          const lineHeader = `${this.configuration.format(
+            `➤`,
+            `blueBright`
+          )} ${this.configuration.format(
+            `YN0009:`,
+            `grey`
+          )} │ ┌ Errors for ${this.configuration.format(
+            relativePath,
+            FormatType.PATH
+          )}`;
+          this.logError(lineHeader);
+          process.stdout.write(lineHeader + "\n");
+
           workspace.stdout.forEach((m) => {
-            m.split("\n").forEach((line) => {
-              this.logError(
-                `${this.configuration.format(
+            const lines = m.split("\n");
+
+            lines.forEach((line, i) => {
+              if (line.length !== 0) {
+                const formattedLine = `${this.configuration.format(
                   `➤`,
                   `blueBright`
-                )} YN0000: │ │ ${relativePath} ${line}\n`
-              );
+                )} YN0009: │ ${lines.length === i - 1 ? "└" : "│"} ${line}`;
+                this.logError(formattedLine);
+                process.stdout.write(formattedLine + "\n");
+              }
             });
           });
-          this.logError(
-            `${this.configuration.format(
-              `➤`,
-              `blueBright`
-            )} ${this.configuration.format(`YN0000:`, `grey`)} │ └ End Output\n`
-          );
+
+          const lineTail = `${this.configuration.format(
+            `➤`,
+            `blueBright`
+          )} ${this.configuration.format(
+            `YN0009:`,
+            `grey`
+          )} │ └ End ${this.configuration.format(
+            relativePath,
+            FormatType.PATH
+          )}`;
+          this.logError(lineTail);
+          process.stdout.write(lineTail + "\n");
         }
 
         if (workspace.stderr.length !== 0) {
-          this.logError(
-            `${this.configuration.format(
-              `➤`,
-              `blueBright`
-            )} ${this.configuration.format(
-              `YN0009:`,
-              `grey`
-            )} │ ┌ Errors ${this.configuration.format(
-              relativePath,
-              FormatType.PATH
-            )}\n`
-          );
+          // stderr doesnt seem to be useful for showing to the user in cli
+          // we'll still write it out to the build log
+          const lineHeader = `${this.configuration.format(
+            `➤`,
+            `blueBright`
+          )} ${this.configuration.format(
+            `YN0009:`,
+            `grey`
+          )} │ ┌ Errors ${this.configuration.format(
+            relativePath,
+            FormatType.PATH
+          )}`;
+          this.logError(lineHeader);
+          // process.stderr.write(lineHeader + "\n");
+
           workspace.stderr.forEach((e) => {
-            e.toString()
-              .split("\n")
-              .forEach((line) => {
-                this.logError(
-                  `${this.configuration.format(
-                    `➤`,
-                    `blueBright`
-                  )} YN0009: │ │ ${relativePath} ${line}\n`
-                );
-              });
+            const err = e instanceof Error ? e.toString() : `${e}`;
+            const lines = err.split("\n");
+            lines.forEach((line, i) => {
+              if (line.length !== 0) {
+                const formattedLine = `${this.configuration.format(
+                  `➤`,
+                  `blueBright`
+                )} YN0009: │ ${lines.length === i - 1 ? "└" : "│"} ${line}`;
+
+                this.logError(formattedLine);
+                // process.stderr.write(formattedLine + "\n");
+              }
+            });
           });
-          this.logError(
-            `${this.configuration.format(
-              `➤`,
-              `blueBright`
-            )} ${this.configuration.format(`YN0009:`, `grey`)}└ Errors\n`
-          );
+
+          const lineTail = `${this.configuration.format(
+            `➤`,
+            `blueBright`
+          )} ${this.configuration.format(
+            `YN0009:`,
+            `grey`
+          )} │ └ Errors ${this.configuration.format(
+            relativePath,
+            FormatType.PATH
+          )}`;
+          this.logError(lineTail);
+          // process.stderr.write(lineTail + "\n");
         }
       }
-      this.logError(finalLine);
     }
+
+    const finalLine = this.generateFinalReport();
+
+    process.stdout.write(finalLine);
+    this.logError(finalLine);
 
     // commit the build log
     await this.saveBuildLog();
@@ -726,7 +745,14 @@ class BuildSupervisor {
     const arrow = this.configuration.format(`➤`, `blueBright`);
     const code = grey(`YN0000:`);
 
-    let output = `${arrow} ${code} Build Finished\n`;
+    let output = `${arrow} ${code} └ Build finished${
+      this.buildReport.failCount != 0
+        ? this.configuration.format(
+            ` with ${this.buildReport.failCount} errors`,
+            "red"
+          )
+        : ""
+    }\n`;
     if (this.buildReport.buildStart) {
       const successString = this.configuration.format(
         `${this.buildReport.successCount}`,
@@ -758,9 +784,7 @@ class BuildSupervisor {
           const command = workspace.manifest.scripts.get(this.buildCommand);
 
           const currentBuildLog = this.buildLog?.get(workspace.relativeCwd);
-          this.logError(
-            `${workspace.relativeCwd}: ${JSON.stringify(currentBuildLog)}`
-          );
+
           this.buildReporter.emit(
             BuildReporterEvents.start,
             workspace.relativeCwd,
@@ -787,6 +811,7 @@ class BuildSupervisor {
               this.buildReporter,
               prefix
             );
+
             if (exitCode !== 0) {
               this.buildReporter.emit(
                 BuildReporterEvents.fail,

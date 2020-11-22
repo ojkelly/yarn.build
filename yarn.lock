@@ -619,6 +619,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/consectetur@workspace:packages/examples/words/consectetur"
   dependencies:
+    "@types/node": ^14.14.9
     typescript: ^3.8.3
   languageName: unknown
   linkType: soft
@@ -643,6 +644,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/ipsum@workspace:packages/examples/words/ipsum"
   dependencies:
+    "@types/node": ^14.14.9
     typescript: ^3.8.3
   languageName: unknown
   linkType: soft
@@ -660,6 +662,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/lorem@workspace:packages/examples/words/lorem"
   dependencies:
+    "@types/node": ^14.14.9
     typescript: ^3.8.3
   languageName: unknown
   linkType: soft
@@ -706,6 +709,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/sit@workspace:packages/examples/words/sit"
   dependencies:
+    "@types/node": ^14.14.9
     typescript: ^3.8.3
   languageName: unknown
   linkType: soft
@@ -1191,10 +1195,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^13.11.0, @types/node@npm:^13.7.0":
+"@types/node@npm:*, @types/node@npm:^13.7.0":
   version: 13.11.1
   resolution: "@types/node@npm:13.11.1"
   checksum: 0ced8498fb982d1275ce4f2e13554243d53386315e57de641d934fddeb02d86bc745c2c6b2aacad1072f081b0984d5f3beb81d309823202ec6cf8653f6d8100b
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^14.14.9":
+  version: 14.14.9
+  resolution: "@types/node@npm:14.14.9"
+  checksum: df0405c708fa94831e7f71ed01cd6f859a38ab0daeae99e01afdd408905479f205556a43bafe5692c82cd126abbdc68baeb99b4b7d653c1480c289080b71622b
   languageName: node
   linkType: hard
 
@@ -9124,7 +9135,6 @@ resolve@1.1.7:
   resolution: "yarn.build@workspace:."
   dependencies:
     "@kablamo/eslint-plugin": ^1.0.1
-    "@types/node": ^13.11.0
     "@typescript-eslint/eslint-plugin": ^2.23.0
     "@typescript-eslint/parser": ^2.23.0
     "@yarnpkg/pnpify": ^2.0.0-rc.20

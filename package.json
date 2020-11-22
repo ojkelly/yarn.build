@@ -15,11 +15,11 @@
   "scripts": {
     "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('This project uses Yarn. Things wil not work properly with npm. Use yarn: https://yarnpkg.com/en/docs/install')\"",
     "clear:build-cache": "rimraf .yarn/local-build-cache.json",
-    "test": "yarn clear:build-cache && yarn build"
+    "test": "yarn clear:build-cache && yarn build",
+    "test:error": "THROW=true; yarn test"
   },
   "devDependencies": {
     "@kablamo/eslint-plugin": "^1.0.1",
-    "@types/node": "^13.11.0",
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
     "eslint": "^6.8.0",
