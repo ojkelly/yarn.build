@@ -130,6 +130,7 @@ export default class Build extends BaseCommand {
           buildCommand: this.buildCommand,
           cli: runScript,
           dryRun: this.dryRun,
+          verbose: this.verbose
         });
 
         await supervisor.setup();

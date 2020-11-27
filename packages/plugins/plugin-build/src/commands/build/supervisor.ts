@@ -99,6 +99,7 @@ class BuildSupervisor {
   buildMutexes: { [relativCwd: string]: Mutex } = {};
   currentBuildTarget?: string;
   dryRun = false;
+  verbose = false;
   queue: PQueue;
 
   entrypoints: Node[] = [];
@@ -131,6 +132,7 @@ class BuildSupervisor {
     cli,
     configuration,
     dryRun,
+    verbose,
   }: {
     project: Project;
     report: StreamReport;
@@ -138,6 +140,7 @@ class BuildSupervisor {
     cli: BuildCommandCli;
     configuration: Configuration;
     dryRun: boolean;
+    verbose: boolean;
   }) {
     this.configuration = configuration;
     this.project = project;
@@ -145,6 +148,7 @@ class BuildSupervisor {
     this.buildCommand = buildCommand;
     this.cli = cli;
     this.dryRun = dryRun;
+    this.verbose = verbose;
 
     this.queue = new PQueue({
       concurrency: this.concurrency, // TODO: make this customisable
@@ -797,6 +801,14 @@ class BuildSupervisor {
           );
 
           if (!command) {
+            if (this.verbose) {
+              this.buildReporter.emit(
+                BuildReporterEvents.info,
+                workspace.relativeCwd,
+                `Missing \`${this.buildCommand}\` script in manifest.`
+              );
+            }
+
             this.buildReporter.emit(
               BuildReporterEvents.success,
               workspace.relativeCwd
