@@ -221,6 +221,10 @@ class BuildSupervisor {
     };
 
     for (const [id, entry] of this.buildLog) {
+      if (entry.status !== BuildStatus.succeeded) {
+        continue;
+      }
+
       buildLogFile.packages[id] = {
         lastModified: entry.lastModified,
       };
