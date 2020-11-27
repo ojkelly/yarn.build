@@ -8,7 +8,7 @@ import {
 } from "@yarnpkg/core";
 import isCI from "is-ci";
 import { cpus } from "os";
-import { PortablePath, NodeFS } from "@yarnpkg/fslib";
+import { PortablePath, NodeFS, npath } from "@yarnpkg/fslib";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
@@ -154,7 +154,7 @@ class BuildSupervisor {
       autoStart: true,
     });
     this.errorLogFile = fs.createWriteStream(
-      `${this.project.cwd}${path.sep}build-error.log`,
+      this.getBuildErrorPath(),
       {
         flags: "a",
       }
@@ -168,8 +168,13 @@ class BuildSupervisor {
     this.hasSetup = true;
   }
 
+  private getBuildErrorPath(): string {
+    const projectCwd = npath.fromPortablePath(this.project.cwd);
+    return path.resolve(projectCwd, "build-error.log");
+  }
   private getBuildLogPath(): string {
-    return `${this.project.cwd}${path.sep}.yarn${path.sep}local-build-cache.json`;
+    const projectCwd = npath.fromPortablePath(this.project.cwd);
+    return path.resolve(projectCwd, ".yarn", "local-build-cache.json");
   }
   private async readBuildLog(): Promise<BuildLog> {
     const buildLog = new Map<string, BuildLogEntry>();
@@ -398,9 +403,8 @@ class BuildSupervisor {
 
   private async checkIfBuildIsRequired(workspace: Workspace): Promise<boolean> {
     let needsBuild = false;
-    const dir: PortablePath = path.resolve(
-      `${workspace.project.cwd}${path.sep}${workspace.relativeCwd}`
-    ) as PortablePath;
+    const projectCwd = npath.fromPortablePath(workspace.project.cwd);
+    const dir = npath.toPortablePath(path.resolve(projectCwd, workspace.relativeCwd));
 
     let ignore = undefined;
 
