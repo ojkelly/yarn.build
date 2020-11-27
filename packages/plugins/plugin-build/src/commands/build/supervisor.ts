@@ -603,6 +603,8 @@ class BuildSupervisor {
 
     // commit the build log
     await this.saveBuildLog();
+
+    return this.buildReport.failCount === 0;
   };
 
   // This is a very simple requestAnimationFrame polyfil
