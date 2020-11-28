@@ -47,7 +47,7 @@ jobs:
       # Commit new version
       - uses: EndBug/add-and-commit@v5
         with:
-          add: "netlify.toml"
+          add: "netlify.toml .yarn/plugins/@ojkelly/plugin-build.cjs"
           author_name: yarn.BUILD Actions
           author_email: actions@yarn.build
           branch: trunk
