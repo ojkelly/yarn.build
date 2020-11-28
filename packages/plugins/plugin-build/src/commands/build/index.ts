@@ -2,6 +2,7 @@ import { BaseCommand } from "@yarnpkg/cli";
 import {
   Configuration,
   Manifest,
+  MessageName,
   Project,
   StreamReport,
   Workspace,
@@ -165,7 +166,10 @@ export default class Build extends BaseCommand {
         }
 
         // build all the things
-        await supervisor.run();
+        const ranWithoutErrors = await supervisor.run();
+        if (ranWithoutErrors === false) {
+          report.reportError(MessageName.BUILD_FAILED, "Build failed");
+        }
       }
     );
 
