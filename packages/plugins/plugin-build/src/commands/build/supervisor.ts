@@ -8,7 +8,7 @@ import {
 } from "@yarnpkg/core";
 import isCI from "is-ci";
 import { cpus } from "os";
-import { PortablePath, NodeFS } from "@yarnpkg/fslib";
+import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
@@ -157,8 +157,8 @@ class BuildSupervisor {
       throwOnTimeout: true,
       autoStart: true,
     });
-    this.errorLogFile = fs.createWriteStream(
-      `${this.project.cwd}${path.sep}build-error.log`,
+    this.errorLogFile = xfs.createWriteStream(
+      this.getBuildErrorPath(),
       {
         flags: "a",
       }
@@ -172,30 +172,17 @@ class BuildSupervisor {
     this.hasSetup = true;
   }
 
-  private getBuildLogPath(): string {
-    return `${this.project.cwd}${path.sep}.yarn${path.sep}local-build-cache.json`;
+  private getBuildErrorPath() {
+    return ppath.resolve(this.project.cwd, "build-error.log" as Filename);
+  }
+  private getBuildLogPath() {
+    return ppath.resolve(this.project.cwd, ".yarn" as Filename, "local-build-cache.json"  as Filename);
   }
   private async readBuildLog(): Promise<BuildLog> {
     const buildLog = new Map<string, BuildLogEntry>();
 
     try {
-      const buildLogFile: BuildLogFile = await new Promise(
-        (resolve, reject) => {
-          fs.readFile(this.getBuildLogPath(), function (err, buf) {
-            if (err) {
-              reject();
-            }
-            if (buf) {
-              try {
-                const parsed = JSON.parse(buf.toString());
-                resolve(parsed);
-              } catch (e) {
-                reject(e);
-              }
-            }
-          });
-        }
-      );
+      const buildLogFile: BuildLogFile = await xfs.readJsonPromise(this.getBuildLogPath());
 
       if (buildLogFile && buildLogFile.packages) {
         for (const id in buildLogFile.packages) {
@@ -234,9 +221,9 @@ class BuildSupervisor {
       };
     }
 
-    fs.writeFileSync(
+    await xfs.writeJsonPromise(
       this.getBuildLogPath(),
-      JSON.stringify(buildLogFile, null, 2)
+      buildLogFile
     );
   }
 
@@ -406,9 +393,7 @@ class BuildSupervisor {
 
   private async checkIfBuildIsRequired(workspace: Workspace): Promise<boolean> {
     let needsBuild = false;
-    const dir: PortablePath = path.resolve(
-      `${workspace.project.cwd}${path.sep}${workspace.relativeCwd}`
-    ) as PortablePath;
+    const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
     let ignore = undefined;
 
@@ -886,10 +871,9 @@ const getLastModifiedForFolder = async (
   // TODO: ignore the folder where the `pkg.main` script resides, or in a
   // `pkg.build.output` is.
 
-  const fs = new NodeFS();
   let lastModified = 0;
 
-  const files = await fs.readdirPromise(folder);
+  const files = await xfs.readdirPromise(folder);
 
   await Promise.all(
     files.map(async (file) => {
@@ -899,7 +883,7 @@ const getLastModifiedForFolder = async (
         return;
       }
 
-      const stat = await fs.statPromise(filePath);
+      const stat = await xfs.statPromise(filePath);
       if (stat.isFile) {
         if (stat.mtimeMs > lastModified) {
           lastModified = stat.mtimeMs;
