@@ -46,22 +46,22 @@ jobs:
 
       # Commit new version
       - name: Create Pull Request
-          id: cpr
-          uses: peter-evans/create-pull-request@v3
-          with:
-            commit-message: Update release version to ${{ github.ref }}
-            committer: GitHub <noreply@github.com>
-            author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-            signoff: false
-            branch: update-release-version
-            delete-branch: true
-            title: 'release: Update release version to  ${{ github.ref }}'
-            labels: |
-              report
-              automated pr
-            assignees: ojkelly
-            reviewers: ojkelly
-            team-reviewers: |
-              owners
-              maintainers
-            draft: false
+        id: cpr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: Update release version to ${{ github.ref }}
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: update-release-version
+          delete-branch: true
+          title: 'release: Update release version to  ${{ github.ref }}'
+          labels: |
+            report
+            automated pr
+          assignees: ojkelly
+          reviewers: ojkelly
+          team-reviewers: |
+            owners
+            maintainers
+          draft: false
