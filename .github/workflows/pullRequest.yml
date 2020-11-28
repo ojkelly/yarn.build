@@ -1,0 +1,20 @@
+on: [pull_request]
+
+name: Build and Test
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build project
+        run: |
+          yarn install && \
+          cd ./packages/plugins/plugin-build && \
+          yarn release
+      - name: Test
+        run: |
+          yarn build
