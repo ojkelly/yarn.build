@@ -45,13 +45,23 @@ jobs:
           sed -i'' "3s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-build.js\"|" netlify.toml
 
       # Commit new version
-      - uses: EndBug/add-and-commit@v5
+     - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v3
         with:
-          add: "netlify.toml .yarn/plugins/@ojkelly/plugin-build.cjs"
-          author_name: yarn.BUILD Actions
-          author_email: actions@yarn.build
-          branch: trunk
-          message: "[Action] Update the release version"
-          push: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Update release version to ${{ github.ref }}
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: update-release-version
+          delete-branch: true
+          title: 'release: Update release version to  ${{ github.ref }}'
+          labels: |
+            report
+            automated pr
+          assignees: ojkelly
+          reviewers: ojkelly
+          team-reviewers: |
+            owners
+            maintainers
+          draft: false
