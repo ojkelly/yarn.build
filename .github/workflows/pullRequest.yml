@@ -17,4 +17,5 @@ jobs:
           yarn release
       - name: Test
         run: |
+          pwd && \
           yarn build
