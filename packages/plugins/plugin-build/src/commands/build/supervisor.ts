@@ -386,6 +386,19 @@ class BuildSupervisor {
       );
       parent.addBuildCallback(this.build(workspace));
       return true;
+
+    } else {
+      // Use the previous log entry if we don't need to rebuild.
+      // This ensures we always have all our build targets in the log.
+      const previousBuildLog = this.buildLog?.get(workspace.relativeCwd);
+      if (previousBuildLog) {
+        this.buildLog?.set(workspace.relativeCwd, {
+          lastModified: previousBuildLog.lastModified,
+          status: BuildStatus.succeeded,
+          haveCheckedForRebuild: true,
+          rebuild: false,
+        });
+      }
     }
 
     return false;
