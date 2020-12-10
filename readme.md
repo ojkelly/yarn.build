@@ -1,8 +1,10 @@
-# Yarn Build
+# yarn.Build
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/6b14fc77-846f-4035-944a-ff1c7843b70d/deploy-status)](https://app.netlify.com/sites/loving-wing-5cc62e/deploys)
 
-For yarn v2.
+yarn.BUILD is a plugin for Yarn 2. It uses your dependency graph to build just whats needed, when it's needed. You can setup a monorepo with a few backend packages, a server package, maybe a graphQL schema package, and a frontend package. And build it all, in the order it's needed. Then, only rebuild when something changes.
+
+See the full docs at [yarn.BUILD](https://yarn.build)
 
 To install:
 
