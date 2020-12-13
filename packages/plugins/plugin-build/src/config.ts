@@ -19,6 +19,9 @@ type YarnBuildConfiguration = {
   enableBetaFeatures: {
     // Feature to allow configuring input/output folders
     folderConfiguration: boolean;
+    // Feature to allow yarn build packages/*
+    // yarn build package/example/lorem-ipsum
+    targetedBuilds: boolean;
   };
 };
 
@@ -37,6 +40,7 @@ async function getConfiguration(
     };
     enableBetaFeatures?: {
       folderConfiguration?: boolean;
+      targetedBuilds?: boolean;
     };
   } = {};
 
@@ -100,6 +104,11 @@ async function getConfiguration(
         configOnDisk?.enableBetaFeatures?.folderConfiguration === "false"
           ? false
           : true,
+      targetedBuilds:
+        typeof configOnDisk?.enableBetaFeatures?.targetedBuilds === "string" &&
+        configOnDisk?.enableBetaFeatures?.targetedBuilds === "true"
+          ? true
+          : false,
     },
   };
 }
