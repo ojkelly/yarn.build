@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@kablamo/eslint-plugin": "^1.0.1",
+    "@types/jest": "^26.0.19",
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
     "eslint": "^6.8.0",
@@ -28,10 +29,11 @@
     "eslint-plugin-cypress": "^2.10.3",
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-react": "^7.19.0",
+    "jest": "^26.6.3",
     "jest-pnp-resolver": "^1.2.1",
     "prettier": "^2.0.3",
     "rimraf": "^3.0.2",
-    "ts-jest": "^25.3.1",
+    "ts-jest": "^26.4.4",
     "ts-pnp": "^1.2.0",
     "typescript": "^3.8.3"
   },
