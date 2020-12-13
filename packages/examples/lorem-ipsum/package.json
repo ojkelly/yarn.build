@@ -7,6 +7,10 @@
   "scripts": {
     "build": "tsc"
   },
+  "yarn.build": {
+    "input": "src",
+    "output": "dist"
+  },
   "dependencies": {
     "@internal/phrase-lorem-ipsum": "workspace:*"
   },

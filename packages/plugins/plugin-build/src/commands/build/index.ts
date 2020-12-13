@@ -12,6 +12,7 @@ import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Usage } from "clipanion";
 
 import { EventEmitter } from "events";
+import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
 import BuildSupervisor, { BuildReporterEvents } from "./supervisor";
 
 export default class Build extends BaseCommand {
@@ -65,6 +66,8 @@ export default class Build extends BaseCommand {
       this.context.cwd,
       this.context.plugins
     );
+
+    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration();
 
     const report = await StreamReport.start(
       {
@@ -127,11 +130,12 @@ export default class Build extends BaseCommand {
         const supervisor = new BuildSupervisor({
           project,
           configuration,
+          pluginConfiguration,
           report,
           buildCommand: this.buildCommand,
           cli: runScript,
           dryRun: this.dryRun,
-          verbose: this.verbose
+          verbose: this.verbose,
         });
 
         await supervisor.setup();
