@@ -46,6 +46,7 @@ type RunLogEntry = {
   status?: RunStatus;
   rerun?: boolean;
   haveCheckedForRerun?: boolean;
+  command: string;
 };
 
 enum RunSupervisorReporterEvents {
@@ -205,6 +206,7 @@ class RunSupervisor {
             status: runLogFile.packages[id].status,
             haveCheckedForRerun: false,
             rerun: true,
+            command: this.runCommand,
           });
         }
       }
@@ -217,12 +219,20 @@ class RunSupervisor {
     if (!this.runLog) {
       return;
     }
+    let runLogFileOnDisk: RunLogFile | undefined;
+    try {
+      runLogFileOnDisk = await xfs.readJsonPromise(this.getRunLogPath());
+    } catch {
+      // do nothing
+    }
     const runLogFile: RunLogFile = {
       comment:
         "This is an auto-generated file," +
         " it keeps track of whats been built." +
         " This is a local file, don't store this in version control.",
-      packages: {},
+      packages: {
+        ...(runLogFileOnDisk && runLogFileOnDisk.packages),
+      },
     };
 
     for (const [id, entry] of this.runLog) {
@@ -231,7 +241,8 @@ class RunSupervisor {
       }
 
       runLogFile.packages[id] = {
-        lastModified: entry.lastModified,
+        ...runLogFile.packages[id],
+        ...this.runLog.get(id),
       };
     }
 
@@ -412,6 +423,7 @@ class RunSupervisor {
           status: RunStatus.succeeded,
           haveCheckedForRerun: true,
           rerun: false,
+          command: this.runCommand,
         });
       }
     }
@@ -483,6 +495,7 @@ class RunSupervisor {
         status: needsRun ? RunStatus.succeeded : RunStatus.pending,
         haveCheckedForRerun: true,
         rerun: needsRun,
+        command: this.runCommand,
       });
     } catch (e) {
       this.logError(
@@ -555,7 +568,7 @@ class RunSupervisor {
           )} ${this.configuration.format(
             `YN0009:`,
             `grey`
-          )} │ ┌ Errors for ${this.configuration.format(
+          )} │ ┌ [stdout] for ${this.configuration.format(
             relativePath,
             FormatType.PATH
           )}`;
@@ -583,7 +596,7 @@ class RunSupervisor {
           )} ${this.configuration.format(
             `YN0009:`,
             `grey`
-          )} │ └ End ${this.configuration.format(
+          )} │ └ [stdout] ${this.configuration.format(
             relativePath,
             FormatType.PATH
           )}`;
@@ -600,12 +613,12 @@ class RunSupervisor {
           )} ${this.configuration.format(
             `YN0009:`,
             `grey`
-          )} │ ┌ Errors ${this.configuration.format(
+          )} │ ┌ [stderr] ${this.configuration.format(
             relativePath,
             FormatType.PATH
           )}`;
           this.logError(lineHeader);
-          // process.stderr.write(lineHeader + "\n");
+          process.stderr.write(lineHeader + "\n");
 
           workspace.stderr.forEach((e) => {
             const err = e instanceof Error ? e.toString() : `${e}`;
@@ -618,7 +631,7 @@ class RunSupervisor {
                 )} YN0009: │ ${lines.length === i - 1 ? "└" : "│"} ${line}`;
 
                 this.logError(formattedLine);
-                // process.stderr.write(formattedLine + "\n");
+                process.stderr.write(formattedLine + "\n");
               }
             });
           });
@@ -629,17 +642,17 @@ class RunSupervisor {
           )} ${this.configuration.format(
             `YN0009:`,
             `grey`
-          )} │ └ Errors ${this.configuration.format(
+          )} │ └ [stderr] ${this.configuration.format(
             relativePath,
             FormatType.PATH
           )}`;
           this.logError(lineTail);
-          // process.stderr.write(lineTail + "\n");
+          process.stderr.write(lineTail + "\n");
         }
       }
     }
 
-    const finalLine = this.generateFinalReport();
+    const finalLine = this.generateFinalReport(this.runReport.failCount !== 0);
 
     process.stdout.write(finalLine);
     this.logError(finalLine);
@@ -780,12 +793,14 @@ class RunSupervisor {
     return output;
   };
 
-  generateFinalReport = () => {
+  generateFinalReport = (hasPreceedingLine: boolean) => {
     const grey = (s: string) => this.configuration.format(s, `grey`);
     const arrow = this.configuration.format(`➤`, `blueBright`);
     const code = grey(`YN0000:`);
 
-    let output = `${arrow} ${code} ${arrow} Run [ ${this.configuration.format(
+    let output = `${arrow} ${code} ${
+      hasPreceedingLine ? `└` : arrow
+    } Run [ ${this.configuration.format(
       `${this.runCommand} finished`,
       this.runReport.failCount === 0 ? "green" : "red"
     )}${
@@ -876,6 +891,7 @@ class RunSupervisor {
                 status: RunStatus.failed,
                 haveCheckedForRerun: true,
                 rerun: false,
+                command: this.runCommand,
               });
 
               return false;
@@ -886,6 +902,7 @@ class RunSupervisor {
               status: RunStatus.succeeded,
               haveCheckedForRerun: true,
               rerun: false,
+              command: this.runCommand,
             });
 
             this.runReporter.emit(
@@ -904,6 +921,7 @@ class RunSupervisor {
               status: RunStatus.failed,
               haveCheckedForRerun: true,
               rerun: false,
+              command: this.runCommand,
             });
 
             return false;

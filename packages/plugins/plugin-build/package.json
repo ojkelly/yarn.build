@@ -43,7 +43,7 @@
     "update:local": "yarn build:plugin-stage && yarn update:workspace",
     "release": "yarn build:plugin-stage && yarn update:patch-name",
     "clean": "rimraf build bundles",
-    "test": "jest --watch"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -54,5 +54,8 @@
   },
   "files": [
     "/bundles/**/*"
-  ]
+  ],
+  "jest": {
+    "preset": "ts-jest"
+  }
 }

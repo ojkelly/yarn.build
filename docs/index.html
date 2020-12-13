@@ -301,6 +301,10 @@
           yarn workspaces, your whole project will be built.
         </p>
         <p>
+          Or run <code>yarn buil path/to/package</code> to buidl just that
+          package (or packages in that folder), and their dependencies.
+        </p>
+        <p>
           Because of this, it's easy to integrate into your existing yarn
           workspaces. And to build packages in langauges other than Javascript.
         </p>
@@ -357,6 +361,17 @@
           This has been specifically designed to allow easy bundling of packages
           for AWS Lambda, but works equally well with Kubernetes and Docker and
           other deployment systems where you can run node.
+        </p>
+      </article>
+      <hr />
+      <article id="test">
+        <h2>Test</h2>
+        <p>
+          Test your packages and their dependencies.
+        </p>
+        <p>
+          Run <code>yarn test</code> in the directory of the package you want to
+          test or run <code>yarn test path/to/package</code>.
         </p>
       </article>
       <hr />

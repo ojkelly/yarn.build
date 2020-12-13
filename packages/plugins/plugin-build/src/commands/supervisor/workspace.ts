@@ -28,7 +28,7 @@ const addTargets = async ({
   supervisor: RunSupervisor;
 }): Promise<void> => {
   if (targetWorkspace.workspacesCwds.size !== 0) {
-    // we're in the root, need to build all
+    // we're in the root, need to run all
     const workspaceList = getWorkspaceChildrenRecursive(
       targetWorkspace,
       project
