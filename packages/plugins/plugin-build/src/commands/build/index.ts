@@ -10,6 +10,7 @@ import {
 } from "@yarnpkg/core";
 import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Usage } from "clipanion";
+import path from "path";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
@@ -33,6 +34,12 @@ export default class Build extends BaseCommand {
 
   @Command.Boolean(`-d,--dry-run`)
   dryRun = false;
+
+  @Command.Boolean(`--ignore-cache`)
+  ignoreBuildCache = false;
+
+  @Command.Rest()
+  public buildTarget: string[] = [];
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -77,9 +84,18 @@ export default class Build extends BaseCommand {
         includeLogs: true,
       },
       async (report: StreamReport) => {
+        let targetDirectory = this.context.cwd;
+
+        if (
+          pluginConfiguration.enableBetaFeatures.targetedBuilds &&
+          typeof this.buildTarget[0] === "string"
+        ) {
+          targetDirectory = `${configuration.projectCwd}${path.sep}${this.buildTarget[0]}` as PortablePath;
+        }
+
         const { project, workspace: cwdWorkspace } = await Project.find(
           configuration,
-          this.context.cwd
+          targetDirectory
         );
 
         const targetWorkspace = cwdWorkspace || project.topLevelWorkspace;
@@ -135,6 +151,7 @@ export default class Build extends BaseCommand {
           buildCommand: this.buildCommand,
           cli: runScript,
           dryRun: this.dryRun,
+          ignoreBuildCache: this.ignoreBuildCache,
           verbose: this.verbose,
         });
 

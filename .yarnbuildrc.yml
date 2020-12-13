@@ -3,3 +3,4 @@ folders:
   output: build
 enableBetaFeatures:
   folderConfiguration: true
+  targetedBuilds: true

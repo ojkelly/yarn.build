@@ -101,6 +101,7 @@ class BuildSupervisor {
   buildMutexes: { [relativCwd: string]: Mutex } = {};
   currentBuildTarget?: string;
   dryRun = false;
+  ignoreBuildCache = false;
   verbose = false;
   queue: PQueue;
 
@@ -135,6 +136,7 @@ class BuildSupervisor {
     configuration,
     pluginConfiguration,
     dryRun,
+    ignoreBuildCache,
     verbose,
   }: {
     project: Project;
@@ -144,6 +146,7 @@ class BuildSupervisor {
     configuration: Configuration;
     pluginConfiguration: YarnBuildConfiguration;
     dryRun: boolean;
+    ignoreBuildCache: boolean;
     verbose: boolean;
   }) {
     this.configuration = configuration;
@@ -153,6 +156,7 @@ class BuildSupervisor {
     this.buildCommand = buildCommand;
     this.cli = cli;
     this.dryRun = dryRun;
+    this.ignoreBuildCache = ignoreBuildCache;
     this.verbose = verbose;
 
     this.queue = new PQueue({
@@ -409,6 +413,10 @@ class BuildSupervisor {
   };
 
   private async checkIfBuildIsRequired(workspace: Workspace): Promise<boolean> {
+    if (this.ignoreBuildCache === true) {
+      return true;
+    }
+
     let needsBuild = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
