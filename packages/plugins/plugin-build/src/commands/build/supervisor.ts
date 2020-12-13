@@ -415,31 +415,33 @@ class BuildSupervisor {
     // Determine which folders (if any) may contain build artifacts
     // we need to ignore.
     let ignore;
-
-    if (
-      workspace?.manifest?.raw["yarn.build"] &&
-      typeof workspace?.manifest.raw["yarn.build"].output === "string"
-    ) {
-      ignore = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
-    } else if (this.pluginConfiguration.folders.output) {
-      ignore = `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
-    } else if (workspace?.manifest.raw.main) {
-      ignore = `${dir}${path.sep}${
-        workspace?.manifest.raw.main.substring(
-          0,
-          workspace?.manifest.raw.main.lastIndexOf(path.sep)
-        ) as PortablePath
-      }` as PortablePath;
-    }
-
     let srcDir;
-    if (
-      workspace?.manifest?.raw["yarn.build"] &&
-      typeof workspace?.manifest.raw["yarn.build"].input === "string"
-    ) {
-      srcDir = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
-    } else if (this.pluginConfiguration.folders.input) {
-      srcDir = `${dir}${path.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
+
+    if (this.pluginConfiguration.enableBetaFeatures.folderConfiguration) {
+      if (
+        workspace?.manifest?.raw["yarn.build"] &&
+        typeof workspace?.manifest.raw["yarn.build"].output === "string"
+      ) {
+        ignore = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
+      } else if (this.pluginConfiguration.folders.output) {
+        ignore = `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
+      } else if (workspace?.manifest.raw.main) {
+        ignore = `${dir}${path.sep}${
+          workspace?.manifest.raw.main.substring(
+            0,
+            workspace?.manifest.raw.main.lastIndexOf(path.sep)
+          ) as PortablePath
+        }` as PortablePath;
+      }
+
+      if (
+        workspace?.manifest?.raw["yarn.build"] &&
+        typeof workspace?.manifest.raw["yarn.build"].input === "string"
+      ) {
+        srcDir = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
+      } else if (this.pluginConfiguration.folders.input) {
+        srcDir = `${dir}${path.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
+      }
     }
 
     // Traverse the dirs and see if they've been modified

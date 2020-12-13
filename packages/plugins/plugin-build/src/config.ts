@@ -97,9 +97,9 @@ async function getConfiguration(
       folderConfiguration:
         typeof configOnDisk?.enableBetaFeatures?.folderConfiguration ===
           "string" &&
-        configOnDisk?.enableBetaFeatures?.folderConfiguration === "true"
-          ? true
-          : false,
+        configOnDisk?.enableBetaFeatures?.folderConfiguration === "false"
+          ? false
+          : true,
     },
   };
 }
