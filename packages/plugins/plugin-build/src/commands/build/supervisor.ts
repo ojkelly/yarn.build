@@ -9,6 +9,7 @@ import {
 import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
+import { YarnBuildConfiguration } from "../../config";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
@@ -87,6 +88,7 @@ type BuildCommandCli = (
 class BuildSupervisor {
   project: Project;
   configuration: Configuration;
+  pluginConfiguration: YarnBuildConfiguration;
   report: StreamReport;
 
   buildCommand: string;
@@ -131,6 +133,7 @@ class BuildSupervisor {
     buildCommand,
     cli,
     configuration,
+    pluginConfiguration,
     dryRun,
     verbose,
   }: {
@@ -139,10 +142,12 @@ class BuildSupervisor {
     buildCommand: string;
     cli: BuildCommandCli;
     configuration: Configuration;
+    pluginConfiguration: YarnBuildConfiguration;
     dryRun: boolean;
     verbose: boolean;
   }) {
     this.configuration = configuration;
+    this.pluginConfiguration = pluginConfiguration;
     this.project = project;
     this.report = report;
     this.buildCommand = buildCommand;
@@ -157,12 +162,9 @@ class BuildSupervisor {
       throwOnTimeout: true,
       autoStart: true,
     });
-    this.errorLogFile = xfs.createWriteStream(
-      this.getBuildErrorPath(),
-      {
-        flags: "a",
-      }
-    );
+    this.errorLogFile = xfs.createWriteStream(this.getBuildErrorPath(), {
+      flags: "a",
+    });
   }
 
   async setup() {
@@ -176,13 +178,19 @@ class BuildSupervisor {
     return ppath.resolve(this.project.cwd, "build-error.log" as Filename);
   }
   private getBuildLogPath() {
-    return ppath.resolve(this.project.cwd, ".yarn" as Filename, "local-build-cache.json"  as Filename);
+    return ppath.resolve(
+      this.project.cwd,
+      ".yarn" as Filename,
+      "local-build-cache.json" as Filename
+    );
   }
   private async readBuildLog(): Promise<BuildLog> {
     const buildLog = new Map<string, BuildLogEntry>();
 
     try {
-      const buildLogFile: BuildLogFile = await xfs.readJsonPromise(this.getBuildLogPath());
+      const buildLogFile: BuildLogFile = await xfs.readJsonPromise(
+        this.getBuildLogPath()
+      );
 
       if (buildLogFile && buildLogFile.packages) {
         for (const id in buildLogFile.packages) {
@@ -221,10 +229,7 @@ class BuildSupervisor {
       };
     }
 
-    await xfs.writeJsonPromise(
-      this.getBuildLogPath(),
-      buildLogFile
-    );
+    await xfs.writeJsonPromise(this.getBuildLogPath(), buildLogFile);
   }
 
   logError(s: string) {
@@ -386,7 +391,6 @@ class BuildSupervisor {
       );
       parent.addBuildCallback(this.build(workspace));
       return true;
-
     } else {
       // Use the previous log entry if we don't need to rebuild.
       // This ensures we always have all our build targets in the log.
@@ -408,10 +412,18 @@ class BuildSupervisor {
     let needsBuild = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
-    let ignore = undefined;
+    // Determine which folders (if any) may contain build artifacts
+    // we need to ignore.
+    let ignore;
 
-    if (workspace?.manifest.raw.main) {
-      // TODO: could this be improved?
+    if (
+      workspace?.manifest?.raw["yarn.build"] &&
+      typeof workspace?.manifest.raw["yarn.build"].output === "string"
+    ) {
+      ignore = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
+    } else if (this.pluginConfiguration.folders.output) {
+      ignore = `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
+    } else if (workspace?.manifest.raw.main) {
       ignore = `${dir}${path.sep}${
         workspace?.manifest.raw.main.substring(
           0,
@@ -420,6 +432,17 @@ class BuildSupervisor {
       }` as PortablePath;
     }
 
+    let srcDir;
+    if (
+      workspace?.manifest?.raw["yarn.build"] &&
+      typeof workspace?.manifest.raw["yarn.build"].input === "string"
+    ) {
+      srcDir = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
+    } else if (this.pluginConfiguration.folders.input) {
+      srcDir = `${dir}${path.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
+    }
+
+    // Traverse the dirs and see if they've been modified
     const release = await this.buildReport.mutex.acquire();
     try {
       const previousBuildLog = this.buildLog?.get(workspace.relativeCwd);
@@ -427,7 +450,10 @@ class BuildSupervisor {
       if (previousBuildLog?.haveCheckedForRebuild) {
         return previousBuildLog?.rebuild ?? true;
       }
-      const currentLastModified = await getLastModifiedForFolder(dir, ignore);
+      const currentLastModified = await getLastModifiedForFolder(
+        srcDir ?? dir,
+        ignore
+      );
 
       if (previousBuildLog?.lastModified !== currentLastModified) {
         needsBuild = true;
@@ -439,14 +465,6 @@ class BuildSupervisor {
         haveCheckedForRebuild: true,
         rebuild: needsBuild,
       });
-      // if (needsBuild) {
-      //   this.buildReporter.emit(
-      //     BuildReporterEvents.success,
-      //     workspace.relativeCwd
-      //   );
-      // } else {
-
-      // }
     } catch (e) {
       this.logError(
         `${workspace.relativeCwd}: failed to get lastModified (${e})`
@@ -881,9 +899,6 @@ const getLastModifiedForFolder = async (
   folder: PortablePath,
   ignore: PortablePath | undefined
 ): Promise<number> => {
-  // TODO: ignore the folder where the `pkg.main` script resides, or in a
-  // `pkg.build.output` is.
-
   let lastModified = 0;
 
   const files = await xfs.readdirPromise(folder);

@@ -42,7 +42,6 @@
     "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "update:local": "yarn build:plugin-stage && yarn update:workspace",
     "release": "yarn build:plugin-stage && yarn update:patch-name",
-    "build": "update",
     "clean": "rimraf build bundles",
     "test": "jest --watch"
   },
