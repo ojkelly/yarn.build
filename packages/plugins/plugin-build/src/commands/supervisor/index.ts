@@ -127,7 +127,7 @@ class RunSupervisor {
 
   nextUnitOfWork: Promise<void>[] = [];
 
-  errorLogFile: fs.WriteStream;
+  errorLogFile: fs.WriteStream | undefined;
 
   private hasSetup = false;
 
@@ -169,9 +169,11 @@ class RunSupervisor {
       throwOnTimeout: true,
       autoStart: true,
     });
-    this.errorLogFile = xfs.createWriteStream(this.getRunErrorPath(), {
-      flags: "a",
-    });
+    if (this.verbose) {
+      this.errorLogFile = xfs.createWriteStream(this.getRunErrorPath(), {
+        flags: "a",
+      });
+    }
   }
 
   async setup() {
@@ -182,7 +184,7 @@ class RunSupervisor {
   }
 
   private getRunErrorPath() {
-    return ppath.resolve(this.project.cwd, "run-error.log" as Filename);
+    return ppath.resolve(this.project.cwd, "yarnBuild-error.log" as Filename);
   }
   private getRunLogPath() {
     return ppath.resolve(
@@ -250,8 +252,12 @@ class RunSupervisor {
   }
 
   logError(s: string) {
-    // if ci print to stderr
-    this.errorLogFile.write("➤ YN0009: " + stripAnsi(s) + "\n");
+    if (this.verbose && this.errorLogFile) {
+      this.errorLogFile.write("➤ YN0009: " + stripAnsi(s) + "\n");
+    }
+    if (isCI) {
+      process.stderr.write("➤ YN0009: " + stripAnsi(s) + "\n");
+    }
   }
 
   setupRunReporter = () => {
