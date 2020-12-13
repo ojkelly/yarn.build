@@ -5,13 +5,20 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest"
   },
   "dependencies": {
     "@internal/adipiscing": "workspace:*",
     "@internal/dolor": "workspace:*"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.19",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.4.4",
     "typescript": "^3.8.3"
+  },
+  "jest": {
+    "preset": "ts-jest"
   }
 }

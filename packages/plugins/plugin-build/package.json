@@ -6,7 +6,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/is-ci": "^2.0.0",
-    "@types/jest": "^25.2.1",
+    "@types/jest": "^26.0.19",
     "@types/yup": "0.26.12",
     "@yarnpkg/builder": "^2.x",
     "@yarnpkg/cli": "^2.x",
@@ -14,9 +14,9 @@
     "@yarnpkg/fslib": "^2.x",
     "@yarnpkg/libzip": "^2.x",
     "@yarnpkg/plugin-pack": "2.x",
-    "jest": "^25.3.0",
+    "jest": "^26.6.3",
     "jest-pnp-resolver": "^1.2.1",
-    "ts-jest": "^25.3.1",
+    "ts-jest": "^26.4.4",
     "typescript": "^3.7.5"
   },
   "dependencies": {
@@ -43,7 +43,7 @@
     "update:local": "yarn build:plugin-stage && yarn update:workspace",
     "release": "yarn build:plugin-stage && yarn update:patch-name",
     "clean": "rimraf build bundles",
-    "test": "jest --watch"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -54,5 +54,8 @@
   },
   "files": [
     "/bundles/**/*"
-  ]
+  ],
+  "jest": {
+    "preset": "ts-jest"
+  }
 }
