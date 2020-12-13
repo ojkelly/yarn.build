@@ -403,9 +403,11 @@ class RunSupervisor {
     } else {
       // Use the previous log entry if we don't need to rerun.
       // This ensures we always have all our run targets in the log.
-      const previousRunLog = this.runLog?.get(workspace.relativeCwd);
+      const previousRunLog = this.runLog?.get(
+        `${workspace.relativeCwd}#${this.runCommand}`
+      );
       if (previousRunLog) {
-        this.runLog?.set(workspace.relativeCwd, {
+        this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
           lastModified: previousRunLog.lastModified,
           status: RunStatus.succeeded,
           haveCheckedForRerun: true,
@@ -460,7 +462,9 @@ class RunSupervisor {
     // Traverse the dirs and see if they've been modified
     const release = await this.runReport.mutex.acquire();
     try {
-      const previousRunLog = this.runLog?.get(workspace.relativeCwd);
+      const previousRunLog = this.runLog?.get(
+        `${workspace.relativeCwd}#${this.runCommand}`
+      );
 
       if (previousRunLog?.haveCheckedForRerun) {
         return previousRunLog?.rerun ?? true;
@@ -474,7 +478,7 @@ class RunSupervisor {
         needsRun = true;
       }
 
-      this.runLog?.set(workspace.relativeCwd, {
+      this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
         lastModified: currentLastModified,
         status: needsRun ? RunStatus.succeeded : RunStatus.pending,
         haveCheckedForRerun: true,
@@ -822,7 +826,9 @@ class RunSupervisor {
 
           const command = workspace.manifest.scripts.get(this.runCommand);
 
-          const currentRunLog = this.runLog?.get(workspace.relativeCwd);
+          const currentRunLog = this.runLog?.get(
+            `${workspace.relativeCwd}#${this.runCommand}`
+          );
 
           this.runReporter.emit(
             RunSupervisorReporterEvents.start,
@@ -865,7 +871,7 @@ class RunSupervisor {
                 workspace.relativeCwd
               );
 
-              this.runLog?.set(workspace.relativeCwd, {
+              this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
                 lastModified: currentRunLog?.lastModified,
                 status: RunStatus.failed,
                 haveCheckedForRerun: true,
@@ -875,7 +881,7 @@ class RunSupervisor {
               return false;
             }
 
-            this.runLog?.set(workspace.relativeCwd, {
+            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
               lastModified: currentRunLog?.lastModified,
               status: RunStatus.succeeded,
               haveCheckedForRerun: true,
@@ -893,7 +899,7 @@ class RunSupervisor {
               e
             );
 
-            this.runLog?.set(workspace.relativeCwd, {
+            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
               lastModified: currentRunLog?.lastModified,
               status: RunStatus.failed,
               haveCheckedForRerun: true,
