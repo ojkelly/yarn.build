@@ -21,32 +21,34 @@ import stripAnsi from "strip-ansi";
 import readline from "readline";
 import { Graph, Node } from "./graph";
 
-type BuildPlan = {
+const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
+
+type RunPlan = {
   workspace: Workspace;
-  dependencies: [BuildPlan | void];
+  dependencies: [RunPlan | void];
 };
 
-enum BuildStatus {
+enum RunStatus {
   pending = "pending",
   inProgress = "inProgress",
   failed = "failed",
   succeeded = "succeeded",
 }
-type BuildLogFile = {
+type RunLogFile = {
   comment: string;
   packages: {
-    [relativePath: string]: BuildLogEntry;
+    [relativePath: string]: RunLogEntry;
   };
 };
-type BuildLog = Map<string, BuildLogEntry>;
-type BuildLogEntry = {
+type RunLog = Map<string, RunLogEntry>;
+type RunLogEntry = {
   lastModified?: number;
-  status?: BuildStatus;
-  rebuild?: boolean;
-  haveCheckedForRebuild?: boolean;
+  status?: RunStatus;
+  rerun?: boolean;
+  haveCheckedForRerun?: boolean;
 };
 
-enum BuildReporterEvents {
+enum RunSupervisorReporterEvents {
   pending = "pending",
   start = "start",
   info = "info",
@@ -56,9 +58,9 @@ enum BuildReporterEvents {
   finish = "finish",
 }
 
-type BuildReport = {
+type RunReport = {
   mutex: Mutex;
-  buildStart?: number;
+  runStart?: number;
   totalJobs: number;
   previousOutputNumLines: number;
   successCount: number;
@@ -69,7 +71,7 @@ type BuildReport = {
     [relativeCwd: string]: {
       start?: number;
       name: string;
-      buildScript?: string;
+      runScript?: string;
       done: boolean;
       fail: boolean;
       stdout: string[];
@@ -78,30 +80,30 @@ type BuildReport = {
   };
 };
 
-type BuildCommandCli = (
+type RunCommandCli = (
   command: string,
   cwd: PortablePath,
-  buildReporter: EventEmitter,
+  runReporter: EventEmitter,
   prefix: string
 ) => Promise<number>;
 
-class BuildSupervisor {
+class RunSupervisor {
   project: Project;
   configuration: Configuration;
   pluginConfiguration: YarnBuildConfiguration;
   report: StreamReport;
 
-  buildCommand: string;
-  cli: BuildCommandCli;
+  runCommand: string;
+  cli: RunCommandCli;
 
-  buildLog?: BuildLog;
-  buildGraph = new Graph();
-  buildLength = 0;
-  buildTargets: Workspace[] = [];
-  buildMutexes: { [relativCwd: string]: Mutex } = {};
-  currentBuildTarget?: string;
+  runLog?: RunLog;
+  runGraph = new Graph();
+  runLength = 0;
+  runTargets: Workspace[] = [];
+  runMutexes: { [relativCwd: string]: Mutex } = {};
+  currentRunTarget?: string;
   dryRun = false;
-  ignoreBuildCache = false;
+  ignoreRunCache = false;
   verbose = false;
   queue: PQueue;
 
@@ -109,8 +111,8 @@ class BuildSupervisor {
 
   limit: Limit = PLimit(Math.max(1, cpus().length));
 
-  buildReporter: EventEmitter = new EventEmitter();
-  buildReport: BuildReport = {
+  runReporter: EventEmitter = new EventEmitter();
+  runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
     previousOutputNumLines: 0,
@@ -131,32 +133,32 @@ class BuildSupervisor {
   constructor({
     project,
     report,
-    buildCommand,
+    runCommand,
     cli,
     configuration,
     pluginConfiguration,
     dryRun,
-    ignoreBuildCache,
+    ignoreRunCache,
     verbose,
   }: {
     project: Project;
     report: StreamReport;
-    buildCommand: string;
-    cli: BuildCommandCli;
+    runCommand: string;
+    cli: RunCommandCli;
     configuration: Configuration;
     pluginConfiguration: YarnBuildConfiguration;
     dryRun: boolean;
-    ignoreBuildCache: boolean;
+    ignoreRunCache: boolean;
     verbose: boolean;
   }) {
     this.configuration = configuration;
     this.pluginConfiguration = pluginConfiguration;
     this.project = project;
     this.report = report;
-    this.buildCommand = buildCommand;
+    this.runCommand = runCommand;
     this.cli = cli;
     this.dryRun = dryRun;
-    this.ignoreBuildCache = ignoreBuildCache;
+    this.ignoreRunCache = ignoreRunCache;
     this.verbose = verbose;
 
     this.queue = new PQueue({
@@ -166,56 +168,56 @@ class BuildSupervisor {
       throwOnTimeout: true,
       autoStart: true,
     });
-    this.errorLogFile = xfs.createWriteStream(this.getBuildErrorPath(), {
+    this.errorLogFile = xfs.createWriteStream(this.getRunErrorPath(), {
       flags: "a",
     });
   }
 
   async setup() {
-    this.buildLog = await this.readBuildLog();
-    this.setupBuildReporter();
+    this.runLog = await this.readRunLog();
+    this.setupRunReporter();
 
     this.hasSetup = true;
   }
 
-  private getBuildErrorPath() {
-    return ppath.resolve(this.project.cwd, "build-error.log" as Filename);
+  private getRunErrorPath() {
+    return ppath.resolve(this.project.cwd, "run-error.log" as Filename);
   }
-  private getBuildLogPath() {
+  private getRunLogPath() {
     return ppath.resolve(
       this.project.cwd,
       ".yarn" as Filename,
-      "local-build-cache.json" as Filename
+      YARN_RUN_CACHE_FILENAME
     );
   }
-  private async readBuildLog(): Promise<BuildLog> {
-    const buildLog = new Map<string, BuildLogEntry>();
+  private async readRunLog(): Promise<RunLog> {
+    const runLog = new Map<string, RunLogEntry>();
 
     try {
-      const buildLogFile: BuildLogFile = await xfs.readJsonPromise(
-        this.getBuildLogPath()
+      const runLogFile: RunLogFile = await xfs.readJsonPromise(
+        this.getRunLogPath()
       );
 
-      if (buildLogFile && buildLogFile.packages) {
-        for (const id in buildLogFile.packages) {
-          buildLog.set(id, {
-            lastModified: buildLogFile.packages[id].lastModified,
-            status: buildLogFile.packages[id].status,
-            haveCheckedForRebuild: false,
-            rebuild: true,
+      if (runLogFile && runLogFile.packages) {
+        for (const id in runLogFile.packages) {
+          runLog.set(id, {
+            lastModified: runLogFile.packages[id].lastModified,
+            status: runLogFile.packages[id].status,
+            haveCheckedForRerun: false,
+            rerun: true,
           });
         }
       }
     } catch {}
 
-    return buildLog;
+    return runLog;
   }
 
-  private async saveBuildLog() {
-    if (!this.buildLog) {
+  private async saveRunLog() {
+    if (!this.runLog) {
       return;
     }
-    const buildLogFile: BuildLogFile = {
+    const runLogFile: RunLogFile = {
       comment:
         "This is an auto-generated file," +
         " it keeps track of whats been built." +
@@ -223,17 +225,17 @@ class BuildSupervisor {
       packages: {},
     };
 
-    for (const [id, entry] of this.buildLog) {
-      if (entry.status !== BuildStatus.succeeded) {
+    for (const [id, entry] of this.runLog) {
+      if (entry.status !== RunStatus.succeeded) {
         continue;
       }
 
-      buildLogFile.packages[id] = {
+      runLogFile.packages[id] = {
         lastModified: entry.lastModified,
       };
     }
 
-    await xfs.writeJsonPromise(this.getBuildLogPath(), buildLogFile);
+    await xfs.writeJsonPromise(this.getRunLogPath(), runLogFile);
   }
 
   logError(s: string) {
@@ -241,12 +243,12 @@ class BuildSupervisor {
     this.errorLogFile.write("➤ YN0009: " + stripAnsi(s) + "\n");
   }
 
-  setupBuildReporter = () => {
-    this.buildReporter.on(
-      BuildReporterEvents.pending,
+  setupRunReporter = () => {
+    this.runReporter.on(
+      RunSupervisorReporterEvents.pending,
       (relativeCwd: PortablePath, name: string) => {
-        this.buildReport.mutex.acquire().then((release: () => void) => {
-          this.buildReport.workspaces[relativeCwd] = {
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd] = {
             name,
             stdout: [],
             stderr: [],
@@ -258,14 +260,14 @@ class BuildSupervisor {
       }
     );
 
-    this.buildReporter.on(
-      BuildReporterEvents.start,
-      (relativeCwd: PortablePath, name: string, buildScript: string) => {
-        this.buildReport.mutex.acquire().then((release: () => void) => {
-          this.buildReport.workspaces[relativeCwd] = {
-            ...this.buildReport.workspaces[relativeCwd],
+    this.runReporter.on(
+      RunSupervisorReporterEvents.start,
+      (relativeCwd: PortablePath, name: string, runScript: string) => {
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd] = {
+            ...this.runReport.workspaces[relativeCwd],
             start: Date.now(),
-            buildScript,
+            runScript: runScript,
             name,
           };
           release();
@@ -273,21 +275,21 @@ class BuildSupervisor {
       }
     );
 
-    this.buildReporter.on(
-      BuildReporterEvents.info,
+    this.runReporter.on(
+      RunSupervisorReporterEvents.info,
       (relativeCwd: PortablePath, message: string) => {
-        this.buildReport.mutex.acquire().then((release: () => void) => {
-          this.buildReport.workspaces[relativeCwd].stdout.push(message);
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd].stdout.push(message);
           release();
         });
       }
     );
 
-    this.buildReporter.on(
-      BuildReporterEvents.error,
+    this.runReporter.on(
+      RunSupervisorReporterEvents.error,
       (relativeCwd: PortablePath, error: Error) => {
-        this.buildReport.mutex.acquire().then((release: () => void) => {
-          this.buildReport.workspaces[relativeCwd].stderr.push(error);
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd].stderr.push(error);
           this.logError(`${relativeCwd} ${error}`);
 
           release();
@@ -295,61 +297,61 @@ class BuildSupervisor {
       }
     );
 
-    this.buildReporter.on(
-      BuildReporterEvents.success,
+    this.runReporter.on(
+      RunSupervisorReporterEvents.success,
       (relativeCwd: PortablePath) => {
-        this.buildReport.mutex.acquire().then((release: () => void) => {
-          this.buildReport.workspaces[relativeCwd] = {
-            ...this.buildReport.workspaces[relativeCwd],
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd] = {
+            ...this.runReport.workspaces[relativeCwd],
             done: true,
           };
 
-          this.buildReport.successCount++;
+          this.runReport.successCount++;
           release();
         });
       }
     );
 
-    this.buildReporter.on(
-      BuildReporterEvents.fail,
+    this.runReporter.on(
+      RunSupervisorReporterEvents.fail,
       (relativeCwd: PortablePath, error: Error) => {
-        this.buildReport.mutex.acquire().then((release: () => void) => {
-          this.buildReport.workspaces[relativeCwd].stderr.push(error);
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd].stderr.push(error);
 
-          this.buildReport.workspaces[relativeCwd].done = true;
-          this.buildReport.workspaces[relativeCwd].fail = true;
+          this.runReport.workspaces[relativeCwd].done = true;
+          this.runReport.workspaces[relativeCwd].fail = true;
 
-          this.buildReport.failCount++;
+          this.runReport.failCount++;
 
           this.logError(`${relativeCwd} ${error}`);
 
           // TODO: if fail immediately
-          // this.buildReporter.emit(BuildReporterEvents.finish);
+          // this.runReporter.emit(RunReporterEvents.finish);
           release();
         });
       }
     );
 
-    // this.buildReporter.on(BuildReporterEvents.finish, () => {});
+    // this.runReporter.on(RunReporterEvents.finish, () => {});
   };
 
-  async addBuildTarget(workspace: Workspace) {
-    this.entrypoints.push(this.buildGraph.addNode(workspace.relativeCwd));
-    const build = await this.plan(workspace);
+  async addRunTarget(workspace: Workspace) {
+    this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
+    const shouldRun = await this.plan(workspace);
 
-    if (build) {
-      this.buildTargets.push(workspace);
+    if (shouldRun) {
+      this.runTargets.push(workspace);
     }
   }
 
   plan = async (workspace: Workspace): Promise<boolean> => {
-    const parent = this.buildGraph
+    const parent = this.runGraph
       .addNode(workspace.relativeCwd)
       .addWorkSpace(workspace);
 
-    let rebuildParent = false;
+    let rerunParent = false;
 
-    this.buildMutexes[workspace.relativeCwd] = new Mutex();
+    this.runMutexes[workspace.relativeCwd] = new Mutex();
 
     for (const dependencyType of Manifest.hardDependencies) {
       for (const descriptor of workspace.manifest
@@ -359,33 +361,36 @@ class BuildSupervisor {
 
         if (depWorkspace === null) continue;
 
-        const dep = this.buildGraph
+        const dep = this.runGraph
           .addNode(depWorkspace.relativeCwd)
           .addWorkSpace(depWorkspace);
 
         parent.addDependency(dep);
 
-        const depsOfDepsNeedRebuild = await this.plan(depWorkspace);
+        const depsOfDepsNeedRerun = await this.plan(depWorkspace);
 
-        let depNeedsBuild = false;
+        let depNeedsRun = false;
         if (depWorkspace !== this.project.topLevelWorkspace) {
-          depNeedsBuild = await this.checkIfBuildIsRequired(depWorkspace);
+          depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
         }
 
-        if (depNeedsBuild || depsOfDepsNeedRebuild) {
-          rebuildParent = true;
-          dep.addBuildCallback(this.build(depWorkspace));
+        if (depNeedsRun || depsOfDepsNeedRerun) {
+          rerunParent = true;
+          dep.addRunCallback(this.createRunItem(depWorkspace));
         }
       }
     }
     let hasChanges = false;
     if (workspace !== this.project.topLevelWorkspace) {
-      hasChanges = await this.checkIfBuildIsRequired(workspace);
+      hasChanges = await this.checkIfRunIsRequired(workspace);
     }
-    this.buildReporter.emit(BuildReporterEvents.pending, workspace.relativeCwd);
-    if (rebuildParent || hasChanges) {
-      this.buildReporter.emit(
-        BuildReporterEvents.pending,
+    this.runReporter.emit(
+      RunSupervisorReporterEvents.pending,
+      workspace.relativeCwd
+    );
+    if (rerunParent || hasChanges) {
+      this.runReporter.emit(
+        RunSupervisorReporterEvents.pending,
         workspace.relativeCwd,
         `${
           workspace.manifest.name?.scope
@@ -393,18 +398,18 @@ class BuildSupervisor {
             : ""
         }${workspace.manifest.name?.name}`
       );
-      parent.addBuildCallback(this.build(workspace));
+      parent.addRunCallback(this.createRunItem(workspace));
       return true;
     } else {
-      // Use the previous log entry if we don't need to rebuild.
-      // This ensures we always have all our build targets in the log.
-      const previousBuildLog = this.buildLog?.get(workspace.relativeCwd);
-      if (previousBuildLog) {
-        this.buildLog?.set(workspace.relativeCwd, {
-          lastModified: previousBuildLog.lastModified,
-          status: BuildStatus.succeeded,
-          haveCheckedForRebuild: true,
-          rebuild: false,
+      // Use the previous log entry if we don't need to rerun.
+      // This ensures we always have all our run targets in the log.
+      const previousRunLog = this.runLog?.get(workspace.relativeCwd);
+      if (previousRunLog) {
+        this.runLog?.set(workspace.relativeCwd, {
+          lastModified: previousRunLog.lastModified,
+          status: RunStatus.succeeded,
+          haveCheckedForRerun: true,
+          rerun: false,
         });
       }
     }
@@ -412,15 +417,15 @@ class BuildSupervisor {
     return false;
   };
 
-  private async checkIfBuildIsRequired(workspace: Workspace): Promise<boolean> {
-    if (this.ignoreBuildCache === true) {
+  private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
+    if (this.ignoreRunCache === true) {
       return true;
     }
 
-    let needsBuild = false;
+    let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
-    // Determine which folders (if any) may contain build artifacts
+    // Determine which folders (if any) may contain run artifacts
     // we need to ignore.
     let ignore;
     let srcDir;
@@ -453,27 +458,27 @@ class BuildSupervisor {
     }
 
     // Traverse the dirs and see if they've been modified
-    const release = await this.buildReport.mutex.acquire();
+    const release = await this.runReport.mutex.acquire();
     try {
-      const previousBuildLog = this.buildLog?.get(workspace.relativeCwd);
+      const previousRunLog = this.runLog?.get(workspace.relativeCwd);
 
-      if (previousBuildLog?.haveCheckedForRebuild) {
-        return previousBuildLog?.rebuild ?? true;
+      if (previousRunLog?.haveCheckedForRerun) {
+        return previousRunLog?.rerun ?? true;
       }
       const currentLastModified = await getLastModifiedForFolder(
         srcDir ?? dir,
         ignore
       );
 
-      if (previousBuildLog?.lastModified !== currentLastModified) {
-        needsBuild = true;
+      if (previousRunLog?.lastModified !== currentLastModified) {
+        needsRun = true;
       }
 
-      this.buildLog?.set(workspace.relativeCwd, {
+      this.runLog?.set(workspace.relativeCwd, {
         lastModified: currentLastModified,
-        status: needsBuild ? BuildStatus.succeeded : BuildStatus.pending,
-        haveCheckedForRebuild: true,
-        rebuild: needsBuild,
+        status: needsRun ? RunStatus.succeeded : RunStatus.pending,
+        haveCheckedForRerun: true,
+        rerun: needsRun,
       });
     } catch (e) {
       this.logError(
@@ -483,19 +488,19 @@ class BuildSupervisor {
       release();
     }
 
-    return needsBuild;
+    return needsRun;
   }
 
   run = async () => {
     if (this.hasSetup === false) {
       throw new Error(
-        "BuildSupervisor is not setup, you need to call await supervisor.setup()"
+        "RunSupervisor is not setup, you need to call await supervisor.setup()"
       );
     }
 
-    this.buildReport.buildStart = Date.now();
+    this.runReport.runStart = Date.now();
 
-    // Print our buildReporter output
+    // Print our RunReporter output
     if (!this.dryRun && !isCI) {
       this.raf(this.waitUntilDone);
     }
@@ -504,19 +509,19 @@ class BuildSupervisor {
       return;
     }
 
-    this.currentBuildTarget =
-      this.buildTargets.length > 1
+    this.currentRunTarget =
+      this.runTargets.length > 1
         ? "All"
-        : this.buildTargets[0]?.relativeCwd ?? "Nothing to build";
+        : this.runTargets[0]?.relativeCwd ?? "Nothing to run";
 
     const header = this.generateHeaderString();
 
-    // build
-    await this.buildGraph.build(this.entrypoints);
+    // run
+    await this.runGraph.run(this.entrypoints);
 
-    const release = await this.buildReport.mutex.acquire();
+    const release = await this.runReport.mutex.acquire();
 
-    this.buildReport.done = true;
+    this.runReport.done = true;
 
     release();
 
@@ -525,19 +530,19 @@ class BuildSupervisor {
       readline.moveCursor(
         process.stdout,
         0,
-        -this.buildReport.previousOutputNumLines
+        -this.runReport.previousOutputNumLines
       );
       readline.clearScreenDown(process.stdout);
       process.stdout.cursorTo(0);
     }
 
     // Check if there were errors, and print them out
-    if (this.buildReport.failCount !== 0) {
+    if (this.runReport.failCount !== 0) {
       this.logError(header);
       process.stdout.write(header + "\n");
       // print out any build errors
-      for (const relativePath in this.buildReport.workspaces) {
-        const workspace = this.buildReport.workspaces[relativePath];
+      for (const relativePath in this.runReport.workspaces) {
+        const workspace = this.runReport.workspaces[relativePath];
 
         if (workspace.stdout.length !== 0) {
           const lineHeader = `${this.configuration.format(
@@ -584,7 +589,7 @@ class BuildSupervisor {
 
         if (workspace.stderr.length !== 0) {
           // stderr doesnt seem to be useful for showing to the user in cli
-          // we'll still write it out to the build log
+          // we'll still write it out to the run log
           const lineHeader = `${this.configuration.format(
             `➤`,
             `blueBright`
@@ -635,10 +640,10 @@ class BuildSupervisor {
     process.stdout.write(finalLine);
     this.logError(finalLine);
 
-    // commit the build log
-    await this.saveBuildLog();
+    // commit the run log
+    await this.saveRunLog();
 
-    return this.buildReport.failCount === 0;
+    return this.runReport.failCount === 0;
   };
 
   // This is a very simple requestAnimationFrame polyfil
@@ -647,14 +652,14 @@ class BuildSupervisor {
   };
 
   waitUntilDone = (timestamp: number) => {
-    if (this.buildReport.done) {
+    if (this.runReport.done) {
       return;
     }
 
     readline.moveCursor(
       process.stdout,
       0,
-      -this.buildReport.previousOutputNumLines
+      -this.runReport.previousOutputNumLines
     );
     readline.clearScreenDown(process.stdout);
     process.stdout.cursorTo(0);
@@ -663,11 +668,9 @@ class BuildSupervisor {
 
     process.stdout.write(output);
 
-    this.buildReport.previousOutputNumLines = (
-      output.match(/\n/g) || []
-    ).length;
+    this.runReport.previousOutputNumLines = (output.match(/\n/g) || []).length;
 
-    delay(70).then(() => {
+    delay(90).then(() => {
       this.raf(this.waitUntilDone);
     });
   };
@@ -676,11 +679,11 @@ class BuildSupervisor {
     const arrow = this.configuration.format(`➤`, `blueBright`);
     const code = this.configuration.format(`YN0000:`, `grey`);
 
-    return `${arrow} ${code} ┌ ${this.configuration.format(
-      `Building`,
-      `grey`
-    )} ${this.configuration.format(
-      this.currentBuildTarget ? this.currentBuildTarget : "",
+    return `${arrow} ${code} ┌ Run ${this.configuration.format(
+      `${this.runCommand}`,
+      FormatType.CODE
+    )} for ${this.configuration.format(
+      this.currentRunTarget ? this.currentRunTarget : "",
       FormatType.SCOPE
     )}${
       this.dryRun
@@ -706,8 +709,8 @@ class BuildSupervisor {
 
     let i = 1;
 
-    for (const relativePath in this.buildReport.workspaces) {
-      const thread = this.buildReport.workspaces[relativePath];
+    for (const relativePath in this.runReport.workspaces) {
+      const thread = this.runReport.workspaces[relativePath];
       if (!thread || !thread.start || thread.done) {
         continue;
       }
@@ -717,8 +720,8 @@ class BuildSupervisor {
         FormatType.PATH
       );
 
-      const buildScriptString = this.configuration.format(
-        `(${thread.buildScript})`,
+      const runScriptString = this.configuration.format(
+        `(${thread.runScript})`,
         FormatType.REFERENCE
       );
 
@@ -731,36 +734,36 @@ class BuildSupervisor {
 
       output += `${prefix} ${indexString(i++)} ${pathString}${referenceString(
         thread.name
-      )} ${buildScriptString} ${timeString}\n`;
+      )} ${runScriptString} ${timeString}\n`;
     }
 
     for (i; i < this.concurrency + 1; ) {
       output += `${prefix} ${indexString(i++)} ${idleString}\n`;
     }
 
-    if (this.buildReport.buildStart) {
-      output += this.generateBuildCountString(timestamp);
+    if (this.runReport.runStart) {
+      output += this.generateRunCountString(timestamp);
     }
     return output;
   }
 
-  generateBuildCountString = (timestamp: number) => {
+  generateRunCountString = (timestamp: number) => {
     const grey = (s: string) => this.configuration.format(s, `grey`);
     const arrow = this.configuration.format(`➤`, `blueBright`);
     const code = grey(`YN0000:`);
 
     let output = "";
-    if (this.buildReport.buildStart) {
+    if (this.runReport.runStart) {
       const successString = this.configuration.format(
-        `${this.buildReport.successCount}`,
+        `${this.runReport.successCount}`,
         "green"
       );
       const failedString = this.configuration.format(
-        `${this.buildReport.failCount}`,
+        `${this.runReport.failCount}`,
         "red"
       );
       const totalString = this.configuration.format(
-        `${this.buildGraph.buildSize}`,
+        `${this.runGraph.runSize}`,
         "grey"
       );
 
@@ -768,10 +771,7 @@ class BuildSupervisor {
         ":"
       )}${failedString}${grey("/")}${totalString}${grey(
         "]"
-      )} ${formatTimestampDifference(
-        this.buildReport.buildStart,
-        timestamp
-      )}\n`;
+      )} ${formatTimestampDifference(this.runReport.runStart, timestamp)}\n`;
     }
     return output;
   };
@@ -781,25 +781,28 @@ class BuildSupervisor {
     const arrow = this.configuration.format(`➤`, `blueBright`);
     const code = grey(`YN0000:`);
 
-    let output = `${arrow} ${code} └ Build finished${
-      this.buildReport.failCount != 0
+    let output = `${arrow} ${code} ${arrow} Run [ ${this.configuration.format(
+      `${this.runCommand} finished`,
+      this.runReport.failCount === 0 ? "green" : "red"
+    )}${
+      this.runReport.failCount != 0
         ? this.configuration.format(
-            ` with ${this.buildReport.failCount} errors`,
+            ` with ${this.runReport.failCount} errors`,
             "red"
           )
         : ""
-    }\n`;
-    if (this.buildReport.buildStart) {
+    } ]\n`;
+    if (this.runReport.runStart) {
       const successString = this.configuration.format(
-        `${this.buildReport.successCount}`,
+        `${this.runReport.successCount}`,
         "green"
       );
       const failedString = this.configuration.format(
-        `${this.buildReport.failCount}`,
+        `${this.runReport.failCount}`,
         "red"
       );
       const totalString = this.configuration.format(
-        `${this.buildGraph.buildSize}`,
+        `${this.runGraph.runSize}`,
         "grey"
       );
 
@@ -811,18 +814,18 @@ class BuildSupervisor {
   };
 
   // Returns a PQueue item
-  build = (workspace: Workspace) => {
+  createRunItem = (workspace: Workspace) => {
     return async () =>
       await this.limit(
         async (): Promise<boolean> => {
           const prefix = workspace.relativeCwd;
 
-          const command = workspace.manifest.scripts.get(this.buildCommand);
+          const command = workspace.manifest.scripts.get(this.runCommand);
 
-          const currentBuildLog = this.buildLog?.get(workspace.relativeCwd);
+          const currentRunLog = this.runLog?.get(workspace.relativeCwd);
 
-          this.buildReporter.emit(
-            BuildReporterEvents.start,
+          this.runReporter.emit(
+            RunSupervisorReporterEvents.start,
             workspace.relativeCwd,
             `${
               workspace.manifest.name?.scope
@@ -834,15 +837,15 @@ class BuildSupervisor {
 
           if (!command) {
             if (this.verbose) {
-              this.buildReporter.emit(
-                BuildReporterEvents.info,
+              this.runReporter.emit(
+                RunSupervisorReporterEvents.info,
                 workspace.relativeCwd,
-                `Missing \`${this.buildCommand}\` script in manifest.`
+                `Missing \`${this.runCommand}\` script in manifest.`
               );
             }
 
-            this.buildReporter.emit(
-              BuildReporterEvents.success,
+            this.runReporter.emit(
+              RunSupervisorReporterEvents.success,
               workspace.relativeCwd
             );
             return true;
@@ -852,49 +855,49 @@ class BuildSupervisor {
             const exitCode = await this.cli(
               command,
               workspace.cwd,
-              this.buildReporter,
+              this.runReporter,
               prefix
             );
 
             if (exitCode !== 0) {
-              this.buildReporter.emit(
-                BuildReporterEvents.fail,
+              this.runReporter.emit(
+                RunSupervisorReporterEvents.fail,
                 workspace.relativeCwd
               );
 
-              this.buildLog?.set(workspace.relativeCwd, {
-                lastModified: currentBuildLog?.lastModified,
-                status: BuildStatus.failed,
-                haveCheckedForRebuild: true,
-                rebuild: false,
+              this.runLog?.set(workspace.relativeCwd, {
+                lastModified: currentRunLog?.lastModified,
+                status: RunStatus.failed,
+                haveCheckedForRerun: true,
+                rerun: false,
               });
 
               return false;
             }
 
-            this.buildLog?.set(workspace.relativeCwd, {
-              lastModified: currentBuildLog?.lastModified,
-              status: BuildStatus.succeeded,
-              haveCheckedForRebuild: true,
-              rebuild: false,
+            this.runLog?.set(workspace.relativeCwd, {
+              lastModified: currentRunLog?.lastModified,
+              status: RunStatus.succeeded,
+              haveCheckedForRerun: true,
+              rerun: false,
             });
 
-            this.buildReporter.emit(
-              BuildReporterEvents.success,
+            this.runReporter.emit(
+              RunSupervisorReporterEvents.success,
               workspace.relativeCwd
             );
           } catch (e) {
-            this.buildReporter.emit(
-              BuildReporterEvents.fail,
+            this.runReporter.emit(
+              RunSupervisorReporterEvents.fail,
               workspace.relativeCwd,
               e
             );
 
-            this.buildLog?.set(workspace.relativeCwd, {
-              lastModified: currentBuildLog?.lastModified,
-              status: BuildStatus.failed,
-              haveCheckedForRebuild: true,
-              rebuild: false,
+            this.runLog?.set(workspace.relativeCwd, {
+              lastModified: currentRunLog?.lastModified,
+              status: RunStatus.failed,
+              haveCheckedForRerun: true,
+              rerun: false,
             });
 
             return false;
@@ -963,12 +966,6 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export default BuildSupervisor;
+export default RunSupervisor;
 
-export {
-  BuildCommandCli,
-  BuildLogEntry as BuildLog,
-  BuildPlan,
-  BuildReport,
-  BuildReporterEvents,
-};
+export { RunSupervisor, RunSupervisorReporterEvents };

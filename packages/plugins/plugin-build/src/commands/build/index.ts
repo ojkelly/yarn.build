@@ -1,11 +1,9 @@
 import { BaseCommand } from "@yarnpkg/cli";
 import {
   Configuration,
-  Manifest,
   MessageName,
   Project,
   StreamReport,
-  Workspace,
   miscUtils,
 } from "@yarnpkg/core";
 import { PortablePath } from "@yarnpkg/fslib";
@@ -14,7 +12,9 @@ import path from "path";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
-import BuildSupervisor, { BuildReporterEvents } from "./supervisor";
+import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
+
+import { addTargets } from "../supervisor/workspace";
 
 export default class Build extends BaseCommand {
   @Command.Boolean(`--json`)
@@ -109,7 +109,7 @@ export default class Build extends BaseCommand {
           const stdout = new miscUtils.BufferStream();
           stdout.on("data", (chunk) =>
             buildReporter?.emit(
-              BuildReporterEvents.info,
+              RunSupervisorReporterEvents.info,
               prefix,
               chunk && chunk.toString()
             )
@@ -118,7 +118,7 @@ export default class Build extends BaseCommand {
           const stderr = new miscUtils.BufferStream();
           stderr.on("data", (chunk) =>
             buildReporter?.emit(
-              BuildReporterEvents.error,
+              RunSupervisorReporterEvents.error,
               prefix,
               chunk && chunk.toString()
             )
@@ -143,49 +143,21 @@ export default class Build extends BaseCommand {
           return 2;
         };
 
-        const supervisor = new BuildSupervisor({
+        const supervisor = new RunSupervisor({
           project,
           configuration,
           pluginConfiguration,
           report,
-          buildCommand: this.buildCommand,
+          runCommand: this.buildCommand,
           cli: runScript,
           dryRun: this.dryRun,
-          ignoreBuildCache: this.ignoreBuildCache,
+          ignoreRunCache: this.ignoreBuildCache,
           verbose: this.verbose,
         });
 
         await supervisor.setup();
 
-        if (targetWorkspace.workspacesCwds.size !== 0) {
-          // we're in the root, need to build all
-          const workspaceList = getWorkspaceChildrenRecursive(
-            targetWorkspace,
-            project
-          );
-
-          for (const workspace of workspaceList) {
-            for (const dependencyType of Manifest.hardDependencies) {
-              for (const descriptor of workspace.manifest
-                .getForScope(dependencyType)
-                .values()) {
-                const matchingWorkspace = project.tryWorkspaceByDescriptor(
-                  descriptor
-                );
-
-                if (matchingWorkspace === null) continue;
-
-                await supervisor.addBuildTarget(matchingWorkspace);
-              }
-            }
-            await supervisor.addBuildTarget(workspace);
-          }
-
-          await supervisor.addBuildTarget(targetWorkspace);
-        } else {
-          // we're in a specific target
-          await supervisor.addBuildTarget(targetWorkspace);
-        }
+        await addTargets({ targetWorkspace, project, supervisor });
 
         // build all the things
         const ranWithoutErrors = await supervisor.run();
@@ -198,20 +170,3 @@ export default class Build extends BaseCommand {
     return report.exitCode();
   }
 }
-
-const getWorkspaceChildrenRecursive = (
-  rootWorkspace: Workspace,
-  project: Project
-): Array<Workspace> => {
-  const workspaceList = [];
-  for (const childWorkspaceCwd of rootWorkspace.workspacesCwds) {
-    const childWorkspace = project.workspacesByCwd.get(childWorkspaceCwd);
-    if (childWorkspace) {
-      workspaceList.push(
-        childWorkspace,
-        ...getWorkspaceChildrenRecursive(childWorkspace, project)
-      );
-    }
-  }
-  return workspaceList;
-};

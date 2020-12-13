@@ -4,9 +4,9 @@ class Graph {
   nodes: NodeGraph = {};
   size = 0;
 
-  buildSize = 0;
+  runSize = 0;
 
-  built: Set<string> = new Set();
+  ran: Set<string> = new Set();
 
   // Create a new node with the ID, or retrieve the existing one
   addNode(id: string): Node {
@@ -29,8 +29,8 @@ class Graph {
     }
   }
 
-  resetBuilds() {
-    this.built = new Set();
+  resetRuns() {
+    this.ran = new Set();
   }
 
   async resolve(node: Node) {
@@ -65,39 +65,39 @@ class Graph {
     unresolved.delete(node.id);
   }
 
-  async build(nodes: Node[]): Promise<BuildLog> {
-    const queue: Set<BuildQueueItem> = new Set<BuildQueueItem>();
+  async run(nodes: Node[]): Promise<RunLog> {
+    const queue: Set<RunQueueItem> = new Set<RunQueueItem>();
     const progress: Set<Node> = new Set<Node>();
 
-    const buildLog: BuildLog = {};
+    const runLog: RunLog = {};
 
     for (const n of nodes) {
       // resolve the graph to allocate nodes to threads
-      this.resolveQueue(n, queue, buildLog);
+      this.resolveQueue(n, queue, runLog);
     }
 
     await new Promise((resolve) => {
-      this.workLoop(queue, buildLog, progress, resolve);
+      this.workLoop(queue, runLog, progress, resolve);
     });
 
-    return buildLog;
+    return runLog;
   }
 
   private workLoop(
-    queue: Set<BuildQueueItem>,
-    buildLog: BuildLog,
+    queue: Set<RunQueueItem>,
+    runLog: RunLog,
     progress: Set<Node>,
     resolve: () => void
   ) {
     if (queue.size !== 0) {
       queue.forEach((q) => {
-        if (q.canStart(buildLog)) {
-          if (q?.node?.buildCallback) {
-            q?.node?.buildCallback(buildLog);
+        if (q.canStart(runLog)) {
+          if (q?.node?.runCallback) {
+            q?.node?.runCallback(runLog);
 
             progress.add(q.node);
           } else {
-            buildLog[q.node.id] = { success: true, done: true };
+            runLog[q.node.id] = { success: true, done: true };
           }
 
           queue.delete(q);
@@ -107,36 +107,36 @@ class Graph {
 
     // need to wait for work to complete here
     progress.forEach((n, i) => {
-      if (buildLog[n.id].done) {
+      if (runLog[n.id].done) {
         progress.delete(i);
       }
     });
 
     if (
-      Object.keys(buildLog)
-        .map((id) => buildLog[id]?.done ?? true)
+      Object.keys(runLog)
+        .map((id) => runLog[id]?.done ?? true)
         .every((v) => v === true)
     ) {
       resolve();
       return;
     }
 
-    setTimeout(() => this.workLoop(queue, buildLog, progress, resolve), 30);
+    setTimeout(() => this.workLoop(queue, runLog, progress, resolve), 30);
   }
 
   private resolveQueue(
     node: Node,
-    queue: Set<BuildQueueItem>,
-    buildLog: BuildLog
+    queue: Set<RunQueueItem>,
+    runLog: RunLog
   ): string[] {
     const parentDependencies: string[] = [];
     for (const dep of node.dependencies) {
       parentDependencies.push(dep.id);
-      if (!buildLog[dep.id] && dep.buildCallback) {
-        buildLog[dep.id] = { ...Graph.BuildLogInit };
-        const childDependencies = this.resolveQueue(dep, queue, buildLog);
+      if (!runLog[dep.id] && dep.runCallback) {
+        runLog[dep.id] = { ...Graph.RunLogInit };
+        const childDependencies = this.resolveQueue(dep, queue, runLog);
 
-        const queueItem: BuildQueueItem = {
+        const queueItem: RunQueueItem = {
           node: dep,
           canStart: Graph.QueueItemCanStart(childDependencies),
         };
@@ -145,10 +145,10 @@ class Graph {
     }
 
     // parent item
-    if (!buildLog[node.id] && node.buildCallback) {
-      buildLog[node.id] = { ...Graph.BuildLogInit };
+    if (!runLog[node.id] && node.runCallback) {
+      runLog[node.id] = { ...Graph.RunLogInit };
 
-      const queueItem: BuildQueueItem = {
+      const queueItem: RunQueueItem = {
         node,
         canStart: Graph.QueueItemCanStart(parentDependencies),
       };
@@ -158,22 +158,22 @@ class Graph {
     return parentDependencies;
   }
 
-  private static BuildLogInit = { success: false, done: false };
+  private static RunLogInit = { success: false, done: false };
 
   private static QueueItemCanStart = (dependencies: string[]) => (
-    buildLog: BuildLog
+    runLog: RunLog
   ): boolean => {
     return dependencies
-      .map((id) => buildLog[id]?.done ?? true)
+      .map((id) => runLog[id]?.done ?? true)
       .every((v) => v === true);
   };
 }
 
-type BuildThread = Promise<void>;
+type RunThread = Promise<void>;
 
-type BuildQueueItem = {
+type RunQueueItem = {
   node: Node;
-  canStart: (buildLog: BuildLog) => boolean;
+  canStart: (runLog: RunLog) => boolean;
 };
 
 class Node {
@@ -183,7 +183,7 @@ class Node {
 
   // metadata
   workspace?: Workspace;
-  buildCallback?: BuildLogCallback;
+  runCallback?: RunLogCallback;
 
   constructor(id: string, graph: Graph) {
     this.id = id;
@@ -203,17 +203,17 @@ class Node {
     return this;
   }
 
-  addBuildCallback(callback: BuildCallback): Node {
-    if (this.buildCallback) {
+  addRunCallback(callback: RunCallback): Node {
+    if (this.runCallback) {
       return this;
     }
 
-    this.buildCallback = (buildLog: BuildLog) => {
+    this.runCallback = (runLog: RunLog) => {
       return callback().then((success) => {
-        buildLog[this.id] = { done: true, success };
+        runLog[this.id] = { done: true, success };
       });
     };
-    this.graph.buildSize++;
+    this.graph.runSize++;
 
     return this;
   }
@@ -228,11 +228,11 @@ class CyclicDependencyError extends Error {
   }
 }
 
-type BuildLog = { [id: string]: { success: boolean; done: boolean } };
+type RunLog = { [id: string]: { success: boolean; done: boolean } };
 
-type BuildSuccess = boolean;
-type BuildCallback = () => Promise<BuildSuccess>;
-type BuildLogCallback = (buildLog: BuildLog) => void;
+type RunSuccess = boolean;
+type RunCallback = () => Promise<RunSuccess>;
+type RunLogCallback = (runLog: RunLog) => void;
 
 type NodeGraph = {
   [id: string]: Node;

@@ -50,28 +50,28 @@ describe("Simple dependency graph", () => {
   });
 
   it("can find the optimal resolution path for a single target", async () => {
-    const buildOrder: string[] = [];
+    const runOrder: string[] = [];
 
     const graph = new Graph();
 
-    const A = graph.addNode("A").addBuildCallback(async () => {
-      buildOrder.push("A");
+    const A = graph.addNode("A").addRunCallback(async () => {
+      runOrder.push("A");
       return true;
     });
-    const B = graph.addNode("B").addBuildCallback(async () => {
-      buildOrder.push("B");
+    const B = graph.addNode("B").addRunCallback(async () => {
+      runOrder.push("B");
       return true;
     });
-    const C = graph.addNode("C").addBuildCallback(async () => {
-      buildOrder.push("C");
+    const C = graph.addNode("C").addRunCallback(async () => {
+      runOrder.push("C");
       return true;
     });
-    const D = graph.addNode("D").addBuildCallback(async () => {
-      buildOrder.push("D");
+    const D = graph.addNode("D").addRunCallback(async () => {
+      runOrder.push("D");
       return true;
     });
-    const E = graph.addNode("E").addBuildCallback(async () => {
-      buildOrder.push("E");
+    const E = graph.addNode("E").addRunCallback(async () => {
+      runOrder.push("E");
       return true;
     });
 
@@ -82,13 +82,13 @@ describe("Simple dependency graph", () => {
     C.addDependency(D);
     C.addDependency(E);
 
-    await graph.build([A]);
+    await graph.run([A]);
 
-    expect(buildOrder).toStrictEqual(["D", "E", "C", "B", "A"]);
+    expect(runOrder).toStrictEqual(["D", "E", "C", "B", "A"]);
   });
 
   it("can find the optimal resolution path for multiple root nodes", async () => {
-    const buildOrder: string[] = [];
+    const runOrder: string[] = [];
 
     const graph = new Graph();
 
@@ -120,8 +120,8 @@ describe("Simple dependency graph", () => {
       "Y",
       "Z",
     ].map((id) =>
-      graph.addNode(id).addBuildCallback(async () => {
-        buildOrder.push(id);
+      graph.addNode(id).addRunCallback(async () => {
+        runOrder.push(id);
         return true;
       })
     );
@@ -194,10 +194,8 @@ describe("Simple dependency graph", () => {
     W.addDependency(Y);
     W.addDependency(Z);
 
-    await graph.build([A, F, J, N, R]);
+    await graph.run([A, F, J, N, R]);
 
-    expect(buildOrder.sort()).toStrictEqual([
-      ...new Set(nodes.map((n) => n.id)),
-    ]);
+    expect(runOrder.sort()).toStrictEqual([...new Set(nodes.map((n) => n.id))]);
   });
 });

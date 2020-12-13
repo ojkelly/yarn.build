@@ -1,0 +1,77 @@
+➤ YN0009: ➤ YN0000: └ Build finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Build finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [0:0/0]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ build finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ build finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ build finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ build finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: packages/examples/lorem-ipsum undefined
+➤ YN0009: ➤ YN0000: ┌ Run build for All
+➤ YN0009: ➤ YN0009: │ ┌ Errors for packages/examples/lorem-ipsum
+➤ YN0009: ➤ YN0009: │ │ src/index.ts:7:1 - error TS2304: Cannot find name 'f'.
+➤ YN0009: ➤ YN0009: │ │ 7 f;
+➤ YN0009: ➤ YN0009: │ │   ~
+➤ YN0009: ➤ YN0009: │ │ Found 1 error.
+➤ YN0009: ➤ YN0009: │ └ End packages/examples/lorem-ipsum
+➤ YN0009: ➤ YN0009: │ ┌ Errors packages/examples/lorem-ipsum
+➤ YN0009: ➤ YN0009: │ │ undefined
+➤ YN0009: ➤ YN0009: │ └ Errors packages/examples/lorem-ipsum
+➤ YN0009: ➤ YN0000: └ build finished with 1 errors
+➤ YN0000: [12:1/13]
+
+➤ YN0009: ➤ YN0000: └ build finished
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run [ build finished ]
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run [ build finished ]
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: └ Run [ build finished ]
+➤ YN0000: [13:0/13]
+
+➤ YN0009: ➤ YN0000: ➤ Run [ build finished ]
+➤ YN0000: [13:0/13]
+
