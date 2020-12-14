@@ -18,6 +18,18 @@ yarn plugin import https://yarn.build/latest
 
 `bundle`: bundle a package and its local dependencies, designed for containers and AWS lambda.
 
+`test`: test your package and it's dependencies
+
+## Config
+
+To change any of the defaults or enable beta features add the following to `.yarnbuildrc.yml` in the root of your yarn workspace (next to `yarn.lock`).
+
+```yaml
+enableBetaFeatures:
+  # To enable yarn build path/to/package
+  targetedBuilds: true
+```
+
 ---
 
 For developing on this repository see [packages/plugins/plugin-build/readme.md](packages/plugins/plugin-build/readme.md)
