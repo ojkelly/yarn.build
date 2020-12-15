@@ -477,6 +477,12 @@ class RunSupervisor {
       }
     }
 
+    // If the source directory is the package root, remove `/.` from the end of
+    // the path, so getLastModifiedForFolder can compare the paths correctly
+    if (srcDir?.endsWith("/.")) {
+      srcDir = srcDir.substring(0, srcDir.length - 2) as PortablePath;
+    }
+
     // Traverse the dirs and see if they've been modified
     const release = await this.runReport.mutex.acquire();
     try {

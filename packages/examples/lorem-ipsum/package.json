@@ -9,7 +9,7 @@
     "test": "jest"
   },
   "yarn.build": {
-    "input": "src",
+    "input": ".",
     "output": "dist"
   },
   "dependencies": {

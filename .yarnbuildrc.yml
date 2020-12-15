@@ -1,5 +1,5 @@
 folders:
-  input: src
+  input: .
   output: build
 enableBetaFeatures:
   folderConfiguration: true
