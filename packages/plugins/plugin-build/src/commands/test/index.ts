@@ -48,7 +48,7 @@ export default class Test extends BaseCommand {
       this.context.plugins
     );
 
-    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration();
+    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(configuration);
 
     const report = await StreamReport.start(
       {

@@ -101,20 +101,19 @@ async function getConfiguration(
       folderConfiguration:
         typeof configOnDisk?.enableBetaFeatures?.folderConfiguration ===
           "string" &&
-        configOnDisk?.enableBetaFeatures?.folderConfiguration === "false"
+          configOnDisk?.enableBetaFeatures?.folderConfiguration === "false"
           ? false
           : true,
       targetedBuilds:
         typeof configOnDisk?.enableBetaFeatures?.targetedBuilds === "string" &&
-        configOnDisk?.enableBetaFeatures?.targetedBuilds === "true"
+          configOnDisk?.enableBetaFeatures?.targetedBuilds === "true"
           ? true
           : false,
     },
   };
 }
 
-async function GetPluginConfiguration(): Promise<YarnBuildConfiguration> {
-  const configuration = await Configuration.find(ppath.cwd(), null);
+async function GetPluginConfiguration(configuration: Configuration): Promise<YarnBuildConfiguration> {
   return await getConfiguration(configuration);
 }
 
