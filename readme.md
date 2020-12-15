@@ -22,14 +22,17 @@ yarn plugin import https://yarn.build/latest
 
 ## Config
 
-To change any of the defaults or enable beta features add the following to `.yarnbuildrc.yml` in the root of your yarn workspace (next to `yarn.lock`).
+This isn't required but, to change any of the defaults or enable beta features add the following to `.yarnbuildrc.yml` in the root of your yarn workspace (next to `yarn.lock`).
 
 ```yaml
 folders:
-  input: src
+  # input defaults to the whole package directory
+  input: .
+  # output defaults to a folder called build. This can be set individually in package.json (see below)
   output: build
 enableBetaFeatures:
-  # to enable setting a default input/output folder as shown above
+  # folderConfiguration defaults to true
+  # setting a default input/output folder as shown above
   # and per package i/o folder in package.json as below
   # "yarn.build": {
   #   "input": "src",
@@ -38,7 +41,6 @@ enableBetaFeatures:
   folderConfiguration: true
   # To enable yarn build path/to/package
   targetedBuilds: true
-
 ```
 
 ---
