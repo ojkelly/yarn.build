@@ -25,9 +25,20 @@ yarn plugin import https://yarn.build/latest
 To change any of the defaults or enable beta features add the following to `.yarnbuildrc.yml` in the root of your yarn workspace (next to `yarn.lock`).
 
 ```yaml
+folders:
+  input: src
+  output: build
 enableBetaFeatures:
+  # to enable setting a default input/output folder as shown above
+  # and per package i/o folder in package.json as below
+  # "yarn.build": {
+  #   "input": "src",
+  #   "output": "dist"
+  # },
+  folderConfiguration: true
   # To enable yarn build path/to/package
   targetedBuilds: true
+
 ```
 
 ---
