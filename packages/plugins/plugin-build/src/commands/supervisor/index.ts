@@ -63,7 +63,6 @@ type RunReport = {
   mutex: Mutex;
   runStart?: number;
   totalJobs: number;
-  previousOutputNumLines: number;
   previousOutput: string;
   successCount: number;
   failCount: number;
@@ -117,7 +116,6 @@ class RunSupervisor {
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
-    previousOutputNumLines: 0,
     previousOutput:``,
     successCount: 0,
     failCount: 0,
@@ -556,6 +554,12 @@ class RunSupervisor {
     this.runReport.done = true;
 
     release();
+
+    if (!isCI) {
+      // Cleanup the processing lines
+      Hansi.cursorUp(Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns));
+      Hansi.clearScreenDown();
+    }
 
     // Check if there were errors, and print them out
     if (this.runReport.failCount !== 0) {
