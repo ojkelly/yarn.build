@@ -876,7 +876,7 @@ class RunSupervisor {
 
           try {
             const exitCode = await this.cli(
-              command,
+              this.runCommand,
               workspace.cwd,
               this.runReporter,
               prefix
