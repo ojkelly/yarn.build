@@ -107,9 +107,11 @@ export default class Bundler extends BaseCommand {
   async removeExcluded(tmpDir: PortablePath, excluded: PortablePath[]) {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
-    if (await xfs.lstatPromise(gitDir)) {
-      await xfs.removePromise(gitDir);
-    }
+    try {
+      if (await xfs.lstatPromise(gitDir)) {
+        await xfs.removePromise(gitDir);
+      }
+    } catch (e) {}
 
     await excluded.map(async (p) => {
       if (!p.startsWith(tmpDir)) {
