@@ -18,8 +18,8 @@ import PLimit, { Limit } from "p-limit";
 import { Mutex } from "await-semaphore";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
-import readline from "readline";
 import { Graph, Node } from "./graph";
+import {Hansi} from "./hansi";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -63,7 +63,7 @@ type RunReport = {
   mutex: Mutex;
   runStart?: number;
   totalJobs: number;
-  previousOutputNumLines: number;
+  previousOutput: string;
   successCount: number;
   failCount: number;
   done: boolean;
@@ -116,7 +116,7 @@ class RunSupervisor {
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
-    previousOutputNumLines: 0,
+    previousOutput:``,
     successCount: 0,
     failCount: 0,
     workspaces: {},
@@ -531,6 +531,7 @@ class RunSupervisor {
 
     // Print our RunReporter output
     if (!this.dryRun && !isCI) {
+      Hansi.pad(this.concurrency+3); // ensure we have the space we need (required if we start near the bottom of the display).
       this.raf(this.waitUntilDone);
     }
 
@@ -556,13 +557,8 @@ class RunSupervisor {
 
     if (!isCI) {
       // Cleanup the processing lines
-      readline.moveCursor(
-        process.stdout,
-        0,
-        -this.runReport.previousOutputNumLines
-      );
-      readline.clearScreenDown(process.stdout);
-      process.stdout.cursorTo(0);
+      Hansi.cursorUp(Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns));
+      Hansi.clearScreenDown();
     }
 
     // Check if there were errors, and print them out
@@ -685,19 +681,13 @@ class RunSupervisor {
       return;
     }
 
-    readline.moveCursor(
-      process.stdout,
-      0,
-      -this.runReport.previousOutputNumLines
-    );
-    readline.clearScreenDown(process.stdout);
-    process.stdout.cursorTo(0);
-
     const output = this.generateProgressString(timestamp);
+    Hansi.cursorUp(Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns));
+    Hansi.clearScreenDown();
 
     process.stdout.write(output);
 
-    this.runReport.previousOutputNumLines = (output.match(/\n/g) || []).length;
+    this.runReport.previousOutput = output;
 
     delay(90).then(() => {
       this.raf(this.waitUntilDone);
@@ -728,10 +718,9 @@ class RunSupervisor {
 
     let output = "";
 
-    const indexString = (s: number) =>
+    const generateIndexString = (s: number) =>
       this.configuration.format(`[${s}]`, `grey`);
-    const referenceString = (s: string) =>
-      this.configuration.format(`${s}`, FormatType.NAME);
+
     const idleString = this.configuration.format(`IDLE`, `grey`);
 
     output += this.generateHeaderString() + "\n";
@@ -760,14 +749,15 @@ class RunSupervisor {
             FormatType.RANGE
           )
         : "";
+      const indexString = generateIndexString(i++);
+      const referenceString = this.configuration.format(thread.name, FormatType.NAME);
 
-      output += `${prefix} ${indexString(i++)} ${pathString}${referenceString(
-        thread.name
-      )} ${runScriptString} ${timeString}\n`;
+      output += `${prefix} ${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
+
     }
 
     for (i; i < this.concurrency + 1; ) {
-      output += `${prefix} ${indexString(i++)} ${idleString}\n`;
+      output += `${prefix} ${generateIndexString(i++)} ${idleString}\n`;
     }
 
     if (this.runReport.runStart) {
