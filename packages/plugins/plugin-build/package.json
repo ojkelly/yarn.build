@@ -20,6 +20,7 @@
     "typescript": "^4.1.3"
   },
   "dependencies": {
+    "@types/slice-ansi": "^4.0.0",
     "@yarnpkg/fslib": "^2.4.0",
     "@yarnpkg/libzip": "^2.2.1",
     "@yarnpkg/parsers": "^2.3.0",
@@ -33,6 +34,7 @@
     "is-ci": "^2.0.0",
     "p-limit": "^2.3.0",
     "p-queue": "^6.3.0",
+    "slice-ansi": "^4.0.0",
     "strip-ansi": "^6.0.0"
   },
   "scripts": {

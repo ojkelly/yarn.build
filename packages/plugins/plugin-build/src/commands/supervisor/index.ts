@@ -18,6 +18,7 @@ import PLimit, { Limit } from "p-limit";
 import { Mutex } from "await-semaphore";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
+import sliceAnsi from "slice-ansi";
 import { Graph, Node } from "./graph";
 import {Hansi} from "./hansi";
 
@@ -750,9 +751,29 @@ class RunSupervisor {
           )
         : "";
       const indexString = generateIndexString(i++);
+      const indexSpacer = ` `.repeat(indexString.length - 1);
       const referenceString = this.configuration.format(thread.name, FormatType.NAME);
 
-      output += `${prefix} ${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
+      let outputString  = `${prefix} ${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
+
+      // If output width is more than the available width then we will use multiple lines.
+      let outputSegment1 = ``;
+      let outputSegment2 = ``;
+      let outputSegment3 = ``;
+
+      if (stripAnsi(outputString).length >= process.stdout.columns) {
+        outputSegment1 = `${prefix} ${indexString} ${pathString}${referenceString}\n`;
+        outputSegment2 = `${indexSpacer} ${this.configuration.format(` └`, `grey`)} ${runScriptString} ${timeString}\n`;
+
+        if (stripAnsi(outputSegment1).length >= process.stdout.columns) {
+          outputSegment1 = sliceAnsi(`${prefix} ${indexString} ${pathString}\n`, 0, process.stdout.columns);
+          outputSegment2 = sliceAnsi(`${indexSpacer} ${this.configuration.format(` │`, `grey`)} ${referenceString}\n`, 0, process.stdout.columns);
+          outputSegment3 = sliceAnsi(`${indexSpacer} ${this.configuration.format(` └`, `grey`)} ${runScriptString} ${timeString}\n`, 0, process.stdout.columns);
+        }
+        outputString = outputSegment1 + outputSegment2 + outputSegment3;
+      }
+
+      output += outputString;
 
     }
 
