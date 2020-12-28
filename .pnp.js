@@ -1023,6 +1023,9 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./packages/examples/words/adipiscing/",
           "packageDependencies": [
             ["@internal/adipiscing", "workspace:packages/examples/words/adipiscing"],
+            ["@types/jest", "npm:26.0.19"],
+            ["jest", "npm:26.6.3"],
+            ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:26.4.4"],
             ["typescript", "patch:typescript@npm%3A3.8.3#builtin<compat/typescript>::version=3.8.3&hash=cc6730"]
           ],
           "linkType": "SOFT",
