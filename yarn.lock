@@ -1094,6 +1094,7 @@ __metadata:
   dependencies:
     "@types/is-ci": ^2.0.0
     "@types/jest": ^26.0.19
+    "@types/slice-ansi": ^4.0.0
     "@types/yup": 0.26.12
     "@yarnpkg/builder": ^2.1.3
     "@yarnpkg/cli": ^2.4.0
@@ -1113,6 +1114,7 @@ __metadata:
     jest-pnp-resolver: ^1.2.1
     p-limit: ^2.3.0
     p-queue: ^6.3.0
+    slice-ansi: ^4.0.0
     strip-ansi: ^6.0.0
     ts-jest: ^26.4.4
     typescript: ^4.1.3
@@ -1416,6 +1418,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: d4450e985101a5241a879c919a6f462e4d1ed82c7720d1b732a01bc5692356c5fd817e7ef985efd7b2175f47513d56c3d308ea79dd1f9faf18153a2c673df8fe
+  languageName: node
+  linkType: hard
+
+"@types/slice-ansi@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "@types/slice-ansi@npm:4.0.0"
+  checksum: d4b0e28dc2847c0457682a9a4f76ac7acba4b2330bf9676d21d37259640cefb0493ddbaa3bfb50e1066e154b639def3beb73552b9d131aec701350a01c7ace08
   languageName: node
   linkType: hard
 
@@ -2504,6 +2513,13 @@ __metadata:
   version: 1.0.0
   resolution: "astral-regex@npm:1.0.0"
   checksum: 08e37f599604eb3894af4ec5f9845caec7a45d10c1b57b04c4fc21cc669091803f8386efc52957ec3c7ae8c3af60b933018926aab156e5696a7aab393d6e0874
+  languageName: node
+  linkType: hard
+
+"astral-regex@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "astral-regex@npm:2.0.0"
+  checksum: bf049ee7048b70af5473580020f98faf09159af31a7fa5e223099966dc90e9e87760bd34030e19a6dcac05b45614b428f559bd71f027344d123555e524cb95ac
   languageName: node
   linkType: hard
 
@@ -8020,6 +8036,17 @@ resolve@^1.18.1:
     astral-regex: ^1.0.0
     is-fullwidth-code-point: ^2.0.0
   checksum: 7578393cac91c28f8cb5fa5df36b826ad62c9e66313d2547770db8401570fa8f4aa20cd84ef9244fa054d8e9cc6bfc02578784bb89b238d384b99f2728a35a6d
+  languageName: node
+  linkType: hard
+
+"slice-ansi@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "slice-ansi@npm:4.0.0"
+  dependencies:
+    ansi-styles: ^4.0.0
+    astral-regex: ^2.0.0
+    is-fullwidth-code-point: ^3.0.0
+  checksum: f411aa051802605c3dc8523edee42d39ef59d7c36e6bef6bf1e61d9d2a83894187f6af56911a43ec8e58b921996722d75b354a4c3050b924426ffd1b05da33f9
   languageName: node
   linkType: hard
 
