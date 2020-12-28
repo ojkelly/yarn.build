@@ -15,6 +15,9 @@ jobs:
           yarn install && \
           cd ./packages/plugins/plugin-build && \
           yarn release
+      - name: Build Example
+        run: |
+          yarn build --ignore-cache packages/examples/lorem-ipsum/
       - name: Test
         run: |
-          yarn build
+          yarn test --ignore-cache
