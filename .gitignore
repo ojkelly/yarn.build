@@ -18,6 +18,7 @@ yarn-error.log
 .env
 
 bundle.tgz
+bundle.zip
 
 build.log
 build-error.log

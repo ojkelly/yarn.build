@@ -29,7 +29,7 @@ export default class Bundler extends BaseCommand {
   outputDirectory?: string;
 
   @Command.String(`-a,--archive-name`)
-  archiveName: Filename = `bundle.tgz` as Filename;
+  archiveName: Filename = `bundle.zip` as Filename;
 
   @Command.Array(`--exclude`)
   exclude: Array<PortablePath> = [];
