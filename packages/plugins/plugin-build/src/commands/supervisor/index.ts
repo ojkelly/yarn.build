@@ -4,7 +4,7 @@ import {
   Project,
   StreamReport,
   Workspace,
-  FormatType,
+  formatUtils,
 } from "@yarnpkg/core";
 import isCI from "is-ci";
 import { cpus } from "os";
@@ -23,11 +23,6 @@ import { Graph, Node } from "./graph";
 import {Hansi} from "./hansi";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
-
-type RunPlan = {
-  workspace: Workspace;
-  dependencies: [RunPlan | void];
-};
 
 enum RunStatus {
   pending = "pending",
@@ -177,7 +172,7 @@ class RunSupervisor {
     }
   }
 
-  async setup() {
+  async setup(): Promise<void> {
     this.runLog = await this.readRunLog();
     this.setupRunReporter();
 
@@ -252,7 +247,7 @@ class RunSupervisor {
     await xfs.writeJsonPromise(this.getRunLogPath(), runLogFile);
   }
 
-  logError(s: string) {
+  logError(s: string): void {
     if (this.verbose && this.errorLogFile) {
       this.errorLogFile.write("➤ YN0009: " + stripAnsi(s) + "\n");
     }
@@ -261,7 +256,7 @@ class RunSupervisor {
     }
   }
 
-  setupRunReporter = () => {
+  setupRunReporter = (): void => {
     this.runReporter.on(
       RunSupervisorReporterEvents.pending,
       (relativeCwd: PortablePath, name: string) => {
@@ -353,7 +348,7 @@ class RunSupervisor {
     // this.runReporter.on(RunReporterEvents.finish, () => {});
   };
 
-  async addRunTarget(workspace: Workspace) {
+  async addRunTarget(workspace: Workspace): Promise<void> {
     this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
     const shouldRun = await this.plan(workspace);
 
@@ -521,7 +516,7 @@ class RunSupervisor {
     return needsRun;
   }
 
-  run = async () => {
+  run = async (): Promise<boolean> => {
     if (this.hasSetup === false) {
       throw new Error(
         "RunSupervisor is not setup, you need to call await supervisor.setup()"
@@ -537,7 +532,7 @@ class RunSupervisor {
     }
 
     if (this.dryRun) {
-      return;
+      return true;
     }
 
     this.currentRunTarget =
@@ -564,6 +559,7 @@ class RunSupervisor {
 
     // Check if there were errors, and print them out
     if (this.runReport.failCount !== 0) {
+
       this.logError(header);
       process.stdout.write(header + "\n");
       // print out any build errors
@@ -571,15 +567,15 @@ class RunSupervisor {
         const workspace = this.runReport.workspaces[relativePath];
 
         if (workspace.stdout.length !== 0) {
-          const lineHeader = `${this.configuration.format(
+          const lineHeader = `${formatUtils.pretty(this.configuration,
             `➤`,
             `blueBright`
-          )} ${this.configuration.format(
+          )} ${formatUtils.pretty(this.configuration,
             `YN0009:`,
             `grey`
-          )} │ ┌ [stdout] for ${this.configuration.format(
+          )} │ ┌ [stdout] for ${formatUtils.pretty(this.configuration,
             relativePath,
-            FormatType.PATH
+            formatUtils.Type.PATH
           )}`;
           this.logError(lineHeader);
           process.stdout.write(lineHeader + "\n");
@@ -589,7 +585,7 @@ class RunSupervisor {
 
             lines.forEach((line, i) => {
               if (line.length !== 0) {
-                const formattedLine = `${this.configuration.format(
+                const formattedLine = `${formatUtils.pretty(this.configuration,
                   `➤`,
                   `blueBright`
                 )} YN0009: │ ${lines.length === i - 1 ? "└" : "│"} ${line}`;
@@ -599,15 +595,15 @@ class RunSupervisor {
             });
           });
 
-          const lineTail = `${this.configuration.format(
+          const lineTail = `${formatUtils.pretty(this.configuration,
             `➤`,
             `blueBright`
-          )} ${this.configuration.format(
+          )} ${formatUtils.pretty(this.configuration,
             `YN0009:`,
             `grey`
-          )} │ └ [stdout] ${this.configuration.format(
+          )} │ └ [stdout] ${formatUtils.pretty(this.configuration,
             relativePath,
-            FormatType.PATH
+            formatUtils.Type.PATH
           )}`;
           this.logError(lineTail);
           process.stdout.write(lineTail + "\n");
@@ -616,15 +612,15 @@ class RunSupervisor {
         if (workspace.stderr.length !== 0) {
           // stderr doesnt seem to be useful for showing to the user in cli
           // we'll still write it out to the run log
-          const lineHeader = `${this.configuration.format(
+          const lineHeader = `${formatUtils.pretty(this.configuration,
             `➤`,
             `blueBright`
-          )} ${this.configuration.format(
+          )} ${formatUtils.pretty(this.configuration,
             `YN0009:`,
             `grey`
-          )} │ ┌ [stderr] ${this.configuration.format(
+          )} │ ┌ [stderr] ${formatUtils.pretty(this.configuration,
             relativePath,
-            FormatType.PATH
+            formatUtils.Type.PATH
           )}`;
           this.logError(lineHeader);
           process.stderr.write(lineHeader + "\n");
@@ -634,7 +630,7 @@ class RunSupervisor {
             const lines = err.split("\n");
             lines.forEach((line, i) => {
               if (line.length !== 0) {
-                const formattedLine = `${this.configuration.format(
+                const formattedLine = `${formatUtils.pretty(this.configuration,
                   `➤`,
                   `blueBright`
                 )} YN0009: │ ${lines.length === i - 1 ? "└" : "│"} ${line}`;
@@ -645,15 +641,15 @@ class RunSupervisor {
             });
           });
 
-          const lineTail = `${this.configuration.format(
+          const lineTail = `${formatUtils.pretty(this.configuration,
             `➤`,
             `blueBright`
-          )} ${this.configuration.format(
+          )} ${formatUtils.pretty(this.configuration,
             `YN0009:`,
             `grey`
-          )} │ └ [stderr] ${this.configuration.format(
+          )} │ └ [stderr] ${formatUtils.pretty(this.configuration,
             relativePath,
-            FormatType.PATH
+            formatUtils.Type.PATH
           )}`;
           this.logError(lineTail);
           process.stderr.write(lineTail + "\n");
@@ -673,11 +669,11 @@ class RunSupervisor {
   };
 
   // This is a very simple requestAnimationFrame polyfil
-  raf = (f: (timestamp: number) => void) => {
+  raf = (f: (timestamp: number) => void): void => {
     setImmediate(() => f(Date.now()));
   };
 
-  waitUntilDone = (timestamp: number) => {
+  waitUntilDone = (timestamp: number): void => {
     if (this.runReport.done) {
       return;
     }
@@ -696,33 +692,33 @@ class RunSupervisor {
   };
 
   generateHeaderString(): string {
-    const arrow = this.configuration.format(`➤`, `blueBright`);
-    const code = this.configuration.format(`YN0000:`, `grey`);
+    const arrow = formatUtils.pretty(this.configuration,`➤`, `blueBright`);
+    const code = formatUtils.pretty(this.configuration,`YN0000:`, `grey`);
 
-    return `${arrow} ${code} ┌ Run ${this.configuration.format(
+    return `${arrow} ${code} ┌ Run ${formatUtils.pretty(this.configuration,
       `${this.runCommand}`,
-      FormatType.CODE
-    )} for ${this.configuration.format(
+      formatUtils.Type.CODE
+    )} for ${formatUtils.pretty(this.configuration,
       this.currentRunTarget ? this.currentRunTarget : "",
-      FormatType.SCOPE
+      formatUtils.Type.SCOPE
     )}${
       this.dryRun
-        ? this.configuration.format(` --dry-run`, FormatType.NAME)
+        ? formatUtils.pretty(this.configuration,` --dry-run`, formatUtils.Type.NAME)
         : ""
     }`;
   }
 
   generateProgressString(timestamp: number): string {
-    const arrow = this.configuration.format(`➤`, `blueBright`);
-    const code = this.configuration.format(`YN0000:`, `grey`);
+    const arrow = formatUtils.pretty(this.configuration,`➤`, `blueBright`);
+    const code = formatUtils.pretty(this.configuration,`YN0000:`, `grey`);
     const prefix = `${arrow} ${code} │`;
 
     let output = "";
 
     const generateIndexString = (s: number) =>
-      this.configuration.format(`[${s}]`, `grey`);
+    formatUtils.pretty(this.configuration,`[${s}]`, `grey`);
 
-    const idleString = this.configuration.format(`IDLE`, `grey`);
+    const idleString = formatUtils.pretty(this.configuration,`IDLE`, `grey`);
 
     output += this.generateHeaderString() + "\n";
 
@@ -734,25 +730,25 @@ class RunSupervisor {
         continue;
       }
 
-      const pathString = this.configuration.format(
+      const pathString = formatUtils.pretty(this.configuration,
         relativePath,
-        FormatType.PATH
+        formatUtils.Type.PATH
       );
 
-      const runScriptString = this.configuration.format(
+      const runScriptString = formatUtils.pretty(this.configuration,
         `(${thread.runScript})`,
-        FormatType.REFERENCE
+        formatUtils.Type.REFERENCE
       );
 
       const timeString = thread.start
-        ? this.configuration.format(
+        ? formatUtils.pretty(this.configuration,
             formatTimestampDifference(thread.start, timestamp),
-            FormatType.RANGE
+            formatUtils.Type.RANGE
           )
         : "";
       const indexString = generateIndexString(i++);
       const indexSpacer = ` `.repeat(indexString.length - 1);
-      const referenceString = this.configuration.format(thread.name, FormatType.NAME);
+      const referenceString = formatUtils.pretty(this.configuration,thread.name, formatUtils.Type.NAME);
 
       let outputString  = `${prefix} ${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
 
@@ -763,12 +759,12 @@ class RunSupervisor {
 
       if (stripAnsi(outputString).length >= process.stdout.columns) {
         outputSegment1 = `${prefix} ${indexString} ${pathString}${referenceString}\n`;
-        outputSegment2 = `${indexSpacer} ${this.configuration.format(` └`, `grey`)} ${runScriptString} ${timeString}\n`;
+        outputSegment2 = `${indexSpacer} ${formatUtils.pretty(this.configuration,` └`, `grey`)} ${runScriptString} ${timeString}\n`;
 
         if (stripAnsi(outputSegment1).length >= process.stdout.columns) {
           outputSegment1 = sliceAnsi(`${prefix} ${indexString} ${pathString}\n`, 0, process.stdout.columns);
-          outputSegment2 = sliceAnsi(`${indexSpacer} ${this.configuration.format(` │`, `grey`)} ${referenceString}\n`, 0, process.stdout.columns);
-          outputSegment3 = sliceAnsi(`${indexSpacer} ${this.configuration.format(` └`, `grey`)} ${runScriptString} ${timeString}\n`, 0, process.stdout.columns);
+          outputSegment2 = sliceAnsi(`${indexSpacer} ${formatUtils.pretty(this.configuration,` │`, `grey`)} ${referenceString}\n`, 0, process.stdout.columns);
+          outputSegment3 = sliceAnsi(`${indexSpacer} ${formatUtils.pretty(this.configuration,` └`, `grey`)} ${runScriptString} ${timeString}\n`, 0, process.stdout.columns);
         }
         outputString = outputSegment1 + outputSegment2 + outputSegment3;
       }
@@ -787,22 +783,22 @@ class RunSupervisor {
     return output;
   }
 
-  generateRunCountString = (timestamp: number) => {
-    const grey = (s: string) => this.configuration.format(s, `grey`);
-    const arrow = this.configuration.format(`➤`, `blueBright`);
+  generateRunCountString = (timestamp: number): string => {
+    const grey = (s: string) => formatUtils.pretty(this.configuration,s, `grey`);
+    const arrow = formatUtils.pretty(this.configuration,`➤`, `blueBright`);
     const code = grey(`YN0000:`);
 
     let output = "";
     if (this.runReport.runStart) {
-      const successString = this.configuration.format(
+      const successString = formatUtils.pretty(this.configuration,
         `${this.runReport.successCount}`,
         "green"
       );
-      const failedString = this.configuration.format(
+      const failedString = formatUtils.pretty(this.configuration,
         `${this.runReport.failCount}`,
         "red"
       );
-      const totalString = this.configuration.format(
+      const totalString = formatUtils.pretty(this.configuration,
         `${this.runGraph.runSize}`,
         "grey"
       );
@@ -816,34 +812,34 @@ class RunSupervisor {
     return output;
   };
 
-  generateFinalReport = (hasPreceedingLine: boolean) => {
-    const grey = (s: string) => this.configuration.format(s, `grey`);
-    const arrow = this.configuration.format(`➤`, `blueBright`);
+  generateFinalReport = (hasPreceedingLine: boolean): string => {
+    const grey = (s: string) => formatUtils.pretty(this.configuration,s, `grey`);
+    const arrow = formatUtils.pretty(this.configuration,`➤`, `blueBright`);
     const code = grey(`YN0000:`);
 
     let output = `${arrow} ${code} ${
       hasPreceedingLine ? `└` : arrow
-    } Run [ ${this.configuration.format(
+    } Run [ ${formatUtils.pretty(this.configuration,
       `${this.runCommand} finished`,
       this.runReport.failCount === 0 ? "green" : "red"
     )}${
       this.runReport.failCount != 0
-        ? this.configuration.format(
+        ? formatUtils.pretty(this.configuration,
             ` with ${this.runReport.failCount} errors`,
             "red"
           )
         : ""
     } ]\n`;
     if (this.runReport.runStart) {
-      const successString = this.configuration.format(
+      const successString = formatUtils.pretty(this.configuration,
         `${this.runReport.successCount}`,
         "green"
       );
-      const failedString = this.configuration.format(
+      const failedString = formatUtils.pretty(this.configuration,
         `${this.runReport.failCount}`,
         "red"
       );
-      const totalString = this.configuration.format(
+      const totalString = formatUtils.pretty(this.configuration,
         `${this.runGraph.runSize}`,
         "grey"
       );
@@ -857,7 +853,7 @@ class RunSupervisor {
 
   // Returns a PQueue item
   createRunItem = (workspace: Workspace) => {
-    return async () =>
+    return async (): Promise<boolean> =>
       await this.limit(
         async (): Promise<boolean> => {
           const prefix = workspace.relativeCwd;
@@ -972,7 +968,7 @@ const getLastModifiedForFolder = async (
       }
 
       const stat = await xfs.statPromise(filePath);
-      if (stat.isFile) {
+      if (stat.isFile()) {
         if (stat.mtimeMs > lastModified) {
           lastModified = stat.mtimeMs;
         }
