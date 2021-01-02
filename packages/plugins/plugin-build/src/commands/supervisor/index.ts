@@ -989,18 +989,23 @@ const getLastModifiedForFolder = async (
   return lastModified;
 };
 
-// TODO: this needs work especially above 1 minute
-const formatTimestampDifference = (from: number, to: number): string => {
-  const ms = Math.abs(to - from);
+export const formatTimestampDifference = (from: number, to: number): string => {
+  let milliseconds = Math.abs(to - from);
   let output = "";
 
-  const s = ms / 1000;
-  const m = s / 60;
+  const minutes = Math.trunc(milliseconds / 60000);
 
-  if (m > 1) {
-    output += `${m}m `;
+  if (minutes) {
+    output += `${minutes}m`;
+    milliseconds -= minutes * 60000;
   }
-  output += `${(ms / 1000).toFixed(2)}s`;
+
+  if (milliseconds) {
+    if (minutes) {
+      output += ` `;
+    }
+    output += `${(milliseconds/1000).toFixed(2)}s`;
+  }
 
   return output;
 };
