@@ -972,7 +972,7 @@ const getLastModifiedForFolder = async (
       }
 
       const stat = await xfs.statPromise(filePath);
-      if (stat.isFile) {
+      if (stat.isFile()) {
         if (stat.mtimeMs > lastModified) {
           lastModified = stat.mtimeMs;
         }
