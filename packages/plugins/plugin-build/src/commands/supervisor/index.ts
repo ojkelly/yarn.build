@@ -20,14 +20,9 @@ import fs from "fs";
 import stripAnsi from "strip-ansi";
 import sliceAnsi from "slice-ansi";
 import { Graph, Node } from "./graph";
-import {Hansi} from "./hansi";
+import { Hansi } from "./hansi";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
-
-type RunPlan = {
-  workspace: Workspace;
-  dependencies: [RunPlan | void];
-};
 
 enum RunStatus {
   pending = "pending",
@@ -117,7 +112,7 @@ class RunSupervisor {
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
-    previousOutput:``,
+    previousOutput: ``,
     successCount: 0,
     failCount: 0,
     workspaces: {},
@@ -213,7 +208,7 @@ class RunSupervisor {
           });
         }
       }
-    } catch {}
+    } catch { }
 
     return runLog;
   }
@@ -362,12 +357,15 @@ class RunSupervisor {
     }
   }
 
-  plan = async (workspace: Workspace): Promise<boolean> => {
+  plan = async (workspace: Workspace, checkCache = new Map<string, boolean>()): Promise<boolean> => {
+    if (checkCache.has(workspace.manifest.indent)) return checkCache.get(workspace.manifest.indent)!;
+
     const parent = this.runGraph
       .addNode(workspace.relativeCwd)
       .addWorkSpace(workspace);
 
     let rerunParent = false;
+
 
     this.runMutexes[workspace.relativeCwd] = new Mutex();
 
@@ -378,6 +376,7 @@ class RunSupervisor {
         const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
 
         if (depWorkspace === null) continue;
+        if (checkCache.has(depWorkspace.manifest.indent)) continue;
 
         const dep = this.runGraph
           .addNode(depWorkspace.relativeCwd)
@@ -385,7 +384,7 @@ class RunSupervisor {
 
         parent.addDependency(dep);
 
-        const depsOfDepsNeedRerun = await this.plan(depWorkspace);
+        const depsOfDepsNeedRerun = await this.plan(depWorkspace, checkCache);
 
         let depNeedsRun = false;
         if (depWorkspace !== this.project.topLevelWorkspace) {
@@ -410,13 +409,13 @@ class RunSupervisor {
       this.runReporter.emit(
         RunSupervisorReporterEvents.pending,
         workspace.relativeCwd,
-        `${
-          workspace.manifest.name?.scope
-            ? `@${workspace.manifest.name?.scope}/`
-            : ""
+        `${workspace.manifest.name?.scope
+          ? `@${workspace.manifest.name?.scope}/`
+          : ""
         }${workspace.manifest.name?.name}`
       );
       parent.addRunCallback(this.createRunItem(workspace));
+      checkCache.set(workspace.manifest.indent, true);
       return true;
     } else {
       // Use the previous log entry if we don't need to rerun.
@@ -435,6 +434,7 @@ class RunSupervisor {
       }
     }
 
+    checkCache.set(workspace.manifest.indent, false);
     return false;
   };
 
@@ -460,12 +460,11 @@ class RunSupervisor {
       } else if (this.pluginConfiguration.folders.output) {
         ignore = `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
       } else if (workspace?.manifest.raw.main) {
-        ignore = `${dir}${path.sep}${
-          workspace?.manifest.raw.main.substring(
-            0,
-            workspace?.manifest.raw.main.lastIndexOf(path.sep)
-          ) as PortablePath
-        }` as PortablePath;
+        ignore = `${dir}${path.sep}${workspace?.manifest.raw.main.substring(
+          0,
+          workspace?.manifest.raw.main.lastIndexOf(path.sep)
+        ) as PortablePath
+          }` as PortablePath;
       }
 
       if (
@@ -532,7 +531,7 @@ class RunSupervisor {
 
     // Print our RunReporter output
     if (!this.dryRun && !isCI) {
-      Hansi.pad(this.concurrency+3); // ensure we have the space we need (required if we start near the bottom of the display).
+      Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
       this.raf(this.waitUntilDone);
     }
 
@@ -705,11 +704,10 @@ class RunSupervisor {
     )} for ${this.configuration.format(
       this.currentRunTarget ? this.currentRunTarget : "",
       FormatType.SCOPE
-    )}${
-      this.dryRun
-        ? this.configuration.format(` --dry-run`, FormatType.NAME)
-        : ""
-    }`;
+    )}${this.dryRun
+      ? this.configuration.format(` --dry-run`, FormatType.NAME)
+      : ""
+      }`;
   }
 
   generateProgressString(timestamp: number): string {
@@ -746,15 +744,15 @@ class RunSupervisor {
 
       const timeString = thread.start
         ? this.configuration.format(
-            formatTimestampDifference(thread.start, timestamp),
-            FormatType.RANGE
-          )
+          formatTimestampDifference(thread.start, timestamp),
+          FormatType.RANGE
+        )
         : "";
       const indexString = generateIndexString(i++);
       const indexSpacer = ` `.repeat(indexString.length - 1);
       const referenceString = this.configuration.format(thread.name, FormatType.NAME);
 
-      let outputString  = `${prefix} ${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
+      let outputString = `${prefix} ${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
 
       // If output width is more than the available width then we will use multiple lines.
       let outputSegment1 = ``;
@@ -777,7 +775,7 @@ class RunSupervisor {
 
     }
 
-    for (i; i < this.concurrency + 1; ) {
+    for (i; i < this.concurrency + 1;) {
       output += `${prefix} ${generateIndexString(i++)} ${idleString}\n`;
     }
 
@@ -821,19 +819,17 @@ class RunSupervisor {
     const arrow = this.configuration.format(`➤`, `blueBright`);
     const code = grey(`YN0000:`);
 
-    let output = `${arrow} ${code} ${
-      hasPreceedingLine ? `└` : arrow
-    } Run [ ${this.configuration.format(
-      `${this.runCommand} finished`,
-      this.runReport.failCount === 0 ? "green" : "red"
-    )}${
-      this.runReport.failCount != 0
+    let output = `${arrow} ${code} ${hasPreceedingLine ? `└` : arrow
+      } Run [ ${this.configuration.format(
+        `${this.runCommand} finished`,
+        this.runReport.failCount === 0 ? "green" : "red"
+      )}${this.runReport.failCount != 0
         ? this.configuration.format(
-            ` with ${this.runReport.failCount} errors`,
-            "red"
-          )
+          ` with ${this.runReport.failCount} errors`,
+          "red"
+        )
         : ""
-    } ]\n`;
+      } ]\n`;
     if (this.runReport.runStart) {
       const successString = this.configuration.format(
         `${this.runReport.successCount}`,
@@ -871,10 +867,9 @@ class RunSupervisor {
           this.runReporter.emit(
             RunSupervisorReporterEvents.start,
             workspace.relativeCwd,
-            `${
-              workspace.manifest.name?.scope
-                ? `@${workspace.manifest.name?.scope}/`
-                : ""
+            `${workspace.manifest.name?.scope
+              ? `@${workspace.manifest.name?.scope}/`
+              : ""
             }${workspace.manifest.name?.name}`,
             command
           );
@@ -972,7 +967,7 @@ const getLastModifiedForFolder = async (
       }
 
       const stat = await xfs.statPromise(filePath);
-      if (stat.isFile) {
+      if (stat.isFile()) {
         if (stat.mtimeMs > lastModified) {
           lastModified = stat.mtimeMs;
         }
@@ -1008,7 +1003,7 @@ export const formatTimestampDifference = (from: number, to: number): string => {
     if (minutes) {
       output += ` `;
     }
-    output += `${(milliseconds/1000).toFixed(2)}s`;
+    output += `${(milliseconds / 1000).toFixed(2)}s`;
   }
 
   return output;
