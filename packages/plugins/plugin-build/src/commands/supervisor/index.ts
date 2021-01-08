@@ -24,11 +24,6 @@ import {Hansi} from "./hansi";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
-type RunPlan = {
-  workspace: Workspace;
-  dependencies: [RunPlan | void];
-};
-
 enum RunStatus {
   pending = "pending",
   inProgress = "inProgress",

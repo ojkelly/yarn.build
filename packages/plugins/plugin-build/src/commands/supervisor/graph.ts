@@ -76,7 +76,7 @@ class Graph {
       this.resolveQueue(n, queue, runLog);
     }
 
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       this.workLoop(queue, runLog, progress, resolve);
     });
 
@@ -168,8 +168,6 @@ class Graph {
       .every((v) => v === true);
   };
 }
-
-type RunThread = Promise<void>;
 
 type RunQueueItem = {
   node: Node;
