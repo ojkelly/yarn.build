@@ -41,6 +41,8 @@ enableBetaFeatures:
   folderConfiguration: true
   # To enable yarn build path/to/package
   targetedBuilds: true
+# Optional: Limit the number of concurrent builds/tests that can occur at once globally. This can also be set as a command line switch.
+maxConcurrency: 4
 ```
 
 ---

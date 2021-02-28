@@ -4,3 +4,4 @@ folders:
 enableBetaFeatures:
   folderConfiguration: true
   targetedBuilds: true
+maxConcurrency: 8
