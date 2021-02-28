@@ -9,6 +9,7 @@ import {
 import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Usage } from "clipanion";
 import path from "path";
+import * as yup from "yup";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
@@ -26,8 +27,15 @@ export default class Test extends BaseCommand {
   @Command.Boolean(`--ignore-cache`)
   ignoreTestCache = false;
 
+  @Command.String(`-m,--max-concurrency`)
+  maxConcurrency: string | undefined;
+
   @Command.Rest()
   public runTarget: string[] = [];
+
+  static schema = yup.object().shape({
+    maxConcurrency: yup.number().integer().moreThan(0),
+  });
 
   static usage: Usage = Command.Usage({
     category: `Test commands`,
@@ -127,6 +135,7 @@ export default class Test extends BaseCommand {
           dryRun: false,
           ignoreRunCache: this.ignoreTestCache,
           verbose: this.verbose,
+          concurrency: maxConcurrency,
         });
 
         await supervisor.setup();

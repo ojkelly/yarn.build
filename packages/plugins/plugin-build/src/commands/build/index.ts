@@ -9,6 +9,7 @@ import {
 import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Usage } from "clipanion";
 import path from "path";
+import * as yup from "yup";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
@@ -38,8 +39,15 @@ export default class Build extends BaseCommand {
   @Command.Boolean(`--ignore-cache`)
   ignoreBuildCache = false;
 
+  @Command.String(`-m,--max-concurrency`)
+  maxConcurrency: string | undefined;
+
   @Command.Rest()
   public buildTarget: string[] = [];
+
+  static schema = yup.object().shape({
+    maxConcurrency: yup.number().integer().moreThan(0),
+  });
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -61,6 +69,9 @@ export default class Build extends BaseCommand {
       also known as NDJSON (https://github.com/ndjson/ndjson-spec).
 
       \`-c,--build-command\` is the command to be run in each package (if available), defaults to "build"
+
+      \`-m,--max-concurrency\` is the maximum number of builds that can run at a time,
+      defaults to the number of logical CPUs on the current machine
     `,
   });
 
@@ -69,6 +80,12 @@ export default class Build extends BaseCommand {
 
   @Command.Path(`build`)
   async execute() {
+    // Safe to run because the input string is validated by clipanion using the schema property
+    const maxConcurrency =
+      this.maxConcurrency === undefined
+        ? undefined
+        : parseInt(this.maxConcurrency);
+
     const configuration = await Configuration.find(
       this.context.cwd,
       this.context.plugins
@@ -153,6 +170,7 @@ export default class Build extends BaseCommand {
           dryRun: this.dryRun,
           ignoreRunCache: this.ignoreBuildCache,
           verbose: this.verbose,
+          concurrency: maxConcurrency,
         });
 
         await supervisor.setup();
