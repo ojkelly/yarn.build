@@ -9,9 +9,14 @@ import {
 import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Usage } from "clipanion";
 import path from "path";
+import * as yup from "yup";
 
 import { EventEmitter } from "events";
-import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
+import {
+  GetPluginConfiguration,
+  maxConcurrencyValidation,
+  YarnBuildConfiguration,
+} from "../../config";
 import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
 
 import { addTargets } from "../supervisor/workspace";
@@ -26,15 +31,34 @@ export default class Test extends BaseCommand {
   @Command.Boolean(`--ignore-cache`)
   ignoreTestCache = false;
 
+  @Command.String(`-m,--max-concurrency`)
+  maxConcurrency: string | undefined;
+
   @Command.Rest()
   public runTarget: string[] = [];
+
+  static schema = yup.object().shape({
+    maxConcurrency: maxConcurrencyValidation,
+  });
 
   static usage: Usage = Command.Usage({
     category: `Test commands`,
     description: `test a package and all its dependencies`,
     details: `
-      Run tests.
+    In a monorepo with internal packages that depend on others, this command
+    will traverse the dependency graph and efficiently ensure, the packages
+    are tested in the right order.
 
+    If the \`--verbose\` flag is set, more information will be logged to stdout than normal.
+    \
+    If the \`--json\` flag is set the output will follow a JSON-stream output
+    also known as NDJSON (https://github.com/ndjson/ndjson-spec).
+
+    If the \`--ignore-cache\` flag is set, every package will be tested,
+    regardless of whether is has changed or not.
+
+    \`-m,--max-concurrency\` is the maximum number of tests that can run at a time,
+    defaults to the number of logical CPUs on the current machine. Will override the global config option.
     `,
   });
 
@@ -48,7 +72,16 @@ export default class Test extends BaseCommand {
       this.context.plugins
     );
 
-    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(configuration);
+    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(
+      configuration
+    );
+
+    // Safe to run because the input string is validated by clipanion using the schema property
+    // TODO: Why doesn't the Command validation cast this for us?
+    const maxConcurrency =
+      this.maxConcurrency === undefined
+        ? pluginConfiguration.maxConcurrency
+        : parseInt(this.maxConcurrency);
 
     const report = await StreamReport.start(
       {
@@ -127,6 +160,7 @@ export default class Test extends BaseCommand {
           dryRun: false,
           ignoreRunCache: this.ignoreTestCache,
           verbose: this.verbose,
+          concurrency: maxConcurrency,
         });
 
         await supervisor.setup();

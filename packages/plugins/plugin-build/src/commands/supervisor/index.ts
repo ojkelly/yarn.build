@@ -20,7 +20,7 @@ import fs from "fs";
 import stripAnsi from "strip-ansi";
 import sliceAnsi from "slice-ansi";
 import { Graph, Node } from "./graph";
-import {Hansi} from "./hansi";
+import { Hansi } from "./hansi";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -102,24 +102,22 @@ class RunSupervisor {
   dryRun = false;
   ignoreRunCache = false;
   verbose = false;
+  concurrency: number;
+  limit: Limit;
   queue: PQueue;
 
   entrypoints: Node[] = [];
-
-  limit: Limit = PLimit(Math.max(1, cpus().length));
 
   runReporter: EventEmitter = new EventEmitter();
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
-    previousOutput:``,
+    previousOutput: ``,
     successCount: 0,
     failCount: 0,
     workspaces: {},
     done: false,
   };
-
-  concurrency = Math.max(1, cpus().length);
 
   nextUnitOfWork: Promise<void>[] = [];
 
@@ -137,6 +135,7 @@ class RunSupervisor {
     dryRun,
     ignoreRunCache,
     verbose,
+    concurrency,
   }: {
     project: Project;
     report: StreamReport;
@@ -147,7 +146,10 @@ class RunSupervisor {
     dryRun: boolean;
     ignoreRunCache: boolean;
     verbose: boolean;
+    concurrency?: number | undefined;
   }) {
+    const resolvedConcurrency = concurrency ?? Math.max(1, cpus().length);
+
     this.configuration = configuration;
     this.pluginConfiguration = pluginConfiguration;
     this.project = project;
@@ -157,9 +159,11 @@ class RunSupervisor {
     this.dryRun = dryRun;
     this.ignoreRunCache = ignoreRunCache;
     this.verbose = verbose;
+    this.concurrency = resolvedConcurrency;
+    this.limit = PLimit(resolvedConcurrency);
 
     this.queue = new PQueue({
-      concurrency: this.concurrency, // TODO: make this customisable
+      concurrency: resolvedConcurrency,
       carryoverConcurrencyCount: true,
       timeout: 50000, // TODO: make this customisable
       throwOnTimeout: true,

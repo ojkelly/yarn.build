@@ -1,8 +1,12 @@
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
 import { parseSyml } from "@yarnpkg/parsers";
 import { Configuration } from "@yarnpkg/core";
+import * as yup from "yup";
 
 const DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME = `.yarnbuildrc.yml` as Filename;
+
+/** The validation pattern used to validate any max concurrency option */
+export const maxConcurrencyValidation = yup.number().integer().moreThan(0);
 
 type YarnBuildConfiguration = {
   // Customising the commands are runtime is not currently supported in Yarn
@@ -23,26 +27,13 @@ type YarnBuildConfiguration = {
     // yarn build package/example/lorem-ipsum
     targetedBuilds: boolean;
   };
+  maxConcurrency?: number | undefined;
 };
 
 async function getConfiguration(
   configuration: Configuration
 ): Promise<YarnBuildConfiguration> {
-  let configOnDisk: {
-    commands?: {
-      build?: string;
-      test?: string;
-      dev?: string;
-    };
-    folders?: {
-      input?: string;
-      output?: string;
-    };
-    enableBetaFeatures?: {
-      folderConfiguration?: boolean;
-      targetedBuilds?: boolean;
-    };
-  } = {};
+  let configOnDisk: unknown = {};
 
   // TODO: make this more customisable
   const rcFilename = DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME;
@@ -56,7 +47,7 @@ async function getConfiguration(
     const content = await xfs.readFilePromise(rcPath, `utf8`);
 
     try {
-      configOnDisk = parseSyml(content) as YarnBuildConfiguration;
+      configOnDisk = parseSyml(content);
     } catch (error) {
       let tip = ``;
 
@@ -69,48 +60,24 @@ async function getConfiguration(
     }
   }
 
-  // I thought about more complex ways to load and check the config.
-  // For now, we don't need to overdo it. Later on that might make sense
-  // but not now.
-  return {
-    commands: {
-      build:
-        typeof configOnDisk?.commands?.build === "string"
-          ? configOnDisk.commands.build
-          : "build",
-      test:
-        typeof configOnDisk?.commands?.test === "string"
-          ? configOnDisk.commands.test
-          : "test",
-      dev:
-        typeof configOnDisk?.commands?.dev === "string"
-          ? configOnDisk.commands.dev
-          : "dev",
-    },
-    folders: {
-      input:
-        typeof configOnDisk?.folders?.input === "string"
-          ? configOnDisk.folders.input
-          : ".",
-      output:
-        typeof configOnDisk?.folders?.output === "string"
-          ? configOnDisk.folders.output
-          : "build",
-    },
-    enableBetaFeatures: {
-      folderConfiguration:
-        typeof configOnDisk?.enableBetaFeatures?.folderConfiguration ===
-          "string" &&
-        configOnDisk?.enableBetaFeatures?.folderConfiguration === "false"
-          ? false
-          : true,
-      targetedBuilds:
-        typeof configOnDisk?.enableBetaFeatures?.targetedBuilds === "string" &&
-        configOnDisk?.enableBetaFeatures?.targetedBuilds === "true"
-          ? true
-          : false,
-    },
-  };
+  const configSchema = yup.object().shape({
+    commands: yup.object().shape({
+      build: yup.string().default("build"),
+      test: yup.string().default("test"),
+      dev: yup.string().default("dev"),
+    }),
+    folders: yup.object().shape({
+      input: yup.string().default("."),
+      output: yup.string().default("build"),
+    }),
+    enableBetaFeatures: yup.object().shape({
+      folderConfiguration: yup.boolean().default(true),
+      targetedBuilds: yup.boolean().default(false),
+    }),
+    maxConcurrency: maxConcurrencyValidation,
+  });
+
+  return configSchema.validate(configOnDisk);
 }
 
 async function GetPluginConfiguration(

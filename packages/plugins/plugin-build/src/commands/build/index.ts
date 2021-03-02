@@ -9,9 +9,14 @@ import {
 import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Usage } from "clipanion";
 import path from "path";
+import * as yup from "yup";
 
 import { EventEmitter } from "events";
-import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
+import {
+  GetPluginConfiguration,
+  maxConcurrencyValidation,
+  YarnBuildConfiguration,
+} from "../../config";
 import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
 
 import { addTargets } from "../supervisor/workspace";
@@ -38,8 +43,15 @@ export default class Build extends BaseCommand {
   @Command.Boolean(`--ignore-cache`)
   ignoreBuildCache = false;
 
+  @Command.String(`-m,--max-concurrency`)
+  maxConcurrency: string | undefined;
+
   @Command.Rest()
   public buildTarget: string[] = [];
+
+  static schema = yup.object().shape({
+    maxConcurrency: maxConcurrencyValidation,
+  });
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -49,6 +61,8 @@ export default class Build extends BaseCommand {
       will traverse the dependency graph and efficiently ensure, the packages
       are built in the right order.
 
+      \`-c,--build-command\` is the command to be run in each package (if available), defaults to "build"
+
       - If \`-p,--parallel\` and \`-i,--interlaced\` are both set, Yarn
       will print the lines from the output as it receives them.
       Parallel defaults to true.
@@ -57,10 +71,18 @@ export default class Build extends BaseCommand {
       from each process and print the resulting buffers only after their
       source processes have exited. Defaults to false.
 
+      If the \`--verbose\` flag is set, more information will be logged to stdout than normal.
+      \
+      If the \`--dry-run\` flag is set, it will simulate running a build, but not actually run it.
+
       If the \`--json\` flag is set the output will follow a JSON-stream output
       also known as NDJSON (https://github.com/ndjson/ndjson-spec).
 
-      \`-c,--build-command\` is the command to be run in each package (if available), defaults to "build"
+      If the \`--ignore-cache\` flag is set, every package will be built,
+      regardless of whether is has changed or not.
+
+      \`-m,--max-concurrency\` is the maximum number of builds that can run at a time,
+      defaults to the number of logical CPUs on the current machine. Will override the global config option.
     `,
   });
 
@@ -74,7 +96,16 @@ export default class Build extends BaseCommand {
       this.context.plugins
     );
 
-    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(configuration);
+    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(
+      configuration
+    );
+
+    // Safe to run because the input string is validated by clipanion using the schema property
+    // TODO: Why doesn't the Command validation cast this for us?
+    const maxConcurrency =
+      this.maxConcurrency === undefined
+        ? pluginConfiguration.maxConcurrency
+        : parseInt(this.maxConcurrency);
 
     const report = await StreamReport.start(
       {
@@ -153,6 +184,7 @@ export default class Build extends BaseCommand {
           dryRun: this.dryRun,
           ignoreRunCache: this.ignoreBuildCache,
           verbose: this.verbose,
+          concurrency: maxConcurrency,
         });
 
         await supervisor.setup();
