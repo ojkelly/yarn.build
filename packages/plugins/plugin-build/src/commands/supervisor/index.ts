@@ -731,7 +731,7 @@ class RunSupervisor {
 
       if (!!this.runReport.runStart) {
         this.runReport.workspaces[relativePath].runtimeSeconds =
-          this.runReport.runStart - timestamp;
+          timestamp - this.runReport.runStart;
       }
 
       const pathString = this.configuration.format(
@@ -872,28 +872,30 @@ class RunSupervisor {
         "\n";
     }
 
-    let totalSeconds = 0;
+    let totalMs = 50;
     for (const relativePath in this.runReport.workspaces) {
       const workspace = this.runReport.workspaces[relativePath];
-      totalSeconds += workspace.runtimeSeconds ?? 0;
+      totalMs += workspace.runtimeSeconds ?? 0;
     }
 
-    if (!!this.runReport.runStart) {
-      const cpuTime = totalSeconds;
-      const wallTime = Date.now() - this.runReport.runStart;
-      const savedTime = formatTimestampDifference(cpuTime, wallTime);
+    if (!!this.runReport.runStart && this.runGraph.runSize > 1) {
+      const cpuTime = totalMs;
+      const now = Date.now();
+      const wallTime = now - this.runReport.runStart;
+      const savedTime = formatTimestampDifference(wallTime, cpuTime);
       if (!isCI) {
         output += this.grey(
-          `Cumulative: (cpu): ${formatTimestampDifference(0, totalSeconds)}\n`
+          `Cumulative: (cpu): ${formatTimestampDifference(0, totalMs)}\n`
         );
         output += this.grey(`Saved: ${savedTime}\n`);
       }
+    }
+    if (!!this.runReport.runStart) {
       output +=
         this.grey(`Runtime (wall): `) +
         formatTimestampDifference(Date.now(), this.runReport.runStart) +
         `\n`;
     }
-
     output += heading;
     return output;
   };
