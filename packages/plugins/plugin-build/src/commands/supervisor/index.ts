@@ -24,6 +24,9 @@ import { Hansi } from "./hansi";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
+const DIVIDER_LENGTH = 80;
+const DIVIDER = "-".repeat(DIVIDER_LENGTH);
+
 enum RunStatus {
   pending = "pending",
   inProgress = "inProgress",
@@ -73,6 +76,7 @@ type RunReport = {
       fail: boolean;
       stdout: string[];
       stderr: Error[];
+      runtimeSeconds?: number;
     };
   };
 };
@@ -184,7 +188,7 @@ class RunSupervisor {
   }
 
   private getRunErrorPath() {
-    return ppath.resolve(this.project.cwd, "yarnBuild-error.log" as Filename);
+    return ppath.resolve(this.project.cwd, "yarn.build-error.log" as Filename);
   }
   private getRunLogPath() {
     return ppath.resolve(
@@ -251,12 +255,9 @@ class RunSupervisor {
     await xfs.writeJsonPromise(this.getRunLogPath(), runLogFile);
   }
 
-  logError(s: string) {
-    if (this.verbose && this.errorLogFile) {
-      this.errorLogFile.write("➤ YN0009: " + stripAnsi(s) + "\n");
-    }
-    if (isCI) {
-      process.stderr.write("➤ YN0009: " + stripAnsi(s) + "\n");
+  logError(s: string): void {
+    if (this.verbose) {
+      process.stderr.write(stripAnsi(s) + "\n");
     }
   }
 
@@ -531,7 +532,7 @@ class RunSupervisor {
 
     // Print our RunReporter output
     if (!this.dryRun && !isCI) {
-      Hansi.pad(this.concurrency+3); // ensure we have the space we need (required if we start near the bottom of the display).
+      Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
       this.raf(this.waitUntilDone);
     }
 
@@ -543,6 +544,11 @@ class RunSupervisor {
       this.runTargets.length > 1
         ? "All"
         : this.runTargets[0]?.relativeCwd ?? "Nothing to run";
+
+    // theres an off by one error in the RunLog
+    if (!isCI) {
+      process.stderr.write("\n");
+    }
 
     const header = this.generateHeaderString();
 
@@ -557,113 +563,98 @@ class RunSupervisor {
 
     if (!isCI) {
       // Cleanup the processing lines
-      Hansi.cursorUp(Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns));
+      Hansi.cursorUp(
+        Hansi.linesRequired(
+          this.runReport.previousOutput,
+          process.stdout.columns
+        )
+      );
       Hansi.clearScreenDown();
     }
 
     // Check if there were errors, and print them out
     if (this.runReport.failCount !== 0) {
-      this.logError(header);
-      process.stdout.write(header + "\n");
+      const packagesWithErrors: string[] = [];
+
+      process.stdout.write(this.formatHeader(header) + "\n");
       // print out any build errors
       for (const relativePath in this.runReport.workspaces) {
         const workspace = this.runReport.workspaces[relativePath];
 
+        if (workspace.fail) {
+          packagesWithErrors.push(relativePath);
+        }
+
+        let hasOutput = false;
+
         if (workspace.stdout.length !== 0) {
-          const lineHeader = `${this.configuration.format(
-            `➤`,
-            `blueBright`
-          )} ${this.configuration.format(
-            `YN0009:`,
-            `grey`
-          )} │ ┌ [stdout] for ${this.configuration.format(
-            relativePath,
-            FormatType.PATH
-          )}`;
-          this.logError(lineHeader);
+          hasOutput = true;
+          const lineHeader = this.formatHeader(
+            `Output: ${this.configuration.format(
+              relativePath,
+              FormatType.PATH
+            )}`,
+            2
+          );
+
           process.stdout.write(lineHeader + "\n");
 
           workspace.stdout.forEach((m) => {
             const lines = m.split("\n");
 
-            lines.forEach((line, i) => {
+            lines.forEach((line) => {
               if (line.length !== 0) {
-                const formattedLine = `${this.configuration.format(
-                  `➤`,
-                  `blueBright`
-                )} YN0009: │ ${lines.length === i - 1 ? "└" : "│"} ${line}`;
-                this.logError(formattedLine);
-                process.stdout.write(formattedLine + "\n");
+                process.stdout.write(line + "\n");
               }
             });
           });
-
-          const lineTail = `${this.configuration.format(
-            `➤`,
-            `blueBright`
-          )} ${this.configuration.format(
-            `YN0009:`,
-            `grey`
-          )} │ └ [stdout] ${this.configuration.format(
-            relativePath,
-            FormatType.PATH
-          )}`;
-          this.logError(lineTail);
-          process.stdout.write(lineTail + "\n");
         }
 
         if (workspace.stderr.length !== 0) {
+          hasOutput = true;
+
           // stderr doesnt seem to be useful for showing to the user in cli
           // we'll still write it out to the run log
-          const lineHeader = `${this.configuration.format(
-            `➤`,
-            `blueBright`
-          )} ${this.configuration.format(
-            `YN0009:`,
-            `grey`
-          )} │ ┌ [stderr] ${this.configuration.format(
-            relativePath,
-            FormatType.PATH
-          )}`;
-          this.logError(lineHeader);
+          const lineHeader = `[stderr]`;
           process.stderr.write(lineHeader + "\n");
 
           workspace.stderr.forEach((e) => {
             const err = e instanceof Error ? e.toString() : `${e}`;
             const lines = err.split("\n");
-            lines.forEach((line, i) => {
+            lines.forEach((line) => {
               if (line.length !== 0) {
-                const formattedLine = `${this.configuration.format(
-                  `➤`,
-                  `blueBright`
-                )} YN0009: │ ${lines.length === i - 1 ? "└" : "│"} ${line}`;
-
-                this.logError(formattedLine);
-                process.stderr.write(formattedLine + "\n");
+                process.stderr.write(line + "\n");
               }
             });
           });
+        }
+        if (hasOutput) {
+          process.stdout.write(this.grey(DIVIDER) + "\n");
+        }
+      }
 
-          const lineTail = `${this.configuration.format(
-            `➤`,
-            `blueBright`
-          )} ${this.configuration.format(
-            `YN0009:`,
-            `grey`
-          )} │ └ [stderr] ${this.configuration.format(
+      if (packagesWithErrors.length > 0) {
+        const errorHeader = this.grey(
+          `ERROR for script ${header}\nThe following packages returned an error.\n`
+        );
+        process.stderr.write(errorHeader);
+
+        packagesWithErrors.forEach((relativePath) => {
+          const lineTail = `- ${this.configuration.format(
             relativePath,
             FormatType.PATH
           )}`;
-          this.logError(lineTail);
           process.stderr.write(lineTail + "\n");
-        }
+        });
       }
+      process.stderr.write(
+        this.grey(`Search \`Output: path\` to find the start of the output.\n`)
+      );
     }
 
-    const finalLine = this.generateFinalReport(this.runReport.failCount !== 0);
+    const finalLine = this.generateFinalReport();
 
     process.stdout.write(finalLine);
-    this.logError(finalLine);
 
     // commit the run log
     await this.saveRunLog();
@@ -682,7 +673,9 @@ class RunSupervisor {
     }
 
     const output = this.generateProgressString(timestamp);
-    Hansi.cursorUp(Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns));
+    Hansi.cursorUp(
+      Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns)
+    );
     Hansi.clearScreenDown();
 
     process.stdout.write(output);
@@ -694,11 +687,19 @@ class RunSupervisor {
     });
   };
 
-  generateHeaderString(): string {
-    const arrow = this.configuration.format(`➤`, `blueBright`);
-    const code = this.configuration.format(`YN0000:`, `grey`);
+  grey = (s: string) => this.configuration.format(s, `grey`);
 
-    return `${arrow} ${code} ┌ Run ${this.configuration.format(
+  formatHeader(name: string, depth = 0): string {
+    const label = `${this.grey("-".repeat(depth) + "[")} ${name} ${this.grey(
+      "]"
+    )}`;
+    const length = stripAnsi(label).length;
+
+    return label + this.grey("-".repeat(DIVIDER_LENGTH - length));
+  }
+
+  generateHeaderString(): string {
+    return `${this.configuration.format(
       `${this.runCommand}`,
       FormatType.CODE
     )} for ${this.configuration.format(
@@ -712,18 +713,13 @@ class RunSupervisor {
   }
 
   generateProgressString(timestamp: number): string {
-    const arrow = this.configuration.format(`➤`, `blueBright`);
-    const code = this.configuration.format(`YN0000:`, `grey`);
-    const prefix = `${arrow} ${code} │`;
-
     let output = "";
 
-    const generateIndexString = (s: number) =>
-      this.configuration.format(`[${s}]`, `grey`);
+    const generateIndexString = (s: number) => this.grey(`[${s}]`);
 
     const idleString = this.configuration.format(`IDLE`, `grey`);
 
-    output += this.generateHeaderString() + "\n";
+    output += this.formatHeader(this.generateHeaderString()) + "\n";
 
     let i = 1;
 
@@ -731,6 +727,11 @@ class RunSupervisor {
       const thread = this.runReport.workspaces[relativePath];
       if (!thread || !thread.start || thread.done) {
         continue;
+      }
+
+      if (!!this.runReport.runStart) {
+        this.runReport.workspaces[relativePath].runtimeSeconds =
+          this.runReport.runStart - timestamp;
       }
 
       const pathString = this.configuration.format(
@@ -751,9 +752,12 @@ class RunSupervisor {
         : "";
       const indexString = generateIndexString(i++);
       const indexSpacer = ` `.repeat(indexString.length - 1);
-      const referenceString = this.configuration.format(thread.name, FormatType.NAME);
+      const referenceString = this.configuration.format(
+        thread.name,
+        FormatType.NAME
+      );
 
-      let outputString  = `${prefix} ${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
+      let outputString = `${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
 
       // If output width is more than the available width then we will use multiple lines.
       let outputSegment1 = ``;
@@ -761,23 +765,34 @@ class RunSupervisor {
       let outputSegment3 = ``;
 
       if (stripAnsi(outputString).length >= process.stdout.columns) {
-        outputSegment1 = `${prefix} ${indexString} ${pathString}${referenceString}\n`;
-        outputSegment2 = `${indexSpacer} ${this.configuration.format(` └`, `grey`)} ${runScriptString} ${timeString}\n`;
+        outputSegment1 = `${indexString} ${pathString}${referenceString}\n`;
+        outputSegment2 = `${indexSpacer} ${runScriptString} ${timeString}\n`;
 
         if (stripAnsi(outputSegment1).length >= process.stdout.columns) {
-          outputSegment1 = sliceAnsi(`${prefix} ${indexString} ${pathString}\n`, 0, process.stdout.columns);
-          outputSegment2 = sliceAnsi(`${indexSpacer} ${this.configuration.format(` │`, `grey`)} ${referenceString}\n`, 0, process.stdout.columns);
-          outputSegment3 = sliceAnsi(`${indexSpacer} ${this.configuration.format(` └`, `grey`)} ${runScriptString} ${timeString}\n`, 0, process.stdout.columns);
+          outputSegment1 = sliceAnsi(
+            `${indexString} ${pathString}\n`,
+            0,
+            process.stdout.columns
+          );
+          outputSegment2 = sliceAnsi(
+            `${indexSpacer} ${referenceString}\n`,
+            0,
+            process.stdout.columns
+          );
+          outputSegment3 = sliceAnsi(
+            `${indexSpacer} ${runScriptString} ${timeString}\n`,
+            0,
+            process.stdout.columns
+          );
         }
         outputString = outputSegment1 + outputSegment2 + outputSegment3;
       }
 
       output += outputString;
-
     }
 
     for (i; i < this.concurrency + 1; ) {
-      output += `${prefix} ${generateIndexString(i++)} ${idleString}\n`;
+      output += `${generateIndexString(i++)} ${idleString}\n`;
     }
 
     if (this.runReport.runStart) {
@@ -787,10 +802,6 @@ class RunSupervisor {
   }
 
   generateRunCountString = (timestamp: number) => {
-    const grey = (s: string) => this.configuration.format(s, `grey`);
-    const arrow = this.configuration.format(`➤`, `blueBright`);
-    const code = grey(`YN0000:`);
-
     let output = "";
     if (this.runReport.runStart) {
       const successString = this.configuration.format(
@@ -806,51 +817,84 @@ class RunSupervisor {
         "grey"
       );
 
-      output += `${arrow} ${code} └ ${grey("[")}${successString}${grey(
-        ":"
-      )}${failedString}${grey("/")}${totalString}${grey(
-        "]"
-      )} ${formatTimestampDifference(this.runReport.runStart, timestamp)}\n`;
+      output +=
+        this.formatHeader(
+          `${successString}${this.grey(":")}${failedString}${this.grey(
+            "/"
+          )}${totalString} ${formatTimestampDifference(
+            this.runReport.runStart,
+            timestamp
+          )}`
+        ) + `\n`;
     }
     return output;
   };
 
-  generateFinalReport = (hasPreceedingLine: boolean) => {
-    const grey = (s: string) => this.configuration.format(s, `grey`);
-    const arrow = this.configuration.format(`➤`, `blueBright`);
-    const code = grey(`YN0000:`);
+  generateFinalReport = () => {
+    const heading =
+      this.formatHeader(
+        `${this.configuration.format(
+          `${this.runCommand} finished`,
+          this.runReport.failCount === 0 ? "green" : "red"
+        )}${
+          this.runReport.failCount != 0
+            ? this.configuration.format(
+                ` with ${this.runReport.failCount} errors`,
+                "red"
+              )
+            : ""
+        }`
+      ) + "\n";
 
-    let output = `${arrow} ${code} ${
-      hasPreceedingLine ? `└` : arrow
-    } Run [ ${this.configuration.format(
-      `${this.runCommand} finished`,
-      this.runReport.failCount === 0 ? "green" : "red"
-    )}${
-      this.runReport.failCount != 0
-        ? this.configuration.format(
-            ` with ${this.runReport.failCount} errors`,
-            "red"
-          )
-        : ""
-    } ]\n`;
+    let output = this.formatHeader("Summary") + "\n";
     if (this.runReport.runStart) {
       const successString = this.configuration.format(
-        `${this.runReport.successCount}`,
+        `Success: ${this.runReport.successCount}`,
         "green"
       );
       const failedString = this.configuration.format(
-        `${this.runReport.failCount}`,
+        `Fail:${this.runReport.failCount}`,
         "red"
       );
       const totalString = this.configuration.format(
-        `${this.runGraph.runSize}`,
+        `Total: ${this.runGraph.runSize}`,
         "grey"
       );
 
-      output += `${arrow} ${code} ${grey("[")}${successString}${grey(
-        ":"
-      )}${failedString}${grey("/")}${totalString}${grey("]")}\n`;
+      output +=
+        successString +
+        "\n" +
+        failedString +
+        "\n" +
+        totalString +
+        "\n" +
+        this.grey("---") +
+        "\n";
     }
+
+    let totalSeconds = 0;
+    for (const relativePath in this.runReport.workspaces) {
+      const workspace = this.runReport.workspaces[relativePath];
+      totalSeconds += workspace.runtimeSeconds ?? 0;
+    }
+
+    if (!!this.runReport.runStart) {
+      const cpuTime = totalSeconds;
+      const wallTime = Date.now() - this.runReport.runStart;
+      const savedTime = formatTimestampDifference(cpuTime, wallTime);
+      if (!isCI) {
+        output += this.grey(
+          `Cumulative: (cpu): ${formatTimestampDifference(0, totalSeconds)}\n`
+        );
+        output += this.grey(`Saved: ${savedTime}\n`);
+      }
+      output +=
+        this.grey(`Runtime (wall): `) +
+        formatTimestampDifference(Date.now(), this.runReport.runStart) +
+        `\n`;
+    }
+
+    output += heading;
     return output;
   };
 
@@ -1007,7 +1051,7 @@ export const formatTimestampDifference = (from: number, to: number): string => {
     if (minutes) {
       output += ` `;
     }
-    output += `${(milliseconds/1000).toFixed(2)}s`;
+    output += `${(milliseconds / 1000).toFixed(2)}s`;
   }
 
   return output;
