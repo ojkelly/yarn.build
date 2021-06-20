@@ -60,7 +60,7 @@ export default class Bundler extends BaseCommand {
       \`-o,--output-directory\` sets the output directory.
 
       \`-a,--archive-name\` sets the name of the archive. Any files matching
-      this, will be excluded from subsequent archives. Defaults to ./bundle.tgz
+      this, will be excluded from subsequent archives. Defaults to ./bundle.zip
     `,
   });
 
