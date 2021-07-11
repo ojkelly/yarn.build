@@ -1,6 +1,6 @@
 [[redirects]]
  from = "/latest"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/plugin-build.js"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.0.0/plugin-build.js"
  status = 200
  force = true
 
