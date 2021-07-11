@@ -7,39 +7,36 @@ import {
   miscUtils,
 } from "@yarnpkg/core";
 import { PortablePath } from "@yarnpkg/fslib";
-import { Command, Usage } from "clipanion";
+import { Command, Option, Usage } from "clipanion";
 import path from "path";
-import * as yup from "yup";
 
 import { EventEmitter } from "events";
-import {
-  GetPluginConfiguration,
-  maxConcurrencyValidation,
-  YarnBuildConfiguration,
-} from "../../config";
+import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
 import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
 
 import { addTargets } from "../supervisor/workspace";
 
 export default class Test extends BaseCommand {
-  @Command.Boolean(`--json`)
-  json = false;
+  static paths = [[`test`]];
 
-  @Command.Boolean(`-v,--verbose`)
-  verbose = false;
-
-  @Command.Boolean(`--ignore-cache`)
-  ignoreTestCache = false;
-
-  @Command.String(`-m,--max-concurrency`)
-  maxConcurrency: string | undefined;
-
-  @Command.Rest()
-  public runTarget: string[] = [];
-
-  static schema = yup.object().shape({
-    maxConcurrency: maxConcurrencyValidation,
+  json = Option.Boolean(`--json`, false, {
+    description: `flag is set the output will follow a JSON-stream output
+      also known as NDJSON (https://github.com/ndjson/ndjson-spec).`,
   });
+
+  verbose = Option.Boolean(`-v,--verbose`, false, {
+    description: `more information will be logged to stdout than normal.`,
+  });
+
+  ignoreTestCache = Option.Boolean(`--ignore-cache`, false, {
+    description: `every package will be tested, regardless of whether is has changed or not.`,
+  });
+
+  maxConcurrency = Option.String(`-m,--max-concurrency`, {
+    description: `is the maximum number of tests that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
+  });
+
+  public runTarget: string[] = Option.Rest();
 
   static usage: Usage = Command.Usage({
     category: `Test commands`,
@@ -48,25 +45,13 @@ export default class Test extends BaseCommand {
     In a monorepo with internal packages that depend on others, this command
     will traverse the dependency graph and efficiently ensure, the packages
     are tested in the right order.
-
-    If the \`--verbose\` flag is set, more information will be logged to stdout than normal.
-    \
-    If the \`--json\` flag is set the output will follow a JSON-stream output
-    also known as NDJSON (https://github.com/ndjson/ndjson-spec).
-
-    If the \`--ignore-cache\` flag is set, every package will be tested,
-    regardless of whether is has changed or not.
-
-    \`-m,--max-concurrency\` is the maximum number of tests that can run at a time,
-    defaults to the number of logical CPUs on the current machine. Will override the global config option.
     `,
   });
 
   // Keep track of what is built, and if it needs to be rebuilt
   runLog: { [key: string]: { hash: string | undefined } } = {};
 
-  @Command.Path(`test`)
-  async execute() {
+  async execute(): Promise<0 | 1> {
     const configuration = await Configuration.find(
       this.context.cwd,
       this.context.plugins
@@ -93,10 +78,7 @@ export default class Test extends BaseCommand {
       async (report: StreamReport) => {
         let targetDirectory = this.context.cwd;
 
-        if (
-          pluginConfiguration.enableBetaFeatures.targetedBuilds &&
-          typeof this.runTarget[0] === "string"
-        ) {
+        if (typeof this.runTarget[0] === "string") {
           targetDirectory = `${configuration.projectCwd}${path.sep}${this.runTarget[0]}` as PortablePath;
         }
 

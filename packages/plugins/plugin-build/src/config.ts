@@ -1,40 +1,25 @@
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
-import { parseSyml } from "@yarnpkg/parsers";
 import { Configuration } from "@yarnpkg/core";
-import * as yup from "yup";
+import * as t from "typanion";
+import { load, JSON_SCHEMA } from "js-yaml";
 
 const DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME = `.yarnbuildrc.yml` as Filename;
 
-/** The validation pattern used to validate any max concurrency option */
-export const maxConcurrencyValidation = yup.number().integer().moreThan(0);
+const isYarnBuildConfiguration = t.isObject({
+  folders: t.isObject({
+    input: t.isString(),
+    output: t.isString(),
+  }),
+  maxConcurrency: t.isOptional(
+    t.applyCascade(t.isNumber(), [t.isInteger(), t.isInInclusiveRange(1, 128)])
+  ),
+});
 
-type YarnBuildConfiguration = {
-  // Customising the commands are runtime is not currently supported in Yarn
-  // So this part is a WIP
-  commands: {
-    build: string;
-    test: string;
-    dev: string;
-  };
-  folders: {
-    input: string;
-    output: string;
-  };
-  enableBetaFeatures: {
-    // Feature to allow configuring input/output folders
-    folderConfiguration: boolean;
-    // Feature to allow yarn build packages/*
-    // yarn build package/example/lorem-ipsum
-    targetedBuilds: boolean;
-  };
-  maxConcurrency?: number | undefined;
-};
+type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
 
 async function getConfiguration(
   configuration: Configuration
 ): Promise<YarnBuildConfiguration> {
-  let configOnDisk: unknown = {};
-
   // TODO: make this more customisable
   const rcFilename = DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME;
 
@@ -46,13 +31,21 @@ async function getConfiguration(
   if (xfs.existsSync(rcPath)) {
     const content = await xfs.readFilePromise(rcPath, `utf8`);
 
+    const errors: string[] = [];
+
     try {
-      configOnDisk = parseSyml(content);
+      const configOnDisk = load(content, { schema: JSON_SCHEMA });
+
+      if (isYarnBuildConfiguration(configOnDisk, { errors })) {
+        return configOnDisk;
+      }
+
+      console.warn(errors);
     } catch (error) {
       let tip = ``;
 
       if (content.match(/^\s+(?!-)[^:]+\s+\S+/m))
-        tip = ` (in particular, make sure you list the colons after each key name)`;
+        tip = ` (config is corrupted, please check it matches the shape in the yarn.build readme.`;
 
       throw new Error(
         `Parse error when loading ${rcPath}; please check it's proper Yaml${tip}`
@@ -60,24 +53,14 @@ async function getConfiguration(
     }
   }
 
-  const configSchema = yup.object().shape({
-    commands: yup.object().shape({
-      build: yup.string().default("build"),
-      test: yup.string().default("test"),
-      dev: yup.string().default("dev"),
-    }),
-    folders: yup.object().shape({
-      input: yup.string().default("."),
-      output: yup.string().default("build"),
-    }),
-    enableBetaFeatures: yup.object().shape({
-      folderConfiguration: yup.boolean().default(true),
-      targetedBuilds: yup.boolean().default(false),
-    }),
-    maxConcurrency: maxConcurrencyValidation,
-  });
-
-  return configSchema.validate(configOnDisk);
+  // return default config if none found
+  return {
+    folders: {
+      input: ".",
+      output: "build",
+    },
+    maxConcurrency: 8,
+  };
 }
 
 async function GetPluginConfiguration(

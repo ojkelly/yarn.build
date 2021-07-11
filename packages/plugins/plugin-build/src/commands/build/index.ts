@@ -7,51 +7,48 @@ import {
   miscUtils,
 } from "@yarnpkg/core";
 import { PortablePath } from "@yarnpkg/fslib";
-import { Command, Usage } from "clipanion";
+import { Command, Option, Usage } from "clipanion";
 import path from "path";
-import * as yup from "yup";
 
 import { EventEmitter } from "events";
-import {
-  GetPluginConfiguration,
-  maxConcurrencyValidation,
-  YarnBuildConfiguration,
-} from "../../config";
+import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
 import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
 
 import { addTargets } from "../supervisor/workspace";
 
 export default class Build extends BaseCommand {
-  @Command.Boolean(`--json`)
-  json = false;
+  static paths = [[`build`]];
 
-  @Command.String(`-c,--build-command`)
-  buildCommand = "build";
-
-  @Command.Boolean(`-p,--parallel`)
-  parallel = true;
-
-  @Command.Boolean(`-i,--interlaced`)
-  interlaced = false;
-
-  @Command.Boolean(`-v,--verbose`)
-  verbose = false;
-
-  @Command.Boolean(`-d,--dry-run`)
-  dryRun = false;
-
-  @Command.Boolean(`--ignore-cache`)
-  ignoreBuildCache = false;
-
-  @Command.String(`-m,--max-concurrency`)
-  maxConcurrency: string | undefined;
-
-  @Command.Rest()
-  public buildTarget: string[] = [];
-
-  static schema = yup.object().shape({
-    maxConcurrency: maxConcurrencyValidation,
+  json = Option.Boolean(`--json`, false, {
+    description: `flag is set the output will follow a JSON-stream output
+      also known as NDJSON (https://github.com/ndjson/ndjson-spec).`,
   });
+
+  buildCommand = Option.String(`-c,--build-command`, `build`, {
+    description: `the command to be run in each package (if available), defaults to "build"`,
+  });
+
+  interlaced = Option.Boolean(`-i,--interlaced`, true, {
+    description: `If false it will instead buffer the output from each process and print the resulting buffers only after their source processes have exited. Defaults to false.`,
+  });
+
+  verbose = Option.Boolean(`-v,--verbose`, false, {
+    description: `more information will be logged to stdout than normal.`,
+  });
+
+  dryRun = Option.Boolean(`-d,--dry-run`, false, {
+    description: `simulate running a build, but not actually run it`,
+  });
+
+  ignoreBuildCache = Option.Boolean(`--ignore-cache`, false, {
+    description: `every package will be built, regardless of whether is has changed or not.`,
+  });
+
+  maxConcurrency = Option.String(`-m,--max-concurrency`, {
+    description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
+  });
+
+  public buildTarget: string[] = Option.Rest();
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -61,35 +58,12 @@ export default class Build extends BaseCommand {
       will traverse the dependency graph and efficiently ensure, the packages
       are built in the right order.
 
-      \`-c,--build-command\` is the command to be run in each package (if available), defaults to "build"
-
-      - If \`-p,--parallel\` and \`-i,--interlaced\` are both set, Yarn
-      will print the lines from the output as it receives them.
-      Parallel defaults to true.
-
-      If \`-i,--interlaced\` wasn't set, it would instead buffer the output
-      from each process and print the resulting buffers only after their
-      source processes have exited. Defaults to false.
-
-      If the \`--verbose\` flag is set, more information will be logged to stdout than normal.
-      \
-      If the \`--dry-run\` flag is set, it will simulate running a build, but not actually run it.
-
-      If the \`--json\` flag is set the output will follow a JSON-stream output
-      also known as NDJSON (https://github.com/ndjson/ndjson-spec).
-
-      If the \`--ignore-cache\` flag is set, every package will be built,
-      regardless of whether is has changed or not.
-
-      \`-m,--max-concurrency\` is the maximum number of builds that can run at a time,
-      defaults to the number of logical CPUs on the current machine. Will override the global config option.
     `,
   });
 
   // Keep track of what is built, and if it needs to be rebuilt
   buildLog: { [key: string]: { hash: string | undefined } } = {};
 
-  @Command.Path(`build`)
   async execute() {
     const configuration = await Configuration.find(
       this.context.cwd,
@@ -117,10 +91,7 @@ export default class Build extends BaseCommand {
       async (report: StreamReport) => {
         let targetDirectory = this.context.cwd;
 
-        if (
-          pluginConfiguration.enableBetaFeatures.targetedBuilds &&
-          typeof this.buildTarget[0] === "string"
-        ) {
+        if (typeof this.buildTarget[0] === "string") {
           targetDirectory = `${configuration.projectCwd}${path.sep}${this.buildTarget[0]}` as PortablePath;
         }
 
