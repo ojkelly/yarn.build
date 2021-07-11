@@ -28,7 +28,6 @@ yarn plugin import https://yarn.build/latest
 
 ## Config
 
-**You probably don't need a config file.**
 
 By default yarn.build looks at your `package.json` and chooses some reasonable defaults.
 
@@ -49,7 +48,9 @@ By default yarn.build looks at your `package.json` and chooses some reasonable d
 When you specify `main` yarn.build will exclude that folder from the build tracker, and use the
 package root (the same directory as the `package.json`) as the input folder to track.
 
-To change any of the defaults or enable beta features add the following to `.yarnbuildrc.yml` in the root of your yarn workspace (next to `yarn.lock`).
+**You probably don't need a config file.** This config file is deprecated in favour of per package config.
+
+To change any of the defaults add the following to `.yarnbuildrc.yml` in the root of your yarn workspace (next to `yarn.lock`).
 
 ```yaml
 folders:
