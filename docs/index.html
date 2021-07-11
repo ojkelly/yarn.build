@@ -23,8 +23,8 @@
 
   <body>
     <header>
-      <h1 style="color: var(--color); font-size: 4rem; margin: 0.1em;">
-        <span style="font-family: var(--font-family); font-weight: 100;"
+      <h1 style="color: var(--color); font-size: 4rem; margin: 0.1em">
+        <span style="font-family: var(--font-family); font-weight: 100"
           >yarn</span
         ><span
           style="
@@ -37,16 +37,14 @@
       </h1>
       <br />
       <p>
-        <a href="#build" style="font-family: var(--font-family-alt);">BUILD</a>
+        <a href="#build" style="font-family: var(--font-family-alt)">BUILD</a>
         and
-        <a href="#bundle" style="font-family: var(--font-family-alt);"
-          >BUNDLE</a
-        >
+        <a href="#bundle" style="font-family: var(--font-family-alt)">BUNDLE</a>
         your local workspaces.<br />
         It's like Bazel, Buck and Pants <em>but for Yarn</em>.
       </p>
       <br />
-      <section id="asciicinema" style="min-height: 220px;">
+      <section id="asciicinema" style="min-height: 220px">
         <asciinema-player
           src="/build.cast"
           cols="99"
@@ -67,12 +65,19 @@
           <h2>Install</h2>
           <p>
             Run this command in your Yarn project<br />to install (or upgrade
-            to) the latest version.
+            to) versions.
           </p>
         </header>
+        <h3>For Yarn 3 and greater</h3>
         <p>
-          <code style="overflow: none; padding: 0.2rem 0.4rem;">
+          <code style="overflow: none; padding: 0.4rem 0.8rem">
             yarn plugin import https://yarn.build/latest
+          </code>
+        </p>
+        <h3>For Yarn 2</h3>
+        <p>
+          <code style="overflow: none; padding: 0.4rem 0.8rem; opacity: 0.8">
+            yarn plugin import https://yarn.build/v2
           </code>
         </p>
       </section>
@@ -82,7 +87,7 @@
           <h2>What is this?</h2>
           <p>
             <a href="https://yarn.build"
-              ><span style="font-family: var(--font-family); font-weight: 100;"
+              ><span style="font-family: var(--font-family); font-weight: 100"
                 >yarn</span
               ><span
                 style="
@@ -93,7 +98,7 @@
                 >.BUILD</span
               ></a
             >
-            is a plugin for <a href="https://yarnpkg.com">Yarn v2</a>
+            is a plugin for <a href="https://yarnpkg.com">Yarn v2 and v3</a>
             <small>(berry)</small>.
           </p>
         </header>
@@ -101,7 +106,7 @@
         <aside>
           <h3>Built for Monorepo's</h3>
           <a href="https://yarn.build"
-            ><span style="font-family: var(--font-family); font-weight: 100;"
+            ><span style="font-family: var(--font-family); font-weight: 100"
               >yarn</span
             ><span
               style="
@@ -120,7 +125,7 @@
         <aside>
           <h3>Uses your Dependency Graph</h3>
           <a href="https://yarn.build"
-            ><span style="font-family: var(--font-family); font-weight: 100;"
+            ><span style="font-family: var(--font-family); font-weight: 100"
               >yarn</span
             ><span
               style="
@@ -139,7 +144,7 @@
           <h3>Super Fast Builds</h3>
           With
           <a href="https://yarn.build"
-            ><span style="font-family: var(--font-family); font-weight: 100;"
+            ><span style="font-family: var(--font-family); font-weight: 100"
               >yarn</span
             ><span
               style="
@@ -155,7 +160,7 @@
         <aside>
           <h3>Only Builds What's Changed</h3>
           <a href="https://yarn.build"
-            ><span style="font-family: var(--font-family); font-weight: 100;"
+            ><span style="font-family: var(--font-family); font-weight: 100"
               >yarn</span
             ><span
               style="
@@ -173,7 +178,7 @@
         <aside>
           <h3>Built in Bundler</h3>
           <a href="https://yarn.build"
-            ><span style="font-family: var(--font-family); font-weight: 100;"
+            ><span style="font-family: var(--font-family); font-weight: 100"
               >yarn</span
             ><span
               style="
@@ -369,9 +374,7 @@
       <hr />
       <article id="test">
         <h2>Test</h2>
-        <p>
-          Test your packages and their dependencies.
-        </p>
+        <p>Test your packages and their dependencies.</p>
         <p>
           Run <code>yarn test</code> in the directory of the package you want to
           test or run <code>yarn test path/to/package</code>.
@@ -379,7 +382,7 @@
       </article>
       <hr />
       <footer>
-        <p style="text-align: center;">
+        <p style="text-align: center">
           Made by <a href="https://owenkelly.com.au">Owen Kelly</a> <br />
           MIT License <br />
           <a href="https://github.com/ojkelly/yarn.build">Source</a>

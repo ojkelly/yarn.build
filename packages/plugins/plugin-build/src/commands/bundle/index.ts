@@ -17,22 +17,33 @@ import {
   Filename,
 } from "@yarnpkg/fslib";
 
-import { Command, Usage } from "clipanion";
+import { Command, Option, Usage } from "clipanion";
 import path from "path";
 
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
-  @Command.Boolean(`--json`)
-  json = false;
+  static paths = [[`bundle`]];
+  json = Option.Boolean(`--json`, false, {
+    description: `flag is set the output will follow a JSON-stream output also known as NDJSON (https://github.com/ndjson/ndjson-spec)`,
+  });
 
-  @Command.String(`-o,--output-directory`)
-  outputDirectory?: string;
+  outputDirectory?: string = Option.String(`-o,--output-directory`, {
+    description:
+      "sets the output directory, this should be outside your source input directory.",
+  });
 
-  @Command.String(`-a,--archive-name`)
-  archiveName: Filename = `bundle.zip` as Filename;
+  archiveName: Filename = Option.String(
+    `-a,--archive-name`,
+    `bundle.zip` as Filename,
+    {
+      description: `sets the name of the archive. Any files matching this, will be excluded from subsequent archives. Defaults to ./bundle.zip`,
+    }
+  );
 
-  @Command.Array(`--exclude`)
-  exclude: Array<PortablePath> = [];
+  exclude = Option.Array(`--exclude`, {
+    arity: 1,
+    description: "Exclude specific paths from the final bundle.",
+  });
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -53,14 +64,6 @@ export default class Bundler extends BaseCommand {
       Why not just compile like we do on the front-end?
       Some dependencies may use require in interesting ways, or be or call
       binaries. It's safest not to transpile them.
-
-      If the \`--json\` flag is set the output will follow a JSON-stream output
-      also known as NDJSON (https://github.com/ndjson/ndjson-spec).
-
-      \`-o,--output-directory\` sets the output directory.
-
-      \`-a,--archive-name\` sets the name of the archive. Any files matching
-      this, will be excluded from subsequent archives. Defaults to ./bundle.tgz
     `,
   });
 
@@ -68,7 +71,7 @@ export default class Bundler extends BaseCommand {
     tmpDir: PortablePath,
     tmpPackageCwd: PortablePath,
     configuration: Configuration
-  ) {
+  ): Promise<void> {
     const { project, workspace } = await Project.find(
       configuration,
       tmpPackageCwd
@@ -104,7 +107,10 @@ export default class Bundler extends BaseCommand {
     }
   }
 
-  async removeExcluded(tmpDir: PortablePath, excluded: PortablePath[]) {
+  async removeExcluded(
+    tmpDir: PortablePath,
+    excluded: string[]
+  ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
     try {
@@ -114,19 +120,20 @@ export default class Bundler extends BaseCommand {
     } catch (e) {}
 
     await excluded.map(async (p) => {
+      p as PortablePath;
+
       if (!p.startsWith(tmpDir)) {
         // Don't remove anything not in the tmp directory
         return;
       }
 
-      if (await xfs.lstatPromise(p)) {
-        await xfs.removePromise(p);
+      if (await xfs.lstatPromise(p as PortablePath)) {
+        await xfs.removePromise(p as PortablePath);
       }
     });
   }
 
-  @Command.Path(`bundle`)
-  async execute() {
+  async execute(): Promise<0 | 1> {
     // Get a tmpDir to work in
     return await xfs.mktempPromise(async (tmpDir) => {
       // Save the originalCWD so we can store the archive somewhere
@@ -158,7 +165,7 @@ export default class Bundler extends BaseCommand {
 
       const tmpPackageCwd = `${tmpDir}${packageCwd}` as PortablePath;
 
-      const exclude = this.exclude;
+      const exclude = this.exclude || [];
 
       const previousArchive = `${tmpPackageCwd}/${this.archiveName}` as PortablePath;
       try {
@@ -217,7 +224,9 @@ export default class Bundler extends BaseCommand {
         const mainFile =
           workspace.relativeCwd + path.sep + workspace?.manifest?.raw?.main;
 
-        const pnp = `./.pnp.js`;
+        // TODO: check if it's .pnp.js or .pnp.cjs
+        // https://github.com/yarnpkg/berry/pull/2286
+        const pnp = `./.pnp.cjs`;
 
         xfs.writeFilePromise(
           `${tmpDir}${path.sep}entrypoint.js` as PortablePath,

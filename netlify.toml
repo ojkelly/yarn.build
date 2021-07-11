@@ -4,9 +4,14 @@
  status = 200
  force = true
 
-
 [[redirects]]
  from = "/release/*"
  to = "https://github.com/ojkelly/yarn.build/releases/download/:splat/plugin-build.js"
+ status = 200
+ force = true
+
+[[redirects]]
+ from = "/v2"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/plugin-build.js"
  status = 200
  force = true

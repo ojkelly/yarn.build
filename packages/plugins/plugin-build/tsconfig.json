@@ -6,13 +6,24 @@
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react",
-    "lib": ["dom", "es2017", "esnext.asynciterable"],
+    "lib": [
+      "dom",
+      "esnext",
+      "esnext.asynciterable"
+    ],
     "module": "commonjs",
     "strict": true,
-    "target": "es2017",
+    "target": "es2018",
     "declaration": true,
     "downlevelIteration": true,
-    "types": ["jest"]
+    "importHelpers": true,
+    "skipLibCheck": true,
+    "types": [
+      "jest"
+    ]
   },
-  "exclude": ["packages/*/lib", "packages/yarnpkg-doctor/fixtures"]
+  "exclude": [
+    "packages/*/lib",
+    "packages/yarnpkg-doctor/fixtures"
+  ]
 }

@@ -1,7 +1,0 @@
-folders:
-  input: .
-  output: build
-enableBetaFeatures:
-  folderConfiguration: true
-  targetedBuilds: true
-maxConcurrency: 8

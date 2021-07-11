@@ -5,6 +5,7 @@ import {
   StreamReport,
   Workspace,
   FormatType,
+  formatUtils,
 } from "@yarnpkg/core";
 import isCI from "is-ci";
 import { cpus } from "os";
@@ -180,7 +181,7 @@ class RunSupervisor {
     }
   }
 
-  async setup() {
+  async setup(): Promise<void> {
     this.runLog = await this.readRunLog();
     this.setupRunReporter();
 
@@ -261,7 +262,7 @@ class RunSupervisor {
     }
   }
 
-  setupRunReporter = () => {
+  setupRunReporter = (): void => {
     this.runReporter.on(
       RunSupervisorReporterEvents.pending,
       (relativeCwd: PortablePath, name: string) => {
@@ -353,7 +354,7 @@ class RunSupervisor {
     // this.runReporter.on(RunReporterEvents.finish, () => {});
   };
 
-  async addRunTarget(workspace: Workspace) {
+  async addRunTarget(workspace: Workspace): Promise<void> {
     this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
     const shouldRun = await this.plan(workspace);
 
@@ -451,31 +452,29 @@ class RunSupervisor {
     let ignore;
     let srcDir;
 
-    if (this.pluginConfiguration.enableBetaFeatures.folderConfiguration) {
-      if (
-        workspace?.manifest?.raw["yarn.build"] &&
-        typeof workspace?.manifest.raw["yarn.build"].output === "string"
-      ) {
-        ignore = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
-      } else if (this.pluginConfiguration.folders.output) {
-        ignore = `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
-      } else if (workspace?.manifest.raw.main) {
-        ignore = `${dir}${path.sep}${
-          workspace?.manifest.raw.main.substring(
-            0,
-            workspace?.manifest.raw.main.lastIndexOf(path.sep)
-          ) as PortablePath
-        }` as PortablePath;
-      }
+    if (
+      workspace?.manifest?.raw["yarn.build"] &&
+      typeof workspace?.manifest.raw["yarn.build"].output === "string"
+    ) {
+      ignore = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
+    } else if (this.pluginConfiguration.folders.output) {
+      ignore = `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
+    } else if (workspace?.manifest.raw.main) {
+      ignore = `${dir}${path.sep}${
+        workspace?.manifest.raw.main.substring(
+          0,
+          workspace?.manifest.raw.main.lastIndexOf(path.sep)
+        ) as PortablePath
+      }` as PortablePath;
+    }
 
-      if (
-        workspace?.manifest?.raw["yarn.build"] &&
-        typeof workspace?.manifest.raw["yarn.build"].input === "string"
-      ) {
-        srcDir = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
-      } else if (this.pluginConfiguration.folders.input) {
-        srcDir = `${dir}${path.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
-      }
+    if (
+      workspace?.manifest?.raw["yarn.build"] &&
+      typeof workspace?.manifest.raw["yarn.build"].input === "string"
+    ) {
+      srcDir = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
+    } else if (this.pluginConfiguration.folders.input) {
+      srcDir = `${dir}${path.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
     }
 
     // If the source directory is the package root, remove `/.` from the end of
@@ -521,7 +520,7 @@ class RunSupervisor {
     return needsRun;
   }
 
-  run = async () => {
+  run = async (): Promise<boolean> => {
     if (this.hasSetup === false) {
       throw new Error(
         "RunSupervisor is not setup, you need to call await supervisor.setup()"
@@ -537,7 +536,7 @@ class RunSupervisor {
     }
 
     if (this.dryRun) {
-      return;
+      return true;
     }
 
     this.currentRunTarget =
@@ -590,9 +589,10 @@ class RunSupervisor {
         if (workspace.stdout.length !== 0) {
           hasOutput = true;
           const lineHeader = this.formatHeader(
-            `Output: ${this.configuration.format(
+            `Output: ${formatUtils.pretty(
+              this.configuration,
               relativePath,
-              FormatType.PATH
+              FormatType.NAME // TODO should be PATH, but the types complain - might be yarn bug
             )}`,
             2
           );
@@ -640,9 +640,10 @@ class RunSupervisor {
         process.stderr.write(errorHeader);
 
         packagesWithErrors.forEach((relativePath) => {
-          const lineTail = `- ${this.configuration.format(
+          const lineTail = `- ${formatUtils.pretty(
+            this.configuration,
             relativePath,
-            FormatType.PATH
+            FormatType.NAME
           )}`;
           process.stderr.write(lineTail + "\n");
         });
@@ -687,7 +688,8 @@ class RunSupervisor {
     });
   };
 
-  grey = (s: string) => this.configuration.format(s, `grey`);
+  grey = (s: string): string =>
+    formatUtils.pretty(this.configuration, s, `grey`);
 
   formatHeader(name: string, depth = 0): string {
     const label = `${this.grey("-".repeat(depth) + "[")} ${name} ${this.grey(
@@ -699,15 +701,17 @@ class RunSupervisor {
   }
 
   generateHeaderString(): string {
-    return `${this.configuration.format(
+    return `${formatUtils.pretty(
+      this.configuration,
       `${this.runCommand}`,
       FormatType.CODE
-    )} for ${this.configuration.format(
+    )} for ${formatUtils.pretty(
+      this.configuration,
       this.currentRunTarget ? this.currentRunTarget : "",
       FormatType.SCOPE
     )}${
       this.dryRun
-        ? this.configuration.format(` --dry-run`, FormatType.NAME)
+        ? formatUtils.pretty(this.configuration, ` --dry-run`, FormatType.NAME)
         : ""
     }`;
   }
@@ -717,7 +721,7 @@ class RunSupervisor {
 
     const generateIndexString = (s: number) => this.grey(`[${s}]`);
 
-    const idleString = this.configuration.format(`IDLE`, `grey`);
+    const idleString = formatUtils.pretty(this.configuration, `IDLE`, `grey`);
 
     output += this.formatHeader(this.generateHeaderString()) + "\n";
 
@@ -734,25 +738,29 @@ class RunSupervisor {
           timestamp - this.runReport.runStart;
       }
 
-      const pathString = this.configuration.format(
+      const pathString = formatUtils.pretty(
+        this.configuration,
         relativePath,
-        FormatType.PATH
+        FormatType.NAME
       );
 
-      const runScriptString = this.configuration.format(
+      const runScriptString = formatUtils.pretty(
+        this.configuration,
         `(${thread.runScript})`,
         FormatType.REFERENCE
       );
 
       const timeString = thread.start
-        ? this.configuration.format(
+        ? formatUtils.pretty(
+            this.configuration,
             formatTimestampDifference(thread.start, timestamp),
             FormatType.RANGE
           )
         : "";
       const indexString = generateIndexString(i++);
       const indexSpacer = ` `.repeat(indexString.length - 1);
-      const referenceString = this.configuration.format(
+      const referenceString = formatUtils.pretty(
+        this.configuration,
         thread.name,
         FormatType.NAME
       );
@@ -801,18 +809,21 @@ class RunSupervisor {
     return output;
   }
 
-  generateRunCountString = (timestamp: number) => {
+  generateRunCountString = (timestamp: number): string => {
     let output = "";
     if (this.runReport.runStart) {
-      const successString = this.configuration.format(
+      const successString = formatUtils.pretty(
+        this.configuration,
         `${this.runReport.successCount}`,
         "green"
       );
-      const failedString = this.configuration.format(
+      const failedString = formatUtils.pretty(
+        this.configuration,
         `${this.runReport.failCount}`,
         "red"
       );
-      const totalString = this.configuration.format(
+      const totalString = formatUtils.pretty(
+        this.configuration,
         `${this.runGraph.runSize}`,
         "grey"
       );
@@ -830,15 +841,17 @@ class RunSupervisor {
     return output;
   };
 
-  generateFinalReport = () => {
+  generateFinalReport = (): string => {
     const heading =
       this.formatHeader(
-        `${this.configuration.format(
+        `${formatUtils.pretty(
+          this.configuration,
           `${this.runCommand} finished`,
           this.runReport.failCount === 0 ? "green" : "red"
         )}${
           this.runReport.failCount != 0
-            ? this.configuration.format(
+            ? formatUtils.pretty(
+                this.configuration,
                 ` with ${this.runReport.failCount} errors`,
                 "red"
               )
@@ -848,15 +861,18 @@ class RunSupervisor {
 
     let output = this.formatHeader("Summary") + "\n";
     if (this.runReport.runStart) {
-      const successString = this.configuration.format(
+      const successString = formatUtils.pretty(
+        this.configuration,
         `Success: ${this.runReport.successCount}`,
         "green"
       );
-      const failedString = this.configuration.format(
+      const failedString = formatUtils.pretty(
+        this.configuration,
         `Fail:${this.runReport.failCount}`,
         "red"
       );
-      const totalString = this.configuration.format(
+      const totalString = formatUtils.pretty(
+        this.configuration,
         `Total: ${this.runGraph.runSize}`,
         "grey"
       );
