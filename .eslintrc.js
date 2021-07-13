@@ -6,26 +6,21 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "prettier",
     "plugin:@kablamo/recommended",
-    "plugin:cypress/recommended"
+    "plugin:cypress/recommended",
   ],
-  parserOptions: {
-    ecmaFeatures: {
-      jsx: true
-    },
-    ecmaVersion: 6,
-    project: "./tsconfig.json",
-    sourceType: "module"
-  },
+
+  parser: require.resolve(`@typescript-eslint/parser`),
+
   settings: {
     react: {
-      version: "detect"
-    }
+      version: "detect",
+    },
   },
   env: {
     es6: true,
     browser: true,
     jest: true,
-    node: true
+    node: true,
   },
   rules: {
     semi: [2, "always"],
@@ -40,16 +35,30 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
-        argsIgnorePattern: "^_"
-      }
+        argsIgnorePattern: "^_",
+      },
     ],
     "no-console": [
       "error",
       {
-        allow: ["warn", "error", "info"]
-      }
+        allow: ["warn", "error", "info"],
+      },
     ],
     "react/display-name": 0,
-    "react/prop-types": 0
-  }
+    "react/prop-types": 0,
+    "lines-between-class-members": ["error", "always"],
+    "padding-line-between-statements": [
+      "error",
+      { blankLine: "always", prev: "*", next: "return" },
+      { blankLine: "always", prev: ["case", "default"], next: "*" },
+      { blankLine: "always", prev: "directive", next: "*" },
+      { blankLine: "any", prev: "directive", next: "directive" },
+      { blankLine: "always", prev: ["const", "let", "var"], next: "*" },
+      {
+        blankLine: "any",
+        prev: ["const", "let", "var"],
+        next: ["const", "let", "var"],
+      },
+    ],
+  },
 };

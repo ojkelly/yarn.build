@@ -23,6 +23,7 @@ import path from "path";
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
   static paths = [[`bundle`]];
+
   json = Option.Boolean(`--json`, false, {
     description: `flag is set the output will follow a JSON-stream output also known as NDJSON (https://github.com/ndjson/ndjson-spec)`,
   });
@@ -159,6 +160,7 @@ export default class Bundler extends BaseCommand {
 
       // copy everything to the tmpDir
       const baseFs = new NodeFS();
+
       await xfs.copyPromise(tmpDir, sourceConfiguration.projectCwd, {
         baseFs,
       });
@@ -168,6 +170,7 @@ export default class Bundler extends BaseCommand {
       const exclude = this.exclude || [];
 
       const previousArchive = `${tmpPackageCwd}/${this.archiveName}` as PortablePath;
+
       try {
         if (await xfs.lstatPromise(previousArchive)) {
           exclude.push(previousArchive);
@@ -273,6 +276,7 @@ export default class Bundler extends BaseCommand {
           });
         }
       );
+
       return report.exitCode();
     });
   }

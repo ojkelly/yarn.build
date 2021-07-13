@@ -56,22 +56,27 @@ describe("Simple dependency graph", () => {
 
     const A = graph.addNode("A").addRunCallback(async () => {
       runOrder.push("A");
+
       return true;
     });
     const B = graph.addNode("B").addRunCallback(async () => {
       runOrder.push("B");
+
       return true;
     });
     const C = graph.addNode("C").addRunCallback(async () => {
       runOrder.push("C");
+
       return true;
     });
     const D = graph.addNode("D").addRunCallback(async () => {
       runOrder.push("D");
+
       return true;
     });
     const E = graph.addNode("E").addRunCallback(async () => {
       runOrder.push("E");
+
       return true;
     });
 
@@ -122,6 +127,7 @@ describe("Simple dependency graph", () => {
     ].map((id) =>
       graph.addNode(id).addRunCallback(async () => {
         runOrder.push(id);
+
         return true;
       })
     );

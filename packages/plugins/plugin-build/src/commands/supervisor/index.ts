@@ -20,7 +20,7 @@ import { Mutex } from "await-semaphore";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
 import sliceAnsi from "slice-ansi";
-import { Graph, Node } from "./graph";
+import { Graph, Node, RunCallback } from "./graph";
 import { Hansi } from "./hansi";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
@@ -91,29 +91,45 @@ type RunCommandCli = (
 
 class RunSupervisor {
   project: Project;
+
   configuration: Configuration;
+
   pluginConfiguration: YarnBuildConfiguration;
+
   report: StreamReport;
 
   runCommand: string;
+
   cli: RunCommandCli;
 
   runLog?: RunLog;
+
   runGraph = new Graph();
+
   runLength = 0;
+
   runTargets: Workspace[] = [];
+
   runMutexes: { [relativCwd: string]: Mutex } = {};
+
   currentRunTarget?: string;
+
   dryRun = false;
+
   ignoreRunCache = false;
+
   verbose = false;
+
   concurrency: number;
+
   limit: Limit;
+
   queue: PQueue;
 
   entrypoints: Node[] = [];
 
   runReporter: EventEmitter = new EventEmitter();
+
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
@@ -191,6 +207,7 @@ class RunSupervisor {
   private getRunErrorPath() {
     return ppath.resolve(this.project.cwd, "yarn.build-error.log" as Filename);
   }
+
   private getRunLogPath() {
     return ppath.resolve(
       this.project.cwd,
@@ -198,6 +215,7 @@ class RunSupervisor {
       YARN_RUN_CACHE_FILENAME
     );
   }
+
   private async readRunLog(): Promise<RunLog> {
     const runLog = new Map<string, RunLogEntry>();
 
@@ -227,6 +245,7 @@ class RunSupervisor {
       return;
     }
     let runLogFileOnDisk: RunLogFile | undefined;
+
     try {
       runLogFileOnDisk = await xfs.readJsonPromise(this.getRunLogPath());
     } catch {
@@ -389,6 +408,7 @@ class RunSupervisor {
         const depsOfDepsNeedRerun = await this.plan(depWorkspace);
 
         let depNeedsRun = false;
+
         if (depWorkspace !== this.project.topLevelWorkspace) {
           depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
         }
@@ -400,6 +420,7 @@ class RunSupervisor {
       }
     }
     let hasChanges = false;
+
     if (workspace !== this.project.topLevelWorkspace) {
       hasChanges = await this.checkIfRunIsRequired(workspace);
     }
@@ -418,6 +439,7 @@ class RunSupervisor {
         }${workspace.manifest.name?.name}`
       );
       parent.addRunCallback(this.createRunItem(workspace));
+
       return true;
     } else {
       // Use the previous log entry if we don't need to rerun.
@@ -425,6 +447,7 @@ class RunSupervisor {
       const previousRunLog = this.runLog?.get(
         `${workspace.relativeCwd}#${this.runCommand}`
       );
+
       if (previousRunLog) {
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
           lastModified: previousRunLog.lastModified,
@@ -485,6 +508,7 @@ class RunSupervisor {
 
     // Traverse the dirs and see if they've been modified
     const release = await this.runReport.mutex.acquire();
+
     try {
       const previousRunLog = this.runLog?.get(
         `${workspace.relativeCwd}#${this.runCommand}`
@@ -616,11 +640,13 @@ class RunSupervisor {
           // stderr doesnt seem to be useful for showing to the user in cli
           // we'll still write it out to the run log
           const lineHeader = `[stderr]`;
+
           process.stderr.write(lineHeader + "\n");
 
           workspace.stderr.forEach((e) => {
             const err = e instanceof Error ? e.toString() : `${e}`;
             const lines = err.split("\n");
+
             lines.forEach((line) => {
               if (line.length !== 0) {
                 process.stderr.write(line + "\n");
@@ -637,6 +663,7 @@ class RunSupervisor {
         const errorHeader = this.grey(
           `ERROR for script ${header}\nThe following packages returned an error.\n`
         );
+
         process.stderr.write(errorHeader);
 
         packagesWithErrors.forEach((relativePath) => {
@@ -645,6 +672,7 @@ class RunSupervisor {
             relativePath,
             FormatType.NAME
           )}`;
+
           process.stderr.write(lineTail + "\n");
         });
       }
@@ -664,16 +692,17 @@ class RunSupervisor {
   };
 
   // This is a very simple requestAnimationFrame polyfil
-  raf = (f: (timestamp: number) => void) => {
+  raf = (f: (timestamp: number) => void): void => {
     setImmediate(() => f(Date.now()));
   };
 
-  waitUntilDone = (timestamp: number) => {
+  waitUntilDone = (timestamp: number): void => {
     if (this.runReport.done) {
       return;
     }
 
     const output = this.generateProgressString(timestamp);
+
     Hansi.cursorUp(
       Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns)
     );
@@ -729,6 +758,7 @@ class RunSupervisor {
 
     for (const relativePath in this.runReport.workspaces) {
       const thread = this.runReport.workspaces[relativePath];
+
       if (!thread || !thread.start || thread.done) {
         continue;
       }
@@ -806,11 +836,13 @@ class RunSupervisor {
     if (this.runReport.runStart) {
       output += this.generateRunCountString(timestamp);
     }
+
     return output;
   }
 
   generateRunCountString = (timestamp: number): string => {
     let output = "";
+
     if (this.runReport.runStart) {
       const successString = formatUtils.pretty(
         this.configuration,
@@ -838,6 +870,7 @@ class RunSupervisor {
           )}`
         ) + `\n`;
     }
+
     return output;
   };
 
@@ -860,6 +893,7 @@ class RunSupervisor {
       ) + "\n";
 
     let output = this.formatHeader("Summary") + "\n";
+
     if (this.runReport.runStart) {
       const successString = formatUtils.pretty(
         this.configuration,
@@ -889,8 +923,10 @@ class RunSupervisor {
     }
 
     let totalMs = 50;
+
     for (const relativePath in this.runReport.workspaces) {
       const workspace = this.runReport.workspaces[relativePath];
+
       totalMs += workspace.runtimeSeconds ?? 0;
     }
 
@@ -899,6 +935,7 @@ class RunSupervisor {
       const now = Date.now();
       const wallTime = now - this.runReport.runStart;
       const savedTime = formatTimestampDifference(wallTime, cpuTime);
+
       if (!isCI) {
         output += this.grey(
           `Cumulative: (cpu): ${formatTimestampDifference(0, totalMs)}\n`
@@ -913,11 +950,12 @@ class RunSupervisor {
         `\n`;
     }
     output += heading;
+
     return output;
   };
 
   // Returns a PQueue item
-  createRunItem = (workspace: Workspace) => {
+  createRunItem = (workspace: Workspace): RunCallback => {
     return async () =>
       await this.limit(
         async (): Promise<boolean> => {
@@ -953,6 +991,7 @@ class RunSupervisor {
               RunSupervisorReporterEvents.success,
               workspace.relativeCwd
             );
+
             return true;
           }
 
@@ -1010,6 +1049,7 @@ class RunSupervisor {
 
             return false;
           }
+
           return true;
         }
       );
@@ -1033,6 +1073,7 @@ const getLastModifiedForFolder = async (
       }
 
       const stat = await xfs.statPromise(filePath);
+
       if (stat.isFile()) {
         if (stat.mtimeMs > lastModified) {
           lastModified = stat.mtimeMs;

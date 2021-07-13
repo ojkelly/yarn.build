@@ -2,6 +2,7 @@ import { Workspace } from "@yarnpkg/core";
 
 class Graph {
   nodes: NodeGraph = {};
+
   size = 0;
 
   runSize = 0;
@@ -17,9 +18,11 @@ class Graph {
 
     // Otherwise make a new Node, store it, then return it
     const newNode = new Node(id, this);
+
     this.nodes[id] = newNode;
 
     this.size++;
+
     return newNode;
   }
 
@@ -29,11 +32,11 @@ class Graph {
     }
   }
 
-  resetRuns() {
+  resetRuns(): void {
     this.ran = new Set();
   }
 
-  async resolve(node: Node) {
+  async resolve(node: Node): Promise<void> {
     // resolved and unresolved are local to this function
     // as they are only relevant to this resolution
     const resolved: Set<string> = new Set();
@@ -118,6 +121,7 @@ class Graph {
         .every((v) => v === true)
     ) {
       resolve();
+
       return;
     }
 
@@ -130,6 +134,7 @@ class Graph {
     runLog: RunLog
   ): string[] {
     const parentDependencies: string[] = [];
+
     for (const dep of node.dependencies) {
       parentDependencies.push(dep.id);
       if (!runLog[dep.id] && dep.runCallback) {
@@ -140,6 +145,7 @@ class Graph {
           node: dep,
           canStart: Graph.QueueItemCanStart(childDependencies),
         };
+
         queue.add(queueItem);
       }
     }
@@ -155,6 +161,7 @@ class Graph {
 
       queue.add(queueItem);
     }
+
     return parentDependencies;
   }
 
@@ -176,11 +183,14 @@ type RunQueueItem = {
 
 class Node {
   id: string;
+
   dependencies: Node[];
+
   graph: Graph;
 
   // metadata
   workspace?: Workspace;
+
   runCallback?: RunLogCallback;
 
   constructor(id: string, graph: Graph) {
@@ -219,6 +229,7 @@ class Node {
 
 class CyclicDependencyError extends Error {
   code: string;
+
   constructor(message: string) {
     super(message);
     this.name = "CyclicDependencyError";
@@ -236,4 +247,4 @@ type NodeGraph = {
   [id: string]: Node;
 };
 
-export { Graph, Node, CyclicDependencyError };
+export { Graph, Node, CyclicDependencyError, RunCallback };

@@ -8,6 +8,7 @@ const CSI = ESC + `[`;
 
 export class Hansi {
   static row = 0;
+
   static column = 0;
 
   static pad(lines = 1): void {
@@ -50,6 +51,7 @@ export class Hansi {
           .toString()
           .split(";")
           .map(Number);
+
         resolve({ x, y });
       });
       process.stdout.write(CSI + `6n`);
@@ -83,6 +85,7 @@ export class Hansi {
   static linesRequired(content: string, width: number): number {
     const wrapRegex = new RegExp(`([^\n]{0,${width}})(\n)?`, `gm`); // Ensure we are no wider than width
     const wrappedContent = stripAnsi(content).match(wrapRegex) ?? [``];
+
     return wrappedContent.length - 1;
   }
 }

@@ -64,7 +64,7 @@ export default class Build extends BaseCommand {
   // Keep track of what is built, and if it needs to be rebuilt
   buildLog: { [key: string]: { hash: string | undefined } } = {};
 
-  async execute() {
+  async execute(): Promise<0 | 1> {
     const configuration = await Configuration.find(
       this.context.cwd,
       this.context.plugins
@@ -109,6 +109,7 @@ export default class Build extends BaseCommand {
           prefix: string
         ) => {
           const stdout = new miscUtils.BufferStream();
+
           stdout.on("data", (chunk) =>
             buildReporter?.emit(
               RunSupervisorReporterEvents.info,
@@ -118,6 +119,7 @@ export default class Build extends BaseCommand {
           );
 
           const stderr = new miscUtils.BufferStream();
+
           stderr.on("data", (chunk) =>
             buildReporter?.emit(
               RunSupervisorReporterEvents.error,
@@ -142,6 +144,7 @@ export default class Build extends BaseCommand {
             stdout.end();
             stderr.end();
           }
+
           return 2;
         };
 
@@ -164,6 +167,7 @@ export default class Build extends BaseCommand {
 
         // build all the things
         const ranWithoutErrors = await supervisor.run();
+
         if (ranWithoutErrors === false) {
           report.reportError(MessageName.BUILD_FAILED, "Build failed");
         }

@@ -96,6 +96,7 @@ export default class Test extends BaseCommand {
           prefix: string
         ) => {
           const stdout = new miscUtils.BufferStream();
+
           stdout.on("data", (chunk) =>
             runReporter?.emit(
               RunSupervisorReporterEvents.info,
@@ -105,6 +106,7 @@ export default class Test extends BaseCommand {
           );
 
           const stderr = new miscUtils.BufferStream();
+
           stderr.on("data", (chunk) =>
             runReporter?.emit(
               RunSupervisorReporterEvents.error,
@@ -129,6 +131,7 @@ export default class Test extends BaseCommand {
             stdout.end();
             stderr.end();
           }
+
           return 2;
         };
 
@@ -151,6 +154,7 @@ export default class Test extends BaseCommand {
 
         // test all the things
         const ranWithoutErrors = await supervisor.run();
+
         if (ranWithoutErrors === false) {
           report.reportError(MessageName.BUILD_FAILED, "Test failed");
         }

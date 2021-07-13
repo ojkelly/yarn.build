@@ -6,8 +6,10 @@ const getWorkspaceChildrenRecursive = (
   project: Project
 ): Array<Workspace> => {
   const workspaceList = [];
+
   for (const childWorkspaceCwd of rootWorkspace.workspacesCwds) {
     const childWorkspace = project.workspacesByCwd.get(childWorkspaceCwd);
+
     if (childWorkspace) {
       workspaceList.push(
         childWorkspace,
@@ -15,6 +17,7 @@ const getWorkspaceChildrenRecursive = (
       );
     }
   }
+
   return workspaceList;
 };
 
