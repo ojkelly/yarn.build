@@ -1,0 +1,23 @@
+name: '@internal/lorem-ipsum'
+version: 1.0.0
+main: build/index.js
+# license, none for the example
+license: UNLICENSED
+private: true
+# scripts comment
+scripts:
+  build: tsc
+  test: jest
+
+# plugin stuff
+yarn.build:
+  input: .
+  output: dist
+dependencies:
+  '@internal/phrase-lorem-ipsum': 'workspace:*'
+  lodash: ^4.17.21
+  yawn-yaml: ^1.5.0
+  '@kablamo/kerosene-ui': ^0.0.21
+  '@kablamo/kerosene': ^0.0.20
+jest:
+  preset: ts-jest

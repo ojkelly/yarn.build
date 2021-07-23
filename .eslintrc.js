@@ -6,7 +6,6 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "prettier",
     "plugin:@kablamo/recommended",
-    "plugin:cypress/recommended",
   ],
 
   parser: require.resolve(`@typescript-eslint/parser`),
