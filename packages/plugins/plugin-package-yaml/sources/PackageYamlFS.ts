@@ -52,6 +52,8 @@ const ManifestFiles = ["package.json", "package.yaml", "package.yml"] as const;
 
 type ManifestFilename = typeof ManifestFiles[number];
 
+// TODO: Read methods
+// TODO: Write methods
 export class PortablePackageYamlFS extends BasePortableFakeFS {
   private readonly realFs: typeof fs;
 
@@ -63,6 +65,13 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   // package.yaml stuff
 
+  convertManifestPath(p: PortablePath, f: ManifestFilename): PortablePath {
+    const str = p.toString();
+    const rest = str.substring(0, str.lastIndexOf("/") + 1);
+
+    return `${rest}${f}` as PortablePath;
+  }
+
   isPathForManifest(p: PortablePath): false | ManifestFilename {
     const str = p.toString();
     const file = str.substring(str.lastIndexOf("/") + 1, str.length);
@@ -72,7 +81,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       : false;
   }
 
-  doesManifestExist(p: PortablePath): boolean | ManifestFilename {
+  doesManifestExist(p: PortablePath): ManifestFilename | undefined {
     const str = p.toString();
     const rest = str.substring(0, str.lastIndexOf("/") + 1);
 
@@ -81,8 +90,22 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         return this.realFs.existsSync(
           npath.fromPortablePath(`${rest}${manifest}`)
         );
-      }) || false
+      }) || undefined
     );
+  }
+
+  patchManifestPath(p: PortablePath): PortablePath {
+    let patched = p;
+
+    if (!!this.isPathForManifest(p)) {
+      const manifestName = this.doesManifestExist(p);
+
+      if (typeof manifestName !== "undefined") {
+        patched = this.convertManifestPath(p, manifestName);
+      }
+    }
+
+    return patched;
   }
 
   // whichManifestExists() {
@@ -141,6 +164,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async openPromise(p: PortablePath, flags: string, mode?: number) {
+    p = this.patchManifestPath(p);
+
     return await new Promise<number>((resolve, reject) => {
       this.realFs.open(
         npath.fromPortablePath(p),
@@ -152,6 +177,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   openSync(p: PortablePath, flags: string, mode?: number) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.openSync(npath.fromPortablePath(p), flags, mode);
   }
 
@@ -307,6 +334,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   createReadStream(p: PortablePath | null, opts?: CreateReadStreamOptions) {
+    p = this.patchManifestPath(p);
+
     const realPath = (
       p !== null ? npath.fromPortablePath(p) : p
     ) as fs.PathLike;
@@ -318,6 +347,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   createWriteStream(p: PortablePath | null, opts?: CreateWriteStreamOptions) {
+    p = this.patchManifestPath(p);
+
     const realPath = (
       p !== null ? npath.fromPortablePath(p) : p
     ) as fs.PathLike;
@@ -329,6 +360,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async realpathPromise(p: PortablePath) {
+    p = this.patchManifestPath(p);
+
     return await new Promise<string>((resolve, reject) => {
       this.realFs.realpath(
         npath.fromPortablePath(p),
@@ -341,12 +374,16 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   realpathSync(p: PortablePath) {
+    p = this.patchManifestPath(p);
+
     return npath.toPortablePath(
       this.realFs.realpathSync(npath.fromPortablePath(p), {})
     );
   }
 
   async existsPromise(p: PortablePath) {
+    p = this.patchManifestPath(p);
+
     return await new Promise<boolean>((resolve) => {
       if (this.realFs.existsSync(npath.fromPortablePath(p))) {
         resolve(true);
@@ -357,10 +394,14 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   accessSync(p: PortablePath, mode?: number) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.accessSync(npath.fromPortablePath(p), mode);
   }
 
   async accessPromise(p: PortablePath, mode?: number) {
+    p = this.patchManifestPath(p);
+
     return await new Promise<void>((resolve, reject) => {
       this.realFs.access(
         npath.fromPortablePath(p),
@@ -373,8 +414,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   existsSync(p: PortablePath) {
     if (!!this.isPathForManifest(p)) {
       const isOnDisk = this.doesManifestExist(p);
-
-      // console.log("existsSync", { p, isOnDisk });
 
       return !!isOnDisk;
     } else {
@@ -397,6 +436,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async statPromise(p: PortablePath, opts?: { bigint: boolean }) {
     return await new Promise<Stats>((resolve, reject) => {
+      p = this.patchManifestPath(p);
+
       if (opts) {
         this.realFs.stat(
           npath.fromPortablePath(p),
@@ -419,6 +460,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   statSync(p: PortablePath, opts?: { bigint: boolean }): BigIntStats | Stats;
 
   statSync(p: PortablePath, opts?: { bigint: boolean }) {
+    p = this.patchManifestPath(p);
+
     if (opts) {
       return this.realFs.statSync(npath.fromPortablePath(p), opts);
     } else {
@@ -476,6 +519,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async lstatPromise(p: PortablePath, opts?: { bigint: boolean }) {
     return await new Promise<Stats>((resolve, reject) => {
+      p = this.patchManifestPath(p);
+
       if (opts) {
         // @ts-expect-error - TS does not know this takes options
         this.realFs.lstat(
@@ -499,6 +544,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   lstatSync(p: PortablePath, opts?: { bigint: boolean }): BigIntStats | Stats;
 
   lstatSync(p: PortablePath, opts?: { bigint: boolean }): BigIntStats | Stats {
+    p = this.patchManifestPath(p);
+
     if (opts) {
       return this.realFs.lstatSync(npath.fromPortablePath(p), opts);
     } else {
@@ -508,6 +555,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async chmodPromise(p: PortablePath, mask: number) {
     return await new Promise<void>((resolve, reject) => {
+      p = this.patchManifestPath(p);
+
       this.realFs.chmod(
         npath.fromPortablePath(p),
         mask,
@@ -517,11 +566,15 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   chmodSync(p: PortablePath, mask: number) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.chmodSync(npath.fromPortablePath(p), mask);
   }
 
   async chownPromise(p: PortablePath, uid: number, gid: number) {
     return await new Promise<void>((resolve, reject) => {
+      p = this.patchManifestPath(p);
+
       this.realFs.chown(
         npath.fromPortablePath(p),
         uid,
@@ -532,6 +585,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   chownSync(p: PortablePath, uid: number, gid: number) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.chownSync(npath.fromPortablePath(p), uid, gid);
   }
 
@@ -553,6 +608,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async copyFilePromise(sourceP: PortablePath, destP: PortablePath, flags = 0) {
+    //  TODO: do we need to patch this?
     return await new Promise<void>((resolve, reject) => {
       this.realFs.copyFile(
         npath.fromPortablePath(sourceP),
@@ -564,6 +620,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   copyFileSync(sourceP: PortablePath, destP: PortablePath, flags = 0) {
+    // TODO: patch this?
     return this.realFs.copyFileSync(
       npath.fromPortablePath(sourceP),
       npath.fromPortablePath(destP),
@@ -824,6 +881,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async unlinkPromise(p: PortablePath) {
+    p = this.patchManifestPath(p);
+
     return await new Promise<void>((resolve, reject) => {
       this.realFs.unlink(
         npath.fromPortablePath(p),
@@ -833,6 +892,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   unlinkSync(p: PortablePath) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.unlinkSync(npath.fromPortablePath(p));
   }
 
@@ -842,6 +903,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     mtime: Date | string | number
   ) {
     return await new Promise<void>((resolve, reject) => {
+      p = this.patchManifestPath(p);
+
       this.realFs.utimes(
         npath.fromPortablePath(p),
         atime,
@@ -856,6 +919,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     atime: Date | string | number,
     mtime: Date | string | number
   ) {
+    p = this.patchManifestPath(p);
+
     this.realFs.utimesSync(npath.fromPortablePath(p), atime, mtime);
   }
 
@@ -941,6 +1006,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   readFilePromise(p: FSPath<PortablePath>, encoding?: string): Promise<Buffer>;
 
+  // TODO: extract this
   async readFilePromise(p: FSPath<PortablePath>, encoding?: string) {
     return await new Promise<any>((resolve, reject) => {
       const loadYmlManifest = (manifestPath: string) => {
@@ -965,7 +1031,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
               console.log(`readFilePromise`, { p, pkgYml, rawManifest });
 
-              console.trace();
               // convert it back to json for compatibility
               resolve(JSON.stringify(pkgYml));
             }
@@ -1029,7 +1094,10 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   readFileSync(p: FSPath<PortablePath>, encoding?: string): Buffer;
 
+  // TODO: patch this and load the yaml
   readFileSync(p: FSPath<PortablePath>, encoding?: string) {
+    // p = this.patchManifestPath(p);
+
     const fsNativePath = typeof p === `string` ? npath.fromPortablePath(p) : p;
 
     return this.realFs.readFileSync(
@@ -1059,6 +1127,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     opts: { withFileTypes: boolean }
   ): Promise<Array<Filename> | Array<Dirent>>;
 
+  // TODO: patch this?
   async readdirPromise(
     p: PortablePath,
     { withFileTypes }: { withFileTypes?: boolean } = {}
@@ -1095,6 +1164,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     opts: { withFileTypes: boolean }
   ): Array<Filename> | Array<Dirent>;
 
+  // TODO: patch this?
   readdirSync(
     p: PortablePath,
     { withFileTypes }: { withFileTypes?: boolean } = {}
@@ -1146,6 +1216,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   watch(p: PortablePath, opts: WatchOptions, cb?: WatchCallback): Watcher;
 
   watch(p: PortablePath, a?: WatchOptions | WatchCallback, b?: WatchCallback) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.watch(
       npath.fromPortablePath(p),
       // @ts-expect-error undefined
@@ -1167,6 +1239,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     a: WatchFileOptions | WatchFileCallback,
     b?: WatchFileCallback
   ) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.watchFile(
       npath.fromPortablePath(p),
       // @ts-expect-error undefined
@@ -1176,6 +1250,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   unwatchFile(p: PortablePath, cb?: WatchFileCallback) {
+    p = this.patchManifestPath(p);
+
     return this.realFs.unwatchFile(npath.fromPortablePath(p), cb);
   }
 
