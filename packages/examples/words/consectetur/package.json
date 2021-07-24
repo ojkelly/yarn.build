@@ -6,5 +6,10 @@
   "private": true,
   "scripts": {
     "build": "tsc"
+  },
+  "dependencies": {
+    "jest": "^26",
+    "ts-jest": "^26.4.4",
+    "typescript": "^4"
   }
 }

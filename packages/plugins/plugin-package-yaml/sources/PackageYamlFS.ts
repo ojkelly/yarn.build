@@ -25,11 +25,11 @@ import { load } from "js-yaml";
 import YAWN from "yawn-yaml/cjs";
 
 export class PackageYamlFS extends ProxiedFS<NativePath, PortablePath> {
-  protected readonly baseFs: FakeFS<PortablePath>;
+  protected readonly baseFs: PortablePackageYamlFS;
 
   constructor(realFs: typeof fs) {
+    // console.log("PackageYamlFS");
     super(npath);
-    console.log("PackageYamlFS new");
     this.baseFs = new PortablePackageYamlFS(realFs);
   }
 
@@ -39,6 +39,10 @@ export class PackageYamlFS extends ProxiedFS<NativePath, PortablePath> {
 
   protected mapToBase(path: NativePath) {
     return npath.toPortablePath(path);
+  }
+
+  patchManifestPath(p: PortablePath): PortablePath {
+    return this.baseFs.patchManifestPath(p);
   }
 }
 
@@ -60,7 +64,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   constructor(realFs: typeof fs = fs) {
     super();
 
-    this.realFs = realFs;
+    this.realFs = { ...realFs };
   }
 
   // package.yaml stuff
@@ -85,13 +89,11 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     const str = p.toString();
     const rest = str.substring(0, str.lastIndexOf("/") + 1);
 
-    return (
-      ManifestFiles.find((manifest) => {
-        return this.realFs.existsSync(
-          npath.fromPortablePath(`${rest}${manifest}`)
-        );
-      }) || undefined
-    );
+    return ManifestFiles.find((manifest) => {
+      return this.realFs.existsSync(
+        npath.fromPortablePath(`${rest}${manifest}`)
+      );
+    });
   }
 
   patchManifestPath(p: PortablePath): PortablePath {
@@ -100,54 +102,20 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     if (!!this.isPathForManifest(p)) {
       const manifestName = this.doesManifestExist(p);
 
+      // if (manifestName == "package.json") {
+      // console.log(typeof this.realFs);
+      // console.trace();
+      // }
+
       if (typeof manifestName !== "undefined") {
         patched = this.convertManifestPath(p, manifestName);
       }
+
+      console.log("patchManifestPath", { manifestName, p, patched });
     }
 
     return patched;
   }
-
-  // whichManifestExists() {
-  //   const loadYmlManifest = () => {
-  //     const pkgYmlPath = `${p.substr(0, p.lastIndexOf(`.`))}.yml`;
-  //     const pkgYmlExists = this.realFs.existsSync(
-  //       npath.fromPortablePath(pkgYmlPath)
-  //     );
-  //     // console.log(`existsPromise`, {pkgYmlPath, pkgYmlExists});
-
-  //     if (pkgYmlExists) resolve(pkgYmlExists);
-
-  //     const pkgYamlPath = `${p.substr(0, p.lastIndexOf(`.`))}.yaml`;
-  //     const pkgYamlExists = this.realFs.existsSync(
-  //       npath.fromPortablePath(pkgYamlPath)
-  //     );
-  //     // console.log(`existsPromise`, {pkgYamlPath, pkgYamlExists});
-
-  //     if (pkgYamlExists) {
-  //       resolve(pkgYamlExists);
-  //     }
-  //   };
-
-  //   if (p.toString().endsWith(`package.json`)) {
-  //     const pkgJsonExists = this.realFs.existsSync(npath.fromPortablePath(p));
-
-  //     if (pkgJsonExists) {
-  //       resolve(pkgJsonExists);
-  //     } else {
-  //       loadYmlManifest();
-  //     }
-  //   }
-
-  //   if (
-  //     p.toString().endsWith(`package.yml`) ||
-  //     p.toString().endsWith(`package.yaml`)
-  //   ) {
-  //     loadYmlManifest();
-
-  //     return;
-  //   }
-  // }
 
   // FS
 
@@ -160,6 +128,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   resolve(p: PortablePath) {
+    // p = this.patchManifestPath(p);
+
     return ppath.resolve(p);
   }
 
@@ -334,7 +304,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   createReadStream(p: PortablePath | null, opts?: CreateReadStreamOptions) {
-    p = this.patchManifestPath(p);
+    if (p !== null) {
+      p = this.patchManifestPath(p);
+    }
 
     const realPath = (
       p !== null ? npath.fromPortablePath(p) : p
@@ -347,7 +319,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   createWriteStream(p: PortablePath | null, opts?: CreateWriteStreamOptions) {
-    p = this.patchManifestPath(p);
+    if (p !== null) {
+      p = this.patchManifestPath(p);
+    }
 
     const realPath = (
       p !== null ? npath.fromPortablePath(p) : p
@@ -360,7 +334,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async realpathPromise(p: PortablePath) {
+    // console.log("realpathPromise", p);
     p = this.patchManifestPath(p);
+    // console.log("realpathPromise a", p);
 
     return await new Promise<string>((resolve, reject) => {
       this.realFs.realpath(
@@ -412,13 +388,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   existsSync(p: PortablePath) {
-    if (!!this.isPathForManifest(p)) {
-      const isOnDisk = this.doesManifestExist(p);
+    p = this.patchManifestPath(p);
 
-      return !!isOnDisk;
-    } else {
-      return this.realFs.existsSync(npath.fromPortablePath(p));
-    }
+    return this.realFs.existsSync(npath.fromPortablePath(p));
   }
 
   async statPromise(p: PortablePath): Promise<Stats>;
@@ -519,7 +491,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async lstatPromise(p: PortablePath, opts?: { bigint: boolean }) {
     return await new Promise<Stats>((resolve, reject) => {
+      // console.log("lstatPromise", p);
       p = this.patchManifestPath(p);
+      // console.log("lstatPromise a", p);
 
       if (opts) {
         // @ts-expect-error - TS does not know this takes options
@@ -689,8 +663,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           npath.fromPortablePath(pkgYmlPath)
         );
 
-        console.log(`writeFilePromise`, { pkgYmlPath, pkgYmlExists });
-
         if (pkgYmlExists) {
           canWrite = true;
           manifestPath = pkgYmlPath;
@@ -703,8 +675,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
             npath.fromPortablePath(pkgYamlPath)
           );
 
-          console.log(`writeFilePromise`, { pkgYamlPath, pkgYamlExists });
-
           if (pkgYamlExists) {
             canWrite = true;
             manifestPath = pkgYmlPath;
@@ -716,13 +686,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
             ? content.toString()
             : content;
 
-          console.log(`writeFilePromise`, { mJsonStr });
-
           const manifestObject = JSON.parse(mJsonStr);
-
-          console.log(`writeFilePromise`, { manifestObject });
-          // const manifestJsonStr = safeDump(manifestObject, JSON_SCHEMA);
-          // console.log(`writeFilePromise`, {manifestJsonStr});
 
           const update: Promise<boolean> = new Promise((didSave) => {
             if (manifestPath) {
@@ -740,20 +704,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
                     if (data instanceof Buffer) rawManifest = data.toString();
                     else rawManifest = data;
 
-                    const pkgYml = load(rawManifest);
-
-                    console.log(`writeFilePromise update`, {
-                      pkgYml,
-                      rawManifest,
-                    });
-
                     const manifestYawn = new YAWN(rawManifest);
 
                     manifestYawn.json = manifestObject;
-
-                    console.log(`writeFilePromise yawn`, {
-                      myyy: manifestYawn.yaml,
-                    });
 
                     // TODO: load existing file off disk, deep merge to persist comments?
 
@@ -764,11 +717,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
                         opts as fs.WriteFileOptions,
                         (err) => {
                           if (err) {
-                            console.log(`writeFilePromise opts did save false`);
                             didSave(false);
                           } else {
-                            console.log(`writeFilePromise opts did save true`);
-
                             didSave(true);
                           }
                         }
@@ -779,12 +729,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
                         manifestYawn.yaml,
                         (err) => {
                           if (err) {
-                            console.log(`writeFilePromise did save false`);
-
                             didSave(false);
                           } else {
-                            console.log(`writeFilePromise did save true`);
-
                             didSave(true);
                           }
                         }
@@ -798,16 +744,10 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
             }
           });
 
-          console.log(`writeFilePromise update`, { update });
-
           if (await update) {
-            console.log(`writeFilePromise update done true`);
-
             return true;
           }
         }
-
-        console.log(`writeFilePromise update false`);
 
         return false;
       };
@@ -1029,8 +969,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
               const pkgYml = load(rawManifest);
 
-              console.log(`readFilePromise`, { p, pkgYml, rawManifest });
-
               // convert it back to json for compatibility
               resolve(JSON.stringify(pkgYml));
             }
@@ -1043,8 +981,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         p.toString().endsWith(`package.yml`) ||
         p.toString().endsWith(`package.yaml`)
       ) {
-        // console.log(`readFilePromise`, {p});
-
         const pth = p.toString();
 
         const pkgJsonPath = `${pth.substr(0, pth.lastIndexOf(`.`))}.json`;
@@ -1052,15 +988,11 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           npath.fromPortablePath(pkgJsonPath)
         );
 
-        // console.log(`readFilePromise`, {pkgJsonPath, pkgJsonExists});
-
         if (!pkgJsonExists) {
           const pkgYmlPath = `${pth.substr(0, pth.lastIndexOf(`.`))}.yml`;
           const pkgYmlExists = this.realFs.existsSync(
             npath.fromPortablePath(pkgYmlPath)
           );
-
-          // console.log(`readFilePromise`, {pkgYmlPath, pkgYmlExists});
 
           if (pkgYmlExists) {
             loadYmlManifest(pkgYmlPath);
@@ -1072,7 +1004,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           const pkgYamlExists = this.realFs.existsSync(
             npath.fromPortablePath(pkgYamlPath)
           );
-          // console.log(`readFilePromise`, {pkgYamlPath, pkgYamlExists});
 
           if (pkgYamlExists) loadYmlManifest(pkgYamlPath);
 

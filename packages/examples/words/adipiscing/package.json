@@ -6,9 +6,16 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "typescript": "^4",
+    "jest": "^26"
   },
   "jest": {
     "preset": "ts-jest"
+  },
+  "dependencies": {
+    "jest": "^26",
+    "ts-jest": "^26.4.4",
+    "typescript": "^4"
   }
 }

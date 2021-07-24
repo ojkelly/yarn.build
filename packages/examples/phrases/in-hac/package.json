@@ -6,11 +6,16 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "echo": "echo 'this is a test'"
   },
   "dependencies": {
     "@internal/consectetur": "workspace:*",
-    "@internal/elit": "workspace:*"
+    "@internal/elit": "workspace:*",
+    "@types/jest": "^26.0.24",
+    "jest": "^26",
+    "ts-jest": "^26.4.4",
+    "typescript": "^4"
   },
   "jest": {
     "preset": "ts-jest"

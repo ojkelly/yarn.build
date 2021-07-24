@@ -479,9 +479,11 @@ class RunSupervisor {
       workspace?.manifest?.raw["yarn.build"] &&
       typeof workspace?.manifest.raw["yarn.build"].output === "string"
     ) {
-      ignore = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
+      ignore =
+        `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
     } else if (this.pluginConfiguration.folders.output) {
-      ignore = `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
+      ignore =
+        `${dir}${path.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
     } else if (workspace?.manifest.raw.main) {
       ignore = `${dir}${path.sep}${
         workspace?.manifest.raw.main.substring(
@@ -495,9 +497,11 @@ class RunSupervisor {
       workspace?.manifest?.raw["yarn.build"] &&
       typeof workspace?.manifest.raw["yarn.build"].input === "string"
     ) {
-      srcDir = `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
+      srcDir =
+        `${dir}${path.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
     } else if (this.pluginConfiguration.folders.input) {
-      srcDir = `${dir}${path.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
+      srcDir =
+        `${dir}${path.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
     }
 
     // If the source directory is the package root, remove `/.` from the end of
@@ -600,6 +604,8 @@ class RunSupervisor {
       const packagesWithErrors: string[] = [];
 
       process.stdout.write(this.formatHeader(header) + "\n");
+      let hasOutput = false;
+
       // print out any build errors
       for (const relativePath in this.runReport.workspaces) {
         const workspace = this.runReport.workspaces[relativePath];
@@ -608,9 +614,7 @@ class RunSupervisor {
           packagesWithErrors.push(relativePath);
         }
 
-        let hasOutput = false;
-
-        if (workspace.stdout.length !== 0) {
+        if (workspace.stdout.length !== 0 || workspace.stderr.length !== 0) {
           hasOutput = true;
           const lineHeader = this.formatHeader(
             `Output: ${formatUtils.pretty(
@@ -622,7 +626,9 @@ class RunSupervisor {
           );
 
           process.stdout.write(lineHeader + "\n");
-
+        }
+        if (workspace.stdout.length !== 0) {
+          hasOutput = true;
           workspace.stdout.forEach((m) => {
             const lines = m.split("\n");
 
@@ -654,11 +660,11 @@ class RunSupervisor {
             });
           });
         }
-        if (hasOutput) {
-          process.stdout.write(this.grey(DIVIDER) + "\n");
-        }
       }
 
+      if (hasOutput) {
+        process.stdout.write(this.grey(DIVIDER) + "\n");
+      }
       if (packagesWithErrors.length > 0) {
         const errorHeader = this.grey(
           `ERROR for script ${header}\nThe following packages returned an error.\n`
@@ -857,7 +863,7 @@ class RunSupervisor {
       const totalString = formatUtils.pretty(
         this.configuration,
         `${this.runGraph.runSize}`,
-        "grey"
+        "white"
       );
 
       output +=
@@ -957,86 +963,55 @@ class RunSupervisor {
   // Returns a PQueue item
   createRunItem = (workspace: Workspace): RunCallback => {
     return async () =>
-      await this.limit(
-        async (): Promise<boolean> => {
-          const prefix = workspace.relativeCwd;
+      await this.limit(async (): Promise<boolean> => {
+        const prefix = workspace.relativeCwd;
 
-          const command = workspace.manifest.scripts.get(this.runCommand);
+        const command = workspace.manifest.scripts.get(this.runCommand);
 
-          const currentRunLog = this.runLog?.get(
-            `${workspace.relativeCwd}#${this.runCommand}`
-          );
+        const currentRunLog = this.runLog?.get(
+          `${workspace.relativeCwd}#${this.runCommand}`
+        );
 
-          this.runReporter.emit(
-            RunSupervisorReporterEvents.start,
-            workspace.relativeCwd,
-            `${
-              workspace.manifest.name?.scope
-                ? `@${workspace.manifest.name?.scope}/`
-                : ""
-            }${workspace.manifest.name?.name}`,
-            command
-          );
+        this.runReporter.emit(
+          RunSupervisorReporterEvents.start,
+          workspace.relativeCwd,
+          `${
+            workspace.manifest.name?.scope
+              ? `@${workspace.manifest.name?.scope}/`
+              : ""
+          }${workspace.manifest.name?.name}`,
+          command
+        );
 
-          if (!command) {
-            if (this.verbose) {
-              this.runReporter.emit(
-                RunSupervisorReporterEvents.info,
-                workspace.relativeCwd,
-                `Missing \`${this.runCommand}\` script in manifest.`
-              );
-            }
-
+        if (!command) {
+          if (this.verbose) {
             this.runReporter.emit(
-              RunSupervisorReporterEvents.success,
-              workspace.relativeCwd
+              RunSupervisorReporterEvents.info,
+              workspace.relativeCwd,
+              `Missing \`${this.runCommand}\` script in manifest.`
             );
-
-            return true;
           }
 
-          try {
-            const exitCode = await this.cli(
-              this.runCommand,
-              workspace.cwd,
-              this.runReporter,
-              prefix
-            );
+          this.runReporter.emit(
+            RunSupervisorReporterEvents.success,
+            workspace.relativeCwd
+          );
 
-            if (exitCode !== 0) {
-              this.runReporter.emit(
-                RunSupervisorReporterEvents.fail,
-                workspace.relativeCwd
-              );
+          return true;
+        }
 
-              this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-                lastModified: currentRunLog?.lastModified,
-                status: RunStatus.failed,
-                haveCheckedForRerun: true,
-                rerun: false,
-                command: this.runCommand,
-              });
+        try {
+          const exitCode = await this.cli(
+            this.runCommand,
+            workspace.cwd,
+            this.runReporter,
+            prefix
+          );
 
-              return false;
-            }
-
-            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-              lastModified: currentRunLog?.lastModified,
-              status: RunStatus.succeeded,
-              haveCheckedForRerun: true,
-              rerun: false,
-              command: this.runCommand,
-            });
-
-            this.runReporter.emit(
-              RunSupervisorReporterEvents.success,
-              workspace.relativeCwd
-            );
-          } catch (e) {
+          if (exitCode !== 0) {
             this.runReporter.emit(
               RunSupervisorReporterEvents.fail,
-              workspace.relativeCwd,
-              e
+              workspace.relativeCwd
             );
 
             this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
@@ -1050,9 +1025,38 @@ class RunSupervisor {
             return false;
           }
 
-          return true;
+          this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+            lastModified: currentRunLog?.lastModified,
+            status: RunStatus.succeeded,
+            haveCheckedForRerun: true,
+            rerun: false,
+            command: this.runCommand,
+          });
+
+          this.runReporter.emit(
+            RunSupervisorReporterEvents.success,
+            workspace.relativeCwd
+          );
+        } catch (e) {
+          this.runReporter.emit(
+            RunSupervisorReporterEvents.fail,
+            workspace.relativeCwd,
+            e
+          );
+
+          this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+            lastModified: currentRunLog?.lastModified,
+            status: RunStatus.failed,
+            haveCheckedForRerun: true,
+            rerun: false,
+            command: this.runCommand,
+          });
+
+          return false;
         }
-      );
+
+        return true;
+      });
   };
 }
 
