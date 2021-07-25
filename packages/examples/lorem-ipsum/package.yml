@@ -1,6 +1,6 @@
 name: '@internal/lorem-ipsum'
 version: 1.0.0
-main: build/index.js
+main: dist/index.js
 
 # license, none for the example
 license: UNLICENSED

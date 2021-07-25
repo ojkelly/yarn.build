@@ -27,10 +27,10 @@ module.exports = {
     "@typescript-eslint/explicit-member-accessibility": "off",
     "@typescript-eslint/indent": "off",
     "@typescript-eslint/member-delimiter-style": "off",
-    "@typescript-eslint/no-explici-any": "off",
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/prefer-interface": "off",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {

@@ -133,8 +133,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       }
 
       this.cache.set(p, patched);
-      // console.log("patchManifestPath", { manifestName, p, patched });
-      // console.trace();
     }
 
     return patched;
@@ -236,31 +234,6 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
     return false;
   }
-  // if (p.toString().endsWith(`package.json`)) {
-  //   const pkgJsonExists = this.realFs.existsSync(
-  //     npath.fromPortablePath(p.toString())
-  //   );
-
-  //   // if theres no package.json where it should be
-  //   // we'll check and see if theres a package.yaml/yml and write that
-  //   // if none is found, we'll fall through to the bottom of this whole fn
-  //   // and write the file the caller wanted to
-  //   if (!pkgJsonExists) {
-  //     if (await writeYamlManifest()) {
-  //       return;
-  //     }
-  //   }
-  // }
-
-  // // this will probably never be called
-  // if (
-  //   p.toString().endsWith(`package.yml`) ||
-  //   p.toString().endsWith(`package.yaml`)
-  // ) {
-  //   if (await writeYamlManifest()) {
-  //     return;
-  //   }
-  // }
 
   // FS
 
