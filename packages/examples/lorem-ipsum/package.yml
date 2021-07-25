@@ -1,0 +1,32 @@
+name: '@internal/lorem-ipsum'
+version: 1.0.0
+main: dist/index.js
+
+# license, none for the example
+license: UNLICENSED
+private: true
+
+# scripts comment
+scripts:
+  build: tsc
+  test: jest
+  dev: ts-node ./src/index.ts
+
+dependencies:
+  '@internal/phrase-lorem-ipsum': 'workspace:*'
+  jest: "^26"
+  ts-jest: "^26.4.4"
+  typescript: ^4.3.5
+
+devDependencies:
+  '@types/node': ^16.4.1
+  ts-node: ^10.1.0
+  '@types/jest': ^26.0.24
+
+jest:
+  preset: ts-jest
+
+# plugin stuff
+yarn.build:
+  input: .
+  output: dist

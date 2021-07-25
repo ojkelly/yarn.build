@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc"
   },
-  "devDependencies": {
-    "typescript": "^4.1.3"
+  "dependencies": {
+    "jest": "^26",
+    "typescript": "^4"
   }
 }

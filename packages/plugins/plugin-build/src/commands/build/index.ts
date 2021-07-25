@@ -70,9 +70,8 @@ export default class Build extends BaseCommand {
       this.context.plugins
     );
 
-    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(
-      configuration
-    );
+    const pluginConfiguration: YarnBuildConfiguration =
+      await GetPluginConfiguration(configuration);
 
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
@@ -92,14 +91,14 @@ export default class Build extends BaseCommand {
         let targetDirectory = this.context.cwd;
 
         if (typeof this.buildTarget[0] === "string") {
-          targetDirectory = `${configuration.projectCwd}${path.sep}${this.buildTarget[0]}` as PortablePath;
+          targetDirectory =
+            `${configuration.projectCwd}${path.sep}${this.buildTarget[0]}` as PortablePath;
         }
 
         const { project, workspace: cwdWorkspace } = await Project.find(
           configuration,
           targetDirectory
         );
-
         const targetWorkspace = cwdWorkspace || project.topLevelWorkspace;
 
         const runScript = async (
@@ -164,7 +163,6 @@ export default class Build extends BaseCommand {
         await supervisor.setup();
 
         await addTargets({ targetWorkspace, project, supervisor });
-
         // build all the things
         const ranWithoutErrors = await supervisor.run();
 
