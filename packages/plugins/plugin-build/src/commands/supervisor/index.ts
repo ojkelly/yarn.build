@@ -868,9 +868,7 @@ class RunSupervisor {
 
       output +=
         this.formatHeader(
-          `${successString}${this.grey(":")}${failedString}${this.grey(
-            "/"
-          )}${totalString} ${formatTimestampDifference(
+          `${successString}:${failedString}/${totalString} ${formatTimestampDifference(
             this.runReport.runStart,
             timestamp
           )}`
@@ -914,7 +912,7 @@ class RunSupervisor {
       const totalString = formatUtils.pretty(
         this.configuration,
         `Total: ${this.runGraph.runSize}`,
-        "grey"
+        "white"
       );
 
       output +=
@@ -943,15 +941,16 @@ class RunSupervisor {
       const savedTime = formatTimestampDifference(wallTime, cpuTime);
 
       if (!isCI) {
-        output += this.grey(
-          `Cumulative: (cpu): ${formatTimestampDifference(0, totalMs)}\n`
-        );
-        output += this.grey(`Saved: ${savedTime}\n`);
+        output += `Cumulative: (cpu): ${formatTimestampDifference(
+          0,
+          totalMs
+        )}\n`;
+        output += `Saved: ${savedTime}\n`;
       }
     }
     if (!!this.runReport.runStart) {
       output +=
-        this.grey(`Runtime (wall): `) +
+        `Runtime (wall): ` +
         formatTimestampDifference(Date.now(), this.runReport.runStart) +
         `\n`;
     }

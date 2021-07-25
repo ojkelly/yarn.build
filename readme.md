@@ -129,6 +129,12 @@ PNP is not supported yet, as neither is a node.
 
 You can still read the yaml file directly (it is just a file after all), but existing tooling that wants to read from your `package.json` will break.
 
+#### Troubleshooting
+
+If it breaks, convert your yaml package file back to json, and comment the plugin out from `.yarnrc.yml`.
+
+Please also make an issue describing you problem, so we can hopefully fix it.
+
 ### Example
 
 The initial usecase for this is for non-javascript packages in a polyglot yarn.build repository. As an example this is how you can build a go app, leveraging yarn and yarn.build but with a yaml file as your build specification (ie `package.yaml`).
