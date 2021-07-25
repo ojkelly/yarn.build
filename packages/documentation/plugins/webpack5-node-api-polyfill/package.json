@@ -1,0 +1,7 @@
+{
+  "name": "@internal/webpack5-node-api-polyfill",
+  "main": "./index.js",
+  "dependencies": {
+    "url": "^0.11.0"
+  }
+}

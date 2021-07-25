@@ -5,6 +5,8 @@
   "license": "MIT",
   "workspaces": {
     "packages": [
+      "packages/documentation",
+      "packages/documentation/plugins/*",
       "packages/plugins/*",
       "packages/examples/*",
       "packages/examples/words/*",
