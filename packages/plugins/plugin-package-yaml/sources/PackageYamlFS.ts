@@ -24,11 +24,12 @@ import fs, { BigIntStats, Stats } from "fs";
 import { load } from "js-yaml";
 import YAWN from "yawn-yaml/cjs";
 
+import { LruCache } from "./lru";
+
 export class PackageYamlFS extends ProxiedFS<NativePath, PortablePath> {
   protected readonly baseFs: PortablePackageYamlFS;
 
   constructor(realFs: typeof fs) {
-    // console.log("PackageYamlFS");
     super(npath);
     this.baseFs = new PortablePackageYamlFS(realFs);
   }
@@ -61,10 +62,29 @@ type ManifestFilename = typeof ManifestFiles[number];
 export class PortablePackageYamlFS extends BasePortableFakeFS {
   private readonly realFs: typeof fs;
 
+  // Package.json mapping cache
+  //
+  // To check if a file has been remapped from package.json to package.yaml
+  // we need to read off the file system. This is expensive, and has the
+  // potential to end up in infinite loops if we're not careful.
+  //
+  // This cache is is limited to just those files which we think are
+  // pakage.json manifests, and it only remembers the last 100.
+  // Even then, it can dramatically cut down on what was a performance hit.
+  //
+  // For any fs methods that may remove or rename the file, we remove their
+  // cache entry. So that next time it needs to be accessed, it can be
+  // checked on the filesystem again.
+  //
+  // This will (most likely) only fail if another program alters the file
+  // during a process.
+  protected cache: LruCache<string>;
+
   constructor(realFs: typeof fs = fs) {
     super();
 
     this.realFs = { ...realFs };
+    this.cache = new LruCache();
   }
 
   // package.yaml stuff
@@ -97,25 +117,150 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   patchManifestPath(p: PortablePath): PortablePath {
+    const cached = this.cache.get(p);
+
+    if (typeof cached !== "undefined") {
+      return cached as PortablePath;
+    }
+
     let patched = p;
 
     if (!!this.isPathForManifest(p)) {
       const manifestName = this.doesManifestExist(p);
 
-      // if (manifestName == "package.json") {
-      // console.log(typeof this.realFs);
-      // console.trace();
-      // }
-
       if (typeof manifestName !== "undefined") {
         patched = this.convertManifestPath(p, manifestName);
       }
 
-      console.log("patchManifestPath", { manifestName, p, patched });
+      this.cache.set(p, patched);
+      // console.log("patchManifestPath", { manifestName, p, patched });
+      // console.trace();
     }
 
     return patched;
   }
+
+  // read the manifest file if it's yaml, and return it as json
+  readManifestFile(p: PortablePath, encoding?: string): false | string {
+    try {
+      const manifestType = this.isPathForManifest(p);
+
+      // bail if we don't need to do anything
+      if (manifestType === false || manifestType == "package.json") {
+        return false;
+      }
+
+      const fsNativePath =
+        typeof p === `string` ? npath.fromPortablePath(p) : p;
+
+      const data = this.realFs.readFileSync(
+        fsNativePath,
+        encoding as
+          | BufferEncoding
+          | (fs.BaseEncodingOptions & { flag?: string | undefined })
+          | null
+          | undefined
+      );
+      let rawManifest = ``;
+
+      if (data instanceof Buffer) {
+        rawManifest = data.toString();
+      } else {
+        rawManifest = data;
+      }
+      const pkgYml = load(rawManifest);
+
+      // convert it back to json for compatibility
+      return JSON.stringify(pkgYml);
+    } catch {
+      // err's ignored, we'll hand off to the normal file reader
+    }
+
+    return false;
+  }
+
+  /// If p is for a non package.json manifest file write it, otherwise bail
+  // The .yaml/.yml manifest file must be on disk, otherwsise a .json will
+  // be defaulted to
+  writeManifestFile(
+    p: FSPath<PortablePath>,
+    content: string | Buffer | ArrayBuffer | DataView,
+    manifestFilename: ManifestFilename,
+    opts?: WriteFileOptions
+  ): boolean {
+    if (typeof content === `string` || Buffer.isBuffer(content)) {
+      // hand this one back to be written as normal
+      if (manifestFilename == "package.json") {
+        return false;
+      }
+
+      const mJsonStr: string = Buffer.isBuffer(content)
+        ? content.toString()
+        : content;
+
+      const manifestObject = JSON.parse(mJsonStr);
+
+      const nativeManifestPath = npath.fromPortablePath(p as PortablePath);
+
+      try {
+        const rawManifest = this.realFs.readFileSync(
+          nativeManifestPath,
+          `utf-8`
+        );
+
+        // load yaml off disk
+        const manifestYawn = new YAWN(rawManifest);
+
+        // merge json, to preserve comments
+        manifestYawn.json = manifestObject;
+
+        if (opts) {
+          this.realFs.writeFileSync(
+            npath.fromPortablePath(nativeManifestPath),
+            manifestYawn.yaml,
+            opts as fs.WriteFileOptions
+          );
+        } else {
+          this.realFs.writeFileSync(
+            npath.fromPortablePath(nativeManifestPath),
+            manifestYawn.yaml
+          );
+        }
+
+        return true;
+      } catch {
+        // errs are ignored, we'll pass this off to the normal file handler
+        // to try and write a package.json
+      }
+    }
+
+    return false;
+  }
+  // if (p.toString().endsWith(`package.json`)) {
+  //   const pkgJsonExists = this.realFs.existsSync(
+  //     npath.fromPortablePath(p.toString())
+  //   );
+
+  //   // if theres no package.json where it should be
+  //   // we'll check and see if theres a package.yaml/yml and write that
+  //   // if none is found, we'll fall through to the bottom of this whole fn
+  //   // and write the file the caller wanted to
+  //   if (!pkgJsonExists) {
+  //     if (await writeYamlManifest()) {
+  //       return;
+  //     }
+  //   }
+  // }
+
+  // // this will probably never be called
+  // if (
+  //   p.toString().endsWith(`package.yml`) ||
+  //   p.toString().endsWith(`package.yaml`)
+  // ) {
+  //   if (await writeYamlManifest()) {
+  //     return;
+  //   }
+  // }
 
   // FS
 
@@ -128,7 +273,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   resolve(p: PortablePath) {
-    // p = this.patchManifestPath(p);
+    p = this.patchManifestPath(p);
 
     return ppath.resolve(p);
   }
@@ -334,9 +479,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async realpathPromise(p: PortablePath) {
-    // console.log("realpathPromise", p);
     p = this.patchManifestPath(p);
-    // console.log("realpathPromise a", p);
 
     return await new Promise<string>((resolve, reject) => {
       this.realFs.realpath(
@@ -491,9 +634,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async lstatPromise(p: PortablePath, opts?: { bigint: boolean }) {
     return await new Promise<Stats>((resolve, reject) => {
-      // console.log("lstatPromise", p);
       p = this.patchManifestPath(p);
-      // console.log("lstatPromise a", p);
 
       if (opts) {
         // @ts-expect-error - TS does not know this takes options
@@ -565,6 +706,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async renamePromise(oldP: PortablePath, newP: PortablePath) {
+    this.cache.delete(oldP);
+    this.cache.delete(newP);
+
     return await new Promise<void>((resolve, reject) => {
       this.realFs.rename(
         npath.fromPortablePath(oldP),
@@ -575,6 +719,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   renameSync(oldP: PortablePath, newP: PortablePath) {
+    this.cache.delete(oldP);
+    this.cache.delete(newP);
+
     return this.realFs.renameSync(
       npath.fromPortablePath(oldP),
       npath.fromPortablePath(newP)
@@ -594,7 +741,9 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   copyFileSync(sourceP: PortablePath, destP: PortablePath, flags = 0) {
-    // TODO: patch this?
+    this.cache.delete(sourceP);
+    this.cache.delete(destP);
+
     return this.realFs.copyFileSync(
       npath.fromPortablePath(sourceP),
       npath.fromPortablePath(destP),
@@ -607,6 +756,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     content: string | Buffer | ArrayBuffer | DataView,
     opts?: WriteFileOptions
   ) {
+    p = this.patchManifestPath(p as PortablePath);
+
     return await new Promise<void>((resolve, reject) => {
       const fsNativePath =
         typeof p === `string` ? npath.fromPortablePath(p) : p;
@@ -628,6 +779,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     });
   }
 
+  // Not patched, if you tried to append to package.json and it was yaml,
+  // it wouldn't be great.
   appendFileSync(
     p: PortablePath,
     content: string | Buffer | ArrayBuffer | DataView,
@@ -651,135 +804,23 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     content: string | Buffer | ArrayBuffer | DataView,
     opts?: WriteFileOptions
   ) {
-    const fsNativePath = typeof p === `string` ? npath.fromPortablePath(p) : p;
+    await new Promise<void>((resolve, reject) => {
+      p = this.patchManifestPath(p as PortablePath);
+      const m = this.isPathForManifest(p);
 
-    if (typeof content === `string` || Buffer.isBuffer(content)) {
-      const writeYamlManifest = async (): Promise<boolean> => {
-        let canWrite = false;
-        let manifestPath: string | undefined;
-        const pathStr = p.toString();
-        const pkgYmlPath = `${pathStr.substr(0, pathStr.lastIndexOf(`.`))}.yml`;
-        const pkgYmlExists = this.realFs.existsSync(
-          npath.fromPortablePath(pkgYmlPath)
-        );
+      if (m !== false) {
+        const success = this.writeManifestFile(p, content, m, opts);
 
-        if (pkgYmlExists) {
-          canWrite = true;
-          manifestPath = pkgYmlPath;
-        } else {
-          const pkgYamlPath = `${pathStr.substr(
-            0,
-            pathStr.lastIndexOf(`.`)
-          )}.yaml`;
-          const pkgYamlExists = this.realFs.existsSync(
-            npath.fromPortablePath(pkgYamlPath)
-          );
+        if (success) {
+          resolve();
 
-          if (pkgYamlExists) {
-            canWrite = true;
-            manifestPath = pkgYmlPath;
-          }
-        }
-
-        if (canWrite && typeof manifestPath == `string`) {
-          const mJsonStr: string = Buffer.isBuffer(content)
-            ? content.toString()
-            : content;
-
-          const manifestObject = JSON.parse(mJsonStr);
-
-          const update: Promise<boolean> = new Promise((didSave) => {
-            if (manifestPath) {
-              const nativeManifestPath = npath.fromPortablePath(manifestPath);
-
-              this.realFs.readFile(
-                nativeManifestPath,
-                `utf-8`,
-                (err: NodeJS.ErrnoException | null, data: string | Buffer) => {
-                  if (err) {
-                    didSave(false);
-                  } else {
-                    let rawManifest = ``;
-
-                    if (data instanceof Buffer) rawManifest = data.toString();
-                    else rawManifest = data;
-
-                    const manifestYawn = new YAWN(rawManifest);
-
-                    manifestYawn.json = manifestObject;
-
-                    // TODO: load existing file off disk, deep merge to persist comments?
-
-                    if (opts) {
-                      this.realFs.writeFile(
-                        npath.fromPortablePath(nativeManifestPath),
-                        manifestYawn.yaml,
-                        opts as fs.WriteFileOptions,
-                        (err) => {
-                          if (err) {
-                            didSave(false);
-                          } else {
-                            didSave(true);
-                          }
-                        }
-                      );
-                    } else {
-                      this.realFs.writeFile(
-                        npath.fromPortablePath(nativeManifestPath),
-                        manifestYawn.yaml,
-                        (err) => {
-                          if (err) {
-                            didSave(false);
-                          } else {
-                            didSave(true);
-                          }
-                        }
-                      );
-                    }
-                  }
-                }
-              );
-            } else {
-              didSave(false);
-            }
-          });
-
-          if (await update) {
-            return true;
-          }
-        }
-
-        return false;
-      };
-
-      if (p.toString().endsWith(`package.json`)) {
-        const pkgJsonExists = this.realFs.existsSync(
-          npath.fromPortablePath(p.toString())
-        );
-
-        // if theres no package.json where it should be
-        // we'll check and see if theres a package.yaml/yml and write that
-        // if none is found, we'll fall through to the bottom of this whole fn
-        // and write the file the caller wanted to
-        if (!pkgJsonExists) {
-          if (await writeYamlManifest()) {
-            return;
-          }
-        }
-      }
-
-      // this will probably never be called
-      if (
-        p.toString().endsWith(`package.yml`) ||
-        p.toString().endsWith(`package.yaml`)
-      ) {
-        if (await writeYamlManifest()) {
           return;
         }
       }
-    }
 
-    await new Promise<void>((resolve, reject) => {
+      const fsNativePath =
+        typeof p === `string` ? npath.fromPortablePath(p) : p;
+
       if (opts) {
         this.realFs.writeFile(
           fsNativePath,
@@ -804,6 +845,17 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     content: string | Buffer | ArrayBuffer | DataView,
     opts?: WriteFileOptions
   ) {
+    p = this.patchManifestPath(p as PortablePath);
+    const m = this.isPathForManifest(p);
+
+    if (m !== false) {
+      const success = this.writeManifestFile(p, content, m, opts);
+
+      if (success) {
+        return;
+      }
+    }
+
     const fsNativePath = typeof p === `string` ? npath.fromPortablePath(p) : p;
 
     if (opts) {
@@ -881,6 +933,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   async rmdirPromise(p: PortablePath, opts?: RmdirOptions) {
+    this.cache.delete(p);
+
     return await new Promise<void>((resolve, reject) => {
       // TODO: always pass opts when min node version is 12.10+
       if (opts) {
@@ -899,6 +953,8 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   }
 
   rmdirSync(p: PortablePath, opts?: RmdirOptions) {
+    this.cache.delete(p);
+
     return this.realFs.rmdirSync(npath.fromPortablePath(p), opts);
   }
 
@@ -949,67 +1005,16 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   // TODO: extract this
   async readFilePromise(p: FSPath<PortablePath>, encoding?: string) {
     return await new Promise<any>((resolve, reject) => {
-      const loadYmlManifest = (manifestPath: string) => {
-        const fsNativePath =
-          typeof manifestPath === `string`
-            ? npath.fromPortablePath(manifestPath)
-            : manifestPath;
+      p = this.patchManifestPath(p as PortablePath);
 
-        this.realFs.readFile(
-          fsNativePath,
-          encoding,
-          (err: NodeJS.ErrnoException | null, data: string | Buffer) => {
-            if (err) {
-              reject(err);
-            } else {
-              let rawManifest = ``;
+      if (this.isPathForManifest(p)) {
+        const manifest = this.readManifestFile(p, encoding);
 
-              if (data instanceof Buffer) rawManifest = data.toString();
-              else rawManifest = data;
-
-              const pkgYml = load(rawManifest);
-
-              // convert it back to json for compatibility
-              resolve(JSON.stringify(pkgYml));
-            }
-          }
-        );
-      };
-
-      if (
-        p.toString().endsWith(`package.json`) ||
-        p.toString().endsWith(`package.yml`) ||
-        p.toString().endsWith(`package.yaml`)
-      ) {
-        const pth = p.toString();
-
-        const pkgJsonPath = `${pth.substr(0, pth.lastIndexOf(`.`))}.json`;
-        const pkgJsonExists = this.realFs.existsSync(
-          npath.fromPortablePath(pkgJsonPath)
-        );
-
-        if (!pkgJsonExists) {
-          const pkgYmlPath = `${pth.substr(0, pth.lastIndexOf(`.`))}.yml`;
-          const pkgYmlExists = this.realFs.existsSync(
-            npath.fromPortablePath(pkgYmlPath)
-          );
-
-          if (pkgYmlExists) {
-            loadYmlManifest(pkgYmlPath);
-
-            return;
-          }
-
-          const pkgYamlPath = `${pth.substr(0, pth.lastIndexOf(`.`))}.yaml`;
-          const pkgYamlExists = this.realFs.existsSync(
-            npath.fromPortablePath(pkgYamlPath)
-          );
-
-          if (pkgYamlExists) loadYmlManifest(pkgYamlPath);
-
-          return;
+        if (manifest !== false) {
+          resolve(manifest);
         }
       }
+
       const fsNativePath =
         typeof p === `string` ? npath.fromPortablePath(p) : p;
 
@@ -1027,7 +1032,15 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   // TODO: patch this and load the yaml
   readFileSync(p: FSPath<PortablePath>, encoding?: string) {
-    // p = this.patchManifestPath(p);
+    p = this.patchManifestPath(p as PortablePath);
+
+    if (this.isPathForManifest(p)) {
+      const manifest = this.readManifestFile(p, encoding);
+
+      if (manifest !== false) {
+        return manifest;
+      }
+    }
 
     const fsNativePath = typeof p === `string` ? npath.fromPortablePath(p) : p;
 

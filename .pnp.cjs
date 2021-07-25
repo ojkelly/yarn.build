@@ -875,13 +875,11 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@internal/lorem-ipsum", "workspace:packages/examples/lorem-ipsum"],
             ["@internal/phrase-lorem-ipsum", "workspace:packages/examples/phrases/lorem-ipsum"],
             ["@types/jest", "npm:26.0.24"],
-            ["@types/node", "npm:16.4.1"],
+            ["@types/node", "npm:16.4.2"],
             ["jest", "npm:26.6.3"],
-            ["lodash", "npm:4.17.21"],
             ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:26.5.6"],
             ["ts-node", "virtual:76b4067bcc43516ec2d5f09dbc310935d6fbae92786e6806fb84e2da9353f3990aaccce210542ce883bef2aee3ca0b394e43330bb8e686bf1141bcd867cb0ea1#npm:10.1.0"],
-            ["typescript", "patch:typescript@npm%3A4.3.5#~builtin<compat/typescript>::version=4.3.5&hash=d8b4e7"],
-            ["yawn-yaml", "npm:1.5.0"]
+            ["typescript", "patch:typescript@npm%3A4.3.5#~builtin<compat/typescript>::version=4.3.5&hash=d8b4e7"]
           ],
           "linkType": "SOFT",
         }]
@@ -1681,6 +1679,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-node-npm-16.4.1-50f3184b8b-6cff78c802.zip/node_modules/@types/node/",
           "packageDependencies": [
             ["@types/node", "npm:16.4.1"]
+          ],
+          "linkType": "HARD",
+        }],
+        ["npm:16.4.2", {
+          "packageLocation": "./.yarn/cache/@types-node-npm-16.4.2-9f96b643d7-d9b02aeb2b.zip/node_modules/@types/node/",
+          "packageDependencies": [
+            ["@types/node", "npm:16.4.2"]
           ],
           "linkType": "HARD",
         }]
@@ -10953,7 +10958,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@tsconfig/node12", "npm:1.0.9"],
             ["@tsconfig/node14", "npm:1.0.1"],
             ["@tsconfig/node16", "npm:1.0.2"],
-            ["@types/node", "npm:16.4.1"],
+            ["@types/node", "npm:16.4.2"],
             ["@types/swc__core", null],
             ["@types/swc__wasm", null],
             ["@types/typescript", null],

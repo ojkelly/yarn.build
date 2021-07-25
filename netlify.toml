@@ -1,17 +1,31 @@
+# yarn.build plugin-build
 [[redirects]]
  from = "/latest"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.0.0/plugin-build.js"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.0.0/plugin-build.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/release/*"
- to = "https://github.com/ojkelly/yarn.build/releases/download/:splat/plugin-build.js"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/:splat/plugin-build.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/v2"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/plugin-build.js"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/plugin-build.cjs"
+ status = 200
+ force = true
+
+# plugin-package-yaml
+[[redirects]]
+ from = "/yaml"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.0.0/plugin-package-yaml.cjs"
+ status = 200
+ force = true
+
+ [[redirects]]
+ from = "/release/plugin-package-yaml/*"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/:splat/plugin-package-yaml.cjs"
  status = 200
  force = true

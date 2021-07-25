@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import {
-  Plugin,
-  Project,
-  Configuration,
-  // ProcessEnvironment
-} from "@yarnpkg/core";
+import { Plugin } from "@yarnpkg/core";
+
 import fs from "fs";
 
-import { patchFs, NodeFS, PortablePath, NativePath } from "@yarnpkg/fslib";
+import { patchFs } from "@yarnpkg/fslib";
 import { PackageYamlFS } from "./PackageYamlFS";
 let fsPatched = false;
 
@@ -18,27 +14,12 @@ const patchFileSystem = (realFs: typeof fs) => {
     patchFs(fs, patchedFs);
     fsPatched = true;
   }
-  // console.log("patchFileSystem", fsPatched, process.pid);
 };
 
 patchFileSystem(fs);
 
-async function setupScriptEnvironment(
-  project: Project,
-  env: { [key: string]: string },
-  makePathWrapper: (
-    name: string,
-    argv0: string,
-    args: Array<string>
-  ) => Promise<void>
-): Promise<void> {
-  //   console.log("setupScriptEnvironment", process.pid);
-}
-
-const plugin: Plugin = {
-  hooks: {
-    setupScriptEnvironment,
-  },
-};
+// This plugin patches `fs` in yarn, but not in pnp.cjs at this time.
+// as such, we export an empty plugin.
+const plugin: Plugin = {};
 
 export default plugin;

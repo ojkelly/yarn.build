@@ -538,11 +538,9 @@ __metadata:
     "@types/jest": ^26.0.24
     "@types/node": ^16.4.1
     jest: ^26
-    lodash: ^4.17.21
     ts-jest: ^26.4.4
     ts-node: ^10.1.0
-    typescript: ^4
-    yawn-yaml: ^1.5.0
+    typescript: ^4.3.5
   languageName: unknown
   linkType: soft
 
@@ -1230,7 +1228,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^16.4.1":
+"@types/node@npm:*":
   version: 16.4.1
   resolution: "@types/node@npm:16.4.1"
   checksum: 6cff78c802a1efecc900506a468a9bdaa321c7132a05e87552ab710f3d3a5cd230308317634f94b8db4833c66c72a765b28670d5ccf8c7c5a7363fcce32d1b1e
@@ -1248,6 +1246,13 @@ __metadata:
   version: 14.17.5
   resolution: "@types/node@npm:14.17.5"
   checksum: 8fba22a8df7bcea75039f08e00fcff8e331f6d367739a9631d3457bc3e8e5ddfdd60e1a5d685d9420312e9ed7cf2f2146d37224ec9f7d578fe8dd32ce3821e62
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^16.4.1":
+  version: 16.4.2
+  resolution: "@types/node@npm:16.4.2"
+  checksum: d9b02aeb2b9633a8f0e18bd9d322a3ff6c937715b96ad1c80b5f941c46a3f97f2419ffabdb44a3c9305e7b82579aef852f0adfa2e755b7ab32d4334a4ca070c7
   languageName: node
   linkType: hard
 

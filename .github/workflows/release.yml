@@ -15,9 +15,9 @@ jobs:
 
       - name: Build project
         run: |
-          yarn install && \
-          cd ./packages/plugins/plugin-build && \
-          yarn release
+          yarn install --immutable-cache --check-cache && \
+          yarn build -c release
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -28,21 +28,34 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
+
+      - name: Upload yarn.build
+        id: upload-release-asset-yarn-build
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./packages/plugins/plugin-build/bundles/@yarnpkg/plugin-build.js
-          asset_name: "plugin-build.js"
+          asset_name: "plugin-build.cjs"
           asset_content_type: text/javascript
 
-      - name: Update release
+      - name: Upload package-yaml
+        id: upload-release-asset-package-yaml
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./packages/plugins/plugin-package-yaml/bundles/@yarnpkg/plugin-package-yaml.js
+          asset_name: "plugin-package-yaml.cjs"
+          asset_content_type: text/javascript
+
+      - name: Update release redirects
         run: |
           export TAGNAME=$(echo "${{ github.ref }}" | sed 's|refs/tags/||g')
-          sed -i'' "3s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-build.js\"|" netlify.toml
+          sed -i'' "4s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-build.cjs\"|" netlify.toml
+          sed -i'' "23s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-package-yaml.cjs\"|" netlify.toml
 
       # Commit new version
       - name: Create Pull Request

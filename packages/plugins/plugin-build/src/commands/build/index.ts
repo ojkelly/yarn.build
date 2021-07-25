@@ -70,10 +70,11 @@ export default class Build extends BaseCommand {
       this.context.plugins
     );
 
-    const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(
-      configuration
-    );
+    console.log("found config");
+    const pluginConfiguration: YarnBuildConfiguration =
+      await GetPluginConfiguration(configuration);
 
+    console.log("got plugin config");
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
     const maxConcurrency =
@@ -92,15 +93,17 @@ export default class Build extends BaseCommand {
         let targetDirectory = this.context.cwd;
 
         if (typeof this.buildTarget[0] === "string") {
-          targetDirectory = `${configuration.projectCwd}${path.sep}${this.buildTarget[0]}` as PortablePath;
+          targetDirectory =
+            `${configuration.projectCwd}${path.sep}${this.buildTarget[0]}` as PortablePath;
         }
 
         const { project, workspace: cwdWorkspace } = await Project.find(
           configuration,
           targetDirectory
         );
-
         const targetWorkspace = cwdWorkspace || project.topLevelWorkspace;
+
+        console.log("found workspace", targetWorkspace.relativeCwd);
 
         const runScript = async (
           command: string,
@@ -148,6 +151,7 @@ export default class Build extends BaseCommand {
           return 2;
         };
 
+        console.log("pre sup");
         const supervisor = new RunSupervisor({
           project,
           configuration,
@@ -162,12 +166,14 @@ export default class Build extends BaseCommand {
         });
 
         await supervisor.setup();
+        console.log("post sup");
 
         await addTargets({ targetWorkspace, project, supervisor });
-
+        console.log("post addtargets");
         // build all the things
         const ranWithoutErrors = await supervisor.run();
 
+        console.log("post run");
         if (ranWithoutErrors === false) {
           report.reportError(MessageName.BUILD_FAILED, "Build failed");
         }
