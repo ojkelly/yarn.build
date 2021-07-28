@@ -66,6 +66,29 @@ If you want to customise the input and output folders per package you can setup 
 }
 ```
 
+## Troubleshooting
+
+**The output is interlaced, or mangled, or not useful in CI**
+
+yarn.build uses `is-ci` to check if it's running in a CI environment, and will not print progress in the same way it does when run locally (or with an interactive tty).
+
+Typically `is-ci` is really good at detecting a CI environment. It does this by checking a for one of many known environment variables set by CI tools. Including the most common and most useful fallback `CI=true`.
+
+If you run `yarn build` or `yarn test` wrapped inside another execution environment inside your CI pipeline, you might need to pass an environment variable (ENV) to let yarn.build know it's being run in CI.
+
+Depending on how your script is run, you can do something like the following:
+
+```
+CI=true yarn build
+```
+
+Adapted for Docker / BuildKit, the following will set `CI` for the script, but not the whole container. [See issue #5 for more information](https://github.com/ojkelly/yarn.build/issues/5#issuecomment-888166665)
+```
+RUN env CI=true yarn build
+```
+
+---
+
 ## plugin-package-yaml
 
 Have you ever wanted to write you `package.json` as `package.yaml` or even `package.yml`?
