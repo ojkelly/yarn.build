@@ -6,16 +6,16 @@ yarn.BUILD is a plugin for [Yarn 2/3 (berry)](https://github.com/yarnpkg/berry).
 
 See the full docs at [yarn.BUILD](https://yarn.build)
 
-Install for Yarn 2:
-
-```
-yarn plugin import https://yarn.build/v2
-```
-
 To install for Yarn 3:
 
 ```
 yarn plugin import https://yarn.build/latest
+```
+
+Install for Yarn 2:
+
+```
+yarn plugin import https://yarn.build/v2
 ```
 
 ## Commands
