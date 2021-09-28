@@ -1,7 +1,7 @@
 {"version": 2, "width": 99, "height": 30, "timestamp": 1606013855, "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
 [3.226987, "o", "\u001b[1m\u001b[7m%\u001b[27m\u001b[1m\u001b[0m                                                                                                  \r \r"]
 [3.326242, "o", "\u001b]2;owenkelly@oBook-Pro: ~/Code/src/github.com/ojkelly/yarn.build/packages/examples/lorem-ipsum\u0007\u001b]1;..s/lorem-ipsum\u0007"]
-[3.36029, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mlorem-ipsum\u001b[00m \u001b[01;34mgit:(\u001b[31mtrunk\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
+[3.36029, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mlorem-ipsum\u001b[00m \u001b[01;34mgit:(\u001b[31mmain\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
 [3.360744, "o", "\u001b[?1h\u001b="]
 [3.361286, "o", "\u001b[?2004h"]
 [4.208575, "o", "\u001b[1m\u001b[31my\u001b[0m\u001b[39m"]
@@ -1018,7 +1018,7 @@
 [11.879001, "o", "\u001b[94m➤\u001b[39m YN0000: Done in 3s 495ms\r\n"]
 [11.92678, "o", "\u001b[1m\u001b[7m%\u001b[27m\u001b[1m\u001b[0m                                                                                                  \r \r"]
 [11.926954, "o", "\u001b]2;owenkelly@oBook-Pro: ~/Code/src/github.com/ojkelly/yarn.build/packages/examples/lorem-ipsum\u0007\u001b]1;..s/lorem-ipsum\u0007"]
-[11.966031, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mlorem-ipsum\u001b[00m \u001b[01;34mgit:(\u001b[31mtrunk\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
+[11.966031, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mlorem-ipsum\u001b[00m \u001b[01;34mgit:(\u001b[31mmain\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
 [11.96617, "o", "\u001b[?1h\u001b="]
 [11.966787, "o", "\u001b[?2004h"]
 [13.031191, "o", "\u001b[?2004l\r\r\n"]

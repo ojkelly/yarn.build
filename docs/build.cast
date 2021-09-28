@@ -1,7 +1,7 @@
 {"version": 2, "width": 99, "height": 30, "timestamp": 1605963113, "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
 [2.130674, "o", "\u001b[1m\u001b[7m%\u001b[27m\u001b[1m\u001b[0m                                                                                                  \r \r"]
 [2.180247, "o", "\u001b]2;owenkelly@oBook-Pro: ~/Code/src/github.com/ojkelly/yarn.build/packages/examples\u0007\u001b]1;..ages/examples\u0007"]
-[2.214077, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mexamples\u001b[00m \u001b[01;34mgit:(\u001b[31mtrunk\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
+[2.214077, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mexamples\u001b[00m \u001b[01;34mgit:(\u001b[31mmain\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
 [2.214261, "o", "\u001b[?1h\u001b="]
 [2.214874, "o", "\u001b[?2004h"]
 [3.052299, "o", "\u001b[1m\u001b[31my\u001b[0m\u001b[39m"]
@@ -461,7 +461,7 @@
 [17.532148, "o", "\u001b[1m\u001b[7m%\u001b[27m\u001b[1m\u001b[0m                                                                                                  \r \r"]
 [17.532198, "o", "\u001b]2;owenkelly@oBook-Pro: ~/Code/src/github.com/ojkelly/yarn.build/packages/examples\u0007"]
 [17.532392, "o", "\u001b]1;..ages/examples\u0007"]
-[17.565183, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mexamples\u001b[00m \u001b[01;34mgit:(\u001b[31mtrunk\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
+[17.565183, "o", "\r\u001b[0m\u001b[27m\u001b[24m\u001b[J\u001b[01;32m➜  \u001b[36mexamples\u001b[00m \u001b[01;34mgit:(\u001b[31mmain\u001b[34m) \u001b[33m✗\u001b[00m \u001b[K"]
 [17.565355, "o", "\u001b[?1h\u001b="]
 [17.565921, "o", "\u001b[?2004h"]
 [20.520679, "o", "\u001b[?2004l\r\r\n"]
