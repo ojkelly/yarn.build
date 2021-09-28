@@ -42,6 +42,7 @@
     "strip-ansi": "^6.0.0"
   },
   "scripts": {
+    "dev": "yarn update:local",
     "build:plugin-stage": "builder build plugin",
     "update:workspace": "mkdir -p ../../../.yarn/plugins/@ojkelly && cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@ojkelly/plugin-build.cjs",
     "update:patch-name": "sed -i 's|@yarnpkg/plugin-build|@ojkelly/plugin-build|g' ./bundles/@yarnpkg/plugin-build.js",

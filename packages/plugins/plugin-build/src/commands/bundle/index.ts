@@ -1,4 +1,5 @@
 import { BaseCommand, WorkspaceRequiredError } from "@yarnpkg/cli";
+import fs from "fs";
 import {
   Cache,
   Configuration,
@@ -31,6 +32,10 @@ export default class Bundler extends BaseCommand {
   outputDirectory?: string = Option.String(`-o,--output-directory`, {
     description:
       "sets the output directory, this should be outside your source input directory.",
+  });
+
+  noCompress = Option.Boolean(`--no-compress`, false, {
+    description: `set this with --output-directory to skip zipping your bundle, when this is set your output directory must be outside your projecty root`,
   });
 
   archiveName: Filename = Option.String(
@@ -88,9 +93,8 @@ export default class Bundler extends BaseCommand {
         for (const descriptor of workspace.manifest
           .getForScope(dependencyType)
           .values()) {
-          const matchingWorkspace = project.tryWorkspaceByDescriptor(
-            descriptor
-          );
+          const matchingWorkspace =
+            project.tryWorkspaceByDescriptor(descriptor);
 
           if (matchingWorkspace === null) continue;
 
@@ -140,8 +144,32 @@ export default class Bundler extends BaseCommand {
       // Save the originalCWD so we can store the archive somewhere
       const originalCwd = `${this.context.cwd}` as PortablePath;
 
-      const outputArchive = ppath.join(originalCwd, this.archiveName);
+      let outputArchive = ppath.join(originalCwd, this.archiveName);
 
+      if (typeof this.outputDirectory == "string") {
+        const resovledOutputDir = ppath.resolve(
+          this.outputDirectory as PortablePath
+        );
+
+        if (!fs.existsSync(resovledOutputDir)) {
+          // console.error("ERROR: --output-directory does not exist");
+
+          // return 1;
+
+          await xfs.mkdirPromise(resovledOutputDir);
+        }
+
+        if (fs.readdirSync(resovledOutputDir).length != 0) {
+          console.error("ERROR: --output-directory is not empty");
+
+          return 1;
+        }
+
+        outputArchive = ppath.join(
+          resovledOutputDir as PortablePath,
+          this.archiveName
+        );
+      }
       // Get the configuration where our source code is
       const sourceConfiguration = await Configuration.find(
         this.context.cwd,
@@ -158,6 +186,33 @@ export default class Bundler extends BaseCommand {
         ""
       );
 
+      let noCompressIsSafe = false;
+      let outputPath: PortablePath | undefined;
+
+      if (this.noCompress === true) {
+        if (typeof this.outputDirectory !== "string") {
+          console.error(
+            "ERROR: you set --no-compress, but did not specify --output-directory"
+          );
+
+          return 1;
+        } else {
+          outputPath = ppath.resolve(
+            this.outputDirectory as PortablePath
+          ) as PortablePath;
+
+          if (outputPath.startsWith(sourceConfiguration.projectCwd)) {
+            console.error(
+              "ERROR: --output-directory is inside project root with --no-compress set.\nThis is no allowed to prevent you destroying your project"
+            );
+
+            return 1;
+          }
+        }
+
+        noCompressIsSafe = true;
+      }
+
       // copy everything to the tmpDir
       const baseFs = new NodeFS();
 
@@ -169,7 +224,8 @@ export default class Bundler extends BaseCommand {
 
       const exclude = this.exclude || [];
 
-      const previousArchive = `${tmpPackageCwd}/${this.archiveName}` as PortablePath;
+      const previousArchive =
+        `${tmpPackageCwd}/${this.archiveName}` as PortablePath;
 
       try {
         if (await xfs.lstatPromise(previousArchive)) {
@@ -203,9 +259,8 @@ export default class Bundler extends BaseCommand {
           for (const descriptor of workspace.manifest
             .getForScope(dependencyType)
             .values()) {
-            const matchingWorkspace = project.tryWorkspaceByDescriptor(
-              descriptor
-            );
+            const matchingWorkspace =
+              project.tryWorkspaceByDescriptor(descriptor);
 
             if (matchingWorkspace === null) continue;
 
@@ -248,32 +303,37 @@ export default class Bundler extends BaseCommand {
           // Install and remove everything we dont need
           await project.install({ cache, report });
 
-          report.reportInfo(null, "Getting libzip");
+          // If flags set don't zip and copy to a tmp directory
+          if (noCompressIsSafe && typeof outputPath !== `undefined`) {
+            report.reportInfo(null, "Moving build to output directory");
 
-          const libzip = await getLibzipPromise();
+            await baseFs.movePromise(tmpDir, outputPath);
+          } else {
+            const libzip = await getLibzipPromise();
 
-          report.reportInfo(null, "Creating archive");
+            report.reportInfo(null, "Creating archive");
 
-          const zipFs = new ZipFS(outputArchive, {
-            create: true,
-            libzip,
-          });
+            const zipFs = new ZipFS(outputArchive, {
+              create: true,
+              libzip,
+            });
 
-          const prefixPath = "bundle" as PortablePath;
+            const prefixPath = "bundle" as PortablePath;
 
-          report.reportInfo(null, "Copying files to archive");
+            report.reportInfo(null, "Copying files to archive");
 
-          await zipFs.copyPromise(prefixPath, tmpDir, {
-            baseFs,
-          });
+            await zipFs.copyPromise(prefixPath, tmpDir, {
+              baseFs,
+            });
 
-          zipFs.saveAndClose();
+            zipFs.saveAndClose();
 
-          report.reportJson({
-            name: "ArchiveSuccess",
-            message: "Archive created successfuly at ",
-            outputArchive,
-          });
+            report.reportJson({
+              name: "ArchiveSuccess",
+              message: "Archive created successfuly at ",
+              outputArchive,
+            });
+          }
         }
       );
 
