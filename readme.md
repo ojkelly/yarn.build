@@ -20,11 +20,67 @@ yarn plugin import https://yarn.build/v2
 
 ## Commands
 
-`build`: build your package and all dependencies
+### `build`
 
-`bundle`: bundle a package and its local dependencies, designed for containers and AWS lambda.
+Build your package and all dependencies.
 
-`test`: test your package and it's dependencies
+Run in the root of your project, or in a non-workspace folder to build everything.
+
+Run in a specific workspace to build that workspace and all of its dependencies
+in the correct order, only rebuidling what's changed.
+
+_My builds are never cached?_
+
+Yarn build tries to guess your input and output folders based on common conventions.
+
+If they're different you can specify them explicitly in `package.json`:
+
+```json
+  "yarn.build": {
+    "input": "src",
+    "output": "dist"
+  }
+```
+
+If that still doesn't work, check to see if your build script is modifying any
+files in your `input` folder. Some build tools like to mess with files like
+`tsconfig.json` and others.
+
+The most ideal state is that your input folder is never modified by your build
+step. If this continues to happen, you should try to adjust the build scripts,
+or workspace layout to avoid it.
+
+As this is fundemental to ensuring sound builds, yarn build will never cache the
+input folder if it's changed.
+
+### `bundle`
+
+Bundle a package and its local dependencies, designed for containers and AWS lambda.
+
+A file `entrypoint.js` is added to the project root, that reexports the file you
+specify as `main` in `package.json`.
+
+_Output `bundle.zip` to a specific folder_
+
+```bash
+# or any path you want to put it in
+yarn bundle --output-directory ../tmp
+```
+
+_Bundle but don't zip_
+
+This is useful when you're building inside a docker container.
+
+Choose an output directory outside your project and pass `--no-compress`.
+
+```bash
+# or any path you want to put it in that's outside your project root
+yarn bundle --no-compress --output-directory /srv/app
+```
+
+### `test`
+
+Test your package and it's dependencies.
 
 ## Config
 
@@ -83,6 +139,7 @@ CI=true yarn build
 ```
 
 Adapted for Docker / BuildKit, the following will set `CI` for the script, but not the whole container. [See issue #5 for more information](https://github.com/ojkelly/yarn.build/issues/5#issuecomment-888166665)
+
 ```
 RUN env CI=true yarn build
 ```
