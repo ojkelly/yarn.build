@@ -16,6 +16,9 @@ import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
 
 import { addTargets } from "../supervisor/workspace";
 
+export const EVENT_BUILD_FAILED_BAIL_ON = 'BUILD_FAILED_BAIL_ON' as const;
+export const EVENT_BUILD_FORCE_QUIT = 'BUILD_FORCE_QUIT';
+
 export default class Build extends BaseCommand {
   static paths = [[`build`]];
 
@@ -40,6 +43,10 @@ export default class Build extends BaseCommand {
     description: `simulate running a build, but not actually run it`,
   });
 
+  bail = Option.Boolean('--bail', false, {
+  description: `exit immediately upon build failing`
+  });
+
   ignoreBuildCache = Option.Boolean(`--ignore-cache`, false, {
     description: `every package will be built, regardless of whether is has changed or not.`,
   });
@@ -47,6 +54,8 @@ export default class Build extends BaseCommand {
   maxConcurrency = Option.String(`-m,--max-concurrency`, {
     description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
   });
+
+  private mainEvent = new EventEmitter();
 
   public buildTarget: string[] = Option.Rest();
 
@@ -72,6 +81,8 @@ export default class Build extends BaseCommand {
 
     const pluginConfiguration: YarnBuildConfiguration =
       await GetPluginConfiguration(configuration);
+
+    this.bail = this.bail ?? pluginConfiguration.folders.bail;
 
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
@@ -126,6 +137,10 @@ export default class Build extends BaseCommand {
               chunk && chunk.toString()
             )
           );
+          this.mainEvent.on(EVENT_BUILD_FORCE_QUIT, () => {
+            // This is quite ugly :(
+            process.exit(1);
+          });
 
           try {
             const exitCode =
@@ -134,7 +149,7 @@ export default class Build extends BaseCommand {
                 stdout,
                 stderr,
               })) || 0;
-
+            
             stdout.end();
             stderr.end();
 
@@ -153,6 +168,7 @@ export default class Build extends BaseCommand {
           pluginConfiguration,
           report,
           runCommand: this.buildCommand,
+          mainEvent: this.mainEvent,
           cli: runScript,
           dryRun: this.dryRun,
           ignoreRunCache: this.ignoreBuildCache,
@@ -160,17 +176,38 @@ export default class Build extends BaseCommand {
           concurrency: maxConcurrency,
         });
 
-        await supervisor.setup();
+        return new Promise<void>(async (resolve) => {
+          let hasFailedAndBailed = false;
 
-        await addTargets({ targetWorkspace, project, supervisor });
-        // build all the things
-        const ranWithoutErrors = await supervisor.run();
+          if (this.bail) {
+            this.mainEvent.on(EVENT_BUILD_FAILED_BAIL_ON, ({name}: {name:string}) => {
+              if (hasFailedAndBailed) {
+                return;
+              }
+              hasFailedAndBailed = true;
+              report.reportError(MessageName.BUILD_FAILED, `Build failed: ${name}`);
+              this.mainEvent.emit(EVENT_BUILD_FORCE_QUIT);
+              resolve();
+            });
+          }
 
-        if (ranWithoutErrors === false) {
-          report.reportError(MessageName.BUILD_FAILED, "Build failed");
-        }
-      }
-    );
+          await supervisor.setup();
+  
+          await addTargets({ targetWorkspace, project, supervisor });
+          // build all the things
+          const ranWithoutErrors = await supervisor.run();
+
+          if (hasFailedAndBailed) {
+            return;
+          }
+
+          if (ranWithoutErrors === false) {
+            report.reportError(MessageName.BUILD_FAILED, "Build failed");
+          }
+          resolve();
+        });
+        
+      });
 
     return report.exitCode();
   }

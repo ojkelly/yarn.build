@@ -22,6 +22,7 @@ import stripAnsi from "strip-ansi";
 import sliceAnsi from "slice-ansi";
 import { Graph, Node, RunCallback } from "./graph";
 import { Hansi } from "./hansi";
+import { EVENT_BUILD_FAILED_BAIL_ON } from "../build";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -100,6 +101,8 @@ class RunSupervisor {
 
   runCommand: string;
 
+  mainEvent: EventEmitter;
+
   cli: RunCommandCli;
 
   runLog?: RunLog;
@@ -151,6 +154,7 @@ class RunSupervisor {
     report,
     runCommand,
     cli,
+    mainEvent,
     configuration,
     pluginConfiguration,
     dryRun,
@@ -162,6 +166,7 @@ class RunSupervisor {
     report: StreamReport;
     runCommand: string;
     cli: RunCommandCli;
+    mainEvent: EventEmitter;
     configuration: Configuration;
     pluginConfiguration: YarnBuildConfiguration;
     dryRun: boolean;
@@ -177,6 +182,7 @@ class RunSupervisor {
     this.report = report;
     this.runCommand = runCommand;
     this.cli = cli;
+    this.mainEvent = mainEvent;
     this.dryRun = dryRun;
     this.ignoreRunCache = ignoreRunCache;
     this.verbose = verbose;
@@ -1013,6 +1019,7 @@ class RunSupervisor {
               workspace.relativeCwd
             );
 
+
             this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
               lastModified: currentRunLog?.lastModified,
               status: RunStatus.failed,
@@ -1020,6 +1027,14 @@ class RunSupervisor {
               rerun: false,
               command: this.runCommand,
             });
+            // this event is ignored if bail is not on
+            const name = `${
+              workspace.manifest.name?.scope
+                ? `@${workspace.manifest.name?.scope}/`
+                : ""
+            }${workspace.manifest.name?.name}`;
+            
+            this.mainEvent.emit(EVENT_BUILD_FAILED_BAIL_ON, {name});
 
             return false;
           }

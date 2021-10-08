@@ -36,6 +36,8 @@ export default class Test extends BaseCommand {
     description: `is the maximum number of tests that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
   });
 
+  mainEvent = new EventEmitter();
+
   public runTarget: string[] = Option.Rest();
 
   static usage: Usage = Command.Usage({
@@ -141,6 +143,7 @@ export default class Test extends BaseCommand {
           pluginConfiguration,
           report,
           runCommand: "test",
+          mainEvent: this.mainEvent,
           cli: runScript,
           dryRun: false,
           ignoreRunCache: this.ignoreTestCache,

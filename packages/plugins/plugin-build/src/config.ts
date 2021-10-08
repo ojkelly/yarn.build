@@ -7,6 +7,7 @@ const DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME = `.yarnbuildrc.yml` as Filename;
 
 const isYarnBuildConfiguration = t.isObject({
   folders: t.isObject({
+    bail: t.isBoolean(),
     input: t.isString(),
     output: t.isString(),
   }),
@@ -15,10 +16,11 @@ const isYarnBuildConfiguration = t.isObject({
   ),
 });
 
+
 type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
 
 async function getConfiguration(
-  configuration: Configuration
+  configuration: Configuration,
 ): Promise<YarnBuildConfiguration> {
   // TODO: make this more customisable
   const rcFilename = DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME;
@@ -56,6 +58,7 @@ async function getConfiguration(
   // return default config if none found
   return {
     folders: {
+      bail: false,
       input: ".",
       output: "build",
     },
@@ -64,7 +67,7 @@ async function getConfiguration(
 }
 
 async function GetPluginConfiguration(
-  configuration: Configuration
+  configuration: Configuration,
 ): Promise<YarnBuildConfiguration> {
   return await getConfiguration(configuration);
 }
