@@ -23,7 +23,7 @@ export const getAllChildProccess = async (pid: number | string): Promise<number[
     try {
         const {stdout} = await execute(command);
         
-        messages = stdout.split(`\n`).filter(Boolean).map((value) => parseInt(value, 10));
+        messages = stdout.split(`\n`).filter(Boolean).map((value) => parseInt(value, 10)).filter((value) => !isNaN(value));
     } catch(e) {
         // Empty on purpose
     }
