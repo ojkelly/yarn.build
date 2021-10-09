@@ -15,6 +15,7 @@ import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
 import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
 
 import { addTargets } from "../supervisor/workspace";
+import { terminateProcess } from "../terminate";
 
 export default class Test extends BaseCommand {
   static paths = [[`test`]];
@@ -35,6 +36,11 @@ export default class Test extends BaseCommand {
   maxConcurrency = Option.String(`-m,--max-concurrency`, {
     description: `is the maximum number of tests that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
   });
+  
+
+  shouldBailInstantly = Option.Boolean('--bail', false, {
+    description: `exit immediately upon build failing`
+  });
 
   public runTarget: string[] = Option.Rest();
 
@@ -48,6 +54,9 @@ export default class Test extends BaseCommand {
     `,
   });
 
+  forceQuit = false;
+
+
   // Keep track of what is built, and if it needs to be rebuilt
   runLog: { [key: string]: { hash: string | undefined } } = {};
 
@@ -60,6 +69,8 @@ export default class Test extends BaseCommand {
     const pluginConfiguration: YarnBuildConfiguration = await GetPluginConfiguration(
       configuration
     );
+    
+    this.shouldBailInstantly = this.shouldBailInstantly ?? pluginConfiguration.folders.bail;
 
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
@@ -114,7 +125,14 @@ export default class Test extends BaseCommand {
               chunk && chunk.toString()
             )
           );
-
+          if (this.forceQuit) {
+            stdout.destroy();
+            stderr.destroy();
+            stdout.end();
+            stderr.end();
+            
+            return 2;
+          }
           try {
             const exitCode =
               (await this.cli.run(["run", command], {
@@ -146,6 +164,11 @@ export default class Test extends BaseCommand {
           ignoreRunCache: this.ignoreTestCache,
           verbose: this.verbose,
           concurrency: maxConcurrency,
+          shouldBailInstantly: this.shouldBailInstantly,
+        });
+
+        supervisor.runReporter.on(RunSupervisorReporterEvents.forceQuit, () => {
+          this.forceQuit = true;
         });
 
         await supervisor.setup();
@@ -160,6 +183,8 @@ export default class Test extends BaseCommand {
         }
       }
     );
+
+    terminateProcess.hasBeenTerminated = true;
 
     return report.exitCode();
   }

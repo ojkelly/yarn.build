@@ -22,6 +22,7 @@ import stripAnsi from "strip-ansi";
 import sliceAnsi from "slice-ansi";
 import { Graph, Node, RunCallback } from "./graph";
 import { Hansi } from "./hansi";
+import { terminateAllChildProcesses } from "../terminate";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -30,6 +31,7 @@ const DIVIDER = "-".repeat(DIVIDER_LENGTH);
 
 enum RunStatus {
   pending = "pending",
+  skipped = "skipped",
   inProgress = "inProgress",
   failed = "failed",
   succeeded = "succeeded",
@@ -54,18 +56,22 @@ enum RunSupervisorReporterEvents {
   start = "start",
   info = "info",
   error = "error",
+  skipped = "skipped",
   success = "success",
   fail = "fail",
   finish = "finish",
+  forceQuit = "force-quit"
 }
 
 type RunReport = {
   mutex: Mutex;
   runStart?: number;
   totalJobs: number;
+  bail?: boolean;
   previousOutput: string;
   successCount: number;
   failCount: number;
+  skipCount: number;
   done: boolean;
   workspaces: {
     // Matches the workspace to its pseudo-thread
@@ -78,6 +84,7 @@ type RunReport = {
       stdout: string[];
       stderr: Error[];
       runtimeSeconds?: number;
+      skipped?: boolean;
     };
   };
 };
@@ -120,6 +127,8 @@ class RunSupervisor {
 
   verbose = false;
 
+  shouldBailInstantly = false;
+
   concurrency: number;
 
   limit: Limit;
@@ -133,9 +142,11 @@ class RunSupervisor {
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
+    skipCount: 0,
     previousOutput: ``,
     successCount: 0,
     failCount: 0,
+    bail: false,
     workspaces: {},
     done: false,
   };
@@ -157,6 +168,7 @@ class RunSupervisor {
     ignoreRunCache,
     verbose,
     concurrency,
+    shouldBailInstantly,
   }: {
     project: Project;
     report: StreamReport;
@@ -168,6 +180,7 @@ class RunSupervisor {
     ignoreRunCache: boolean;
     verbose: boolean;
     concurrency?: number | undefined;
+    shouldBailInstantly?: boolean;
   }) {
     const resolvedConcurrency = concurrency ?? Math.max(1, cpus().length);
 
@@ -181,6 +194,7 @@ class RunSupervisor {
     this.ignoreRunCache = ignoreRunCache;
     this.verbose = verbose;
     this.concurrency = resolvedConcurrency;
+    this.shouldBailInstantly = shouldBailInstantly ?? this.shouldBailInstantly;
     this.limit = PLimit(resolvedConcurrency);
 
     this.queue = new PQueue({
@@ -349,7 +363,19 @@ class RunSupervisor {
         });
       }
     );
-
+      this.runReporter.on(
+        RunSupervisorReporterEvents.skipped,
+        (relativeCwd: PortablePath) => {
+          this.runReport.mutex.acquire().then((release: () => void) => {
+  
+            this.runReport.workspaces[relativeCwd].done = true;
+            this.runReport.workspaces[relativeCwd].skipped = true;
+  
+            this.runReport.skipCount++;
+            release();
+          });
+        }
+      );
     this.runReporter.on(
       RunSupervisorReporterEvents.fail,
       (relativeCwd: PortablePath, error: Error) => {
@@ -362,15 +388,10 @@ class RunSupervisor {
           this.runReport.failCount++;
 
           this.logError(`${relativeCwd} ${error}`);
-
-          // TODO: if fail immediately
-          // this.runReporter.emit(RunReporterEvents.finish);
           release();
         });
       }
     );
-
-    // this.runReporter.on(RunReporterEvents.finish, () => {});
   };
 
   async addRunTarget(workspace: Workspace): Promise<void> {
@@ -408,7 +429,7 @@ class RunSupervisor {
         const depsOfDepsNeedRerun = await this.plan(depWorkspace);
 
         let depNeedsRun = false;
-
+        
         if (depWorkspace !== this.project.topLevelWorkspace) {
           depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
         }
@@ -466,7 +487,7 @@ class RunSupervisor {
     if (this.ignoreRunCache === true) {
       return true;
     }
-
+    
     let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
@@ -706,7 +727,6 @@ class RunSupervisor {
     if (this.runReport.done) {
       return;
     }
-
     const output = this.generateProgressString(timestamp);
 
     Hansi.cursorUp(
@@ -909,6 +929,12 @@ class RunSupervisor {
         `Fail:${this.runReport.failCount}`,
         "red"
       );
+      const skippedString = formatUtils.pretty(
+        this.configuration,
+        `Skipped:${this.runReport.skipCount}`,
+        "white"
+      );
+
       const totalString = formatUtils.pretty(
         this.configuration,
         `Total: ${this.runGraph.runSize}`,
@@ -919,6 +945,8 @@ class RunSupervisor {
         successString +
         "\n" +
         failedString +
+        "\n" +
+        skippedString +
         "\n" +
         totalString +
         "\n" +
@@ -1000,6 +1028,19 @@ class RunSupervisor {
         }
 
         try {
+          if (this.runReport.bail) {
+            // We have bailed skip all!
+            this.runReporter.emit(RunSupervisorReporterEvents.skipped, workspace.relativeCwd);
+            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+              lastModified: currentRunLog?.lastModified,
+              status: RunStatus.skipped,
+              haveCheckedForRerun: true,
+              rerun: false,
+              command: this.runCommand,
+            });
+
+            return false;
+          }
           const exitCode = await this.cli(
             this.runCommand,
             workspace.cwd,
@@ -1008,11 +1049,28 @@ class RunSupervisor {
           );
 
           if (exitCode !== 0) {
+              if (this.shouldBailInstantly && this.runReport.bail && exitCode > 100) {
+                // This has been force killed
+                this.runReporter.emit(
+                  RunSupervisorReporterEvents.skipped,
+                  workspace.relativeCwd
+                );
+
+              this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+                lastModified: currentRunLog?.lastModified,
+                status: RunStatus.skipped,
+                haveCheckedForRerun: true,
+                rerun: false,
+                command: this.runCommand,
+              });
+
+              return false;
+            }
             this.runReporter.emit(
               RunSupervisorReporterEvents.fail,
               workspace.relativeCwd
             );
-
+            
             this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
               lastModified: currentRunLog?.lastModified,
               status: RunStatus.failed,
@@ -1020,6 +1078,10 @@ class RunSupervisor {
               rerun: false,
               command: this.runCommand,
             });
+            if (this.shouldBailInstantly && !this.runReport.bail) {
+              this.runReport.bail = true;
+              void terminateAllChildProcesses();
+            }
 
             return false;
           }
@@ -1053,6 +1115,7 @@ class RunSupervisor {
 
           return false;
         }
+      
 
         return true;
       });
