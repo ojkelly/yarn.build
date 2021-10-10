@@ -12,10 +12,10 @@ import path from "path";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
-import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
+import RunSupervisor, { RunSupervisorReporterEvents } from "../../supervisor";
 
-import { addTargets } from "../supervisor/workspace";
-import { terminateProcess } from "../terminate";
+import { addTargets } from "../../supervisor/workspace";
+import { terminateProcess } from "../../supervisor/terminate";
 
 export default class Build extends BaseCommand {
   static paths = [[`build`]];
@@ -49,8 +49,8 @@ export default class Build extends BaseCommand {
     description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
   });
 
-  shouldBailInstantly = Option.Boolean('--bail', false, {
-    description: `exit immediately upon build failing`
+  shouldBailInstantly = Option.Boolean("--bail", false, {
+    description: `exit immediately upon build failing`,
   });
 
   public buildTarget: string[] = Option.Rest();
@@ -79,8 +79,9 @@ export default class Build extends BaseCommand {
 
     const pluginConfiguration: YarnBuildConfiguration =
       await GetPluginConfiguration(configuration);
-    
-    this.shouldBailInstantly = this.shouldBailInstantly ?? pluginConfiguration.folders.bail;
+
+    this.shouldBailInstantly =
+      this.shouldBailInstantly ?? pluginConfiguration.folders.bail;
 
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
@@ -140,7 +141,7 @@ export default class Build extends BaseCommand {
             stderr.destroy();
             stdout.end();
             stderr.end();
-            
+
             return 2;
           }
           try {
@@ -155,7 +156,6 @@ export default class Build extends BaseCommand {
             stderr.end();
 
             return exitCode;
-
           } catch (err) {
             stdout.end();
             stderr.end();
@@ -192,7 +192,7 @@ export default class Build extends BaseCommand {
         }
       }
     );
-    
+
     terminateProcess.hasBeenTerminated = true;
 
     return report.exitCode();

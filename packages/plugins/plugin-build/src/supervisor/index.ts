@@ -10,7 +10,7 @@ import {
 import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
-import { YarnBuildConfiguration } from "../../config";
+import { YarnBuildConfiguration } from "../config";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
@@ -22,7 +22,7 @@ import stripAnsi from "strip-ansi";
 import sliceAnsi from "slice-ansi";
 import { Graph, Node, RunCallback } from "./graph";
 import { Hansi } from "./hansi";
-import { terminateAllChildProcesses } from "../terminate";
+import { terminateAllChildProcesses } from "./terminate";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -60,7 +60,7 @@ enum RunSupervisorReporterEvents {
   success = "success",
   fail = "fail",
   finish = "finish",
-  forceQuit = "force-quit"
+  forceQuit = "force-quit",
 }
 
 type RunReport = {
@@ -363,19 +363,18 @@ class RunSupervisor {
         });
       }
     );
-      this.runReporter.on(
-        RunSupervisorReporterEvents.skipped,
-        (relativeCwd: PortablePath) => {
-          this.runReport.mutex.acquire().then((release: () => void) => {
-  
-            this.runReport.workspaces[relativeCwd].done = true;
-            this.runReport.workspaces[relativeCwd].skipped = true;
-  
-            this.runReport.skipCount++;
-            release();
-          });
-        }
-      );
+    this.runReporter.on(
+      RunSupervisorReporterEvents.skipped,
+      (relativeCwd: PortablePath) => {
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd].done = true;
+          this.runReport.workspaces[relativeCwd].skipped = true;
+
+          this.runReport.skipCount++;
+          release();
+        });
+      }
+    );
     this.runReporter.on(
       RunSupervisorReporterEvents.fail,
       (relativeCwd: PortablePath, error: Error) => {
@@ -429,7 +428,7 @@ class RunSupervisor {
         const depsOfDepsNeedRerun = await this.plan(depWorkspace);
 
         let depNeedsRun = false;
-        
+
         if (depWorkspace !== this.project.topLevelWorkspace) {
           depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
         }
@@ -487,7 +486,7 @@ class RunSupervisor {
     if (this.ignoreRunCache === true) {
       return true;
     }
-    
+
     let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
@@ -1030,7 +1029,10 @@ class RunSupervisor {
         try {
           if (this.runReport.bail) {
             // We have bailed skip all!
-            this.runReporter.emit(RunSupervisorReporterEvents.skipped, workspace.relativeCwd);
+            this.runReporter.emit(
+              RunSupervisorReporterEvents.skipped,
+              workspace.relativeCwd
+            );
             this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
               lastModified: currentRunLog?.lastModified,
               status: RunStatus.skipped,
@@ -1049,12 +1051,16 @@ class RunSupervisor {
           );
 
           if (exitCode !== 0) {
-              if (this.shouldBailInstantly && this.runReport.bail && exitCode > 100) {
-                // This has been force killed
-                this.runReporter.emit(
-                  RunSupervisorReporterEvents.skipped,
-                  workspace.relativeCwd
-                );
+            if (
+              this.shouldBailInstantly &&
+              this.runReport.bail &&
+              exitCode > 100
+            ) {
+              // This has been force killed
+              this.runReporter.emit(
+                RunSupervisorReporterEvents.skipped,
+                workspace.relativeCwd
+              );
 
               this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
                 lastModified: currentRunLog?.lastModified,
@@ -1070,7 +1076,7 @@ class RunSupervisor {
               RunSupervisorReporterEvents.fail,
               workspace.relativeCwd
             );
-            
+
             this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
               lastModified: currentRunLog?.lastModified,
               status: RunStatus.failed,
@@ -1115,7 +1121,6 @@ class RunSupervisor {
 
           return false;
         }
-      
 
         return true;
       });

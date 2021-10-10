@@ -42,9 +42,8 @@ const addTargets = async ({
         for (const descriptor of workspace.manifest
           .getForScope(dependencyType)
           .values()) {
-          const matchingWorkspace = project.tryWorkspaceByDescriptor(
-            descriptor
-          );
+          const matchingWorkspace =
+            project.tryWorkspaceByDescriptor(descriptor);
 
           if (matchingWorkspace === null) continue;
 
