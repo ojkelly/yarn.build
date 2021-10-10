@@ -81,7 +81,7 @@ export default class Build extends BaseCommand {
       await GetPluginConfiguration(configuration);
 
     this.shouldBailInstantly =
-      this.shouldBailInstantly ?? pluginConfiguration.folders.bail;
+      this.shouldBailInstantly ?? pluginConfiguration.bail;
 
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
