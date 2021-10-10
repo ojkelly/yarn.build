@@ -10,9 +10,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build project
+      - name: Check dependencies
         run: |
-          yarn install && \
+          yarn install --check-cache
+
+      - name: Prettier
+        # run yarn style:fix if your PR fails here
+        run: |
+          yarn style:check
+
+      - name: Build plugin
+        run: |
           cd ./packages/plugins/plugin-build && \
           yarn release
       - name: Build Example

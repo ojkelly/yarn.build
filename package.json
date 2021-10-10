@@ -14,7 +14,9 @@
   "private": true,
   "scripts": {
     "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('This project uses Yarn. Things wil not work properly with npm. Use yarn: https://yarnpkg.com/en/docs/install')\"",
-    "clear:build-cache": "rimraf .yarn/local-build-cache.json"
+    "clear:build-cache": "rimraf .yarn/local-build-cache.json",
+    "style:check": "yarn prettier --check packages/**/*.ts",
+    "style:fix": "yarn prettier --check packages/**/*.ts --write"
   },
   "devDependencies": {
     "@kablamo/eslint-plugin": "^1.0.1",
