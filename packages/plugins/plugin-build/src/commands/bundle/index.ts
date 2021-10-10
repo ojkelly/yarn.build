@@ -20,9 +20,9 @@ import {
 
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
-import { DEFAULT_IGNORE_FILE } from "../../modules/ignore";
+import { DEFAULT_IGNORE_FILE } from "./ignore";
 import { GetPartialPluginConfiguration } from "../../config";
-import { getExcludedFiles } from "../../modules/ignore";
+import { getExcludedFiles } from "./ignore";
 
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
