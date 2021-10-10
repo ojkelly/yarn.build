@@ -71,7 +71,6 @@ async function getConfiguration(
   return DEFAULT_CONFIG;
 }
 
-
 async function GetPartialPluginConfiguration(
   configuration: Configuration
 ): Promise<DeepPartial<YarnBuildConfiguration>> {
@@ -88,9 +87,13 @@ async function GetPluginConfiguration(
     ...data,
     folders: {
       ...DEFAULT_CONFIG.folders,
-      ...(data.folders ?? {})
-    }
+      ...(data.folders ?? {}),
+    },
   };
 }
 
-export { YarnBuildConfiguration, GetPluginConfiguration, GetPartialPluginConfiguration };
+export {
+  YarnBuildConfiguration,
+  GetPluginConfiguration,
+  GetPartialPluginConfiguration,
+};

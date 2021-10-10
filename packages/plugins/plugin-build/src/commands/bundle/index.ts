@@ -21,7 +21,7 @@ import {
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
 import { DEFAULT_IGNORE_FILE } from "../../modules/ignore";
-import { GetPartialPluginConfiguration  } from "../../config";
+import { GetPartialPluginConfiguration } from "../../config";
 import { getExcludedFiles } from "../../modules/ignore";
 
 // a compatible js file that reexports the file from pkg.main
@@ -54,13 +54,10 @@ export default class Bundler extends BaseCommand {
     description: "Exclude specific paths from the final bundle.",
   });
 
-  ignoreFile: Filename = Option.String(
-    '--ignore-file',
-    DEFAULT_IGNORE_FILE,
-    {
-      description: 'set the name of ignore file. Files matching this in workspace root and package root will be used to indicate which files will be excluded from bundle.'
-    }
-  )
+  ignoreFile: Filename = Option.String("--ignore-file", DEFAULT_IGNORE_FILE, {
+    description:
+      "set the name of ignore file. Files matching this in workspace root and package root will be used to indicate which files will be excluded from bundle.",
+  });
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -98,9 +95,12 @@ export default class Bundler extends BaseCommand {
       throw new WorkspaceRequiredError(project.cwd, tmpPackageCwd);
 
     const requiredWorkspaces = new Set<Workspace>([workspace]);
-    const pluginConfiguration = await GetPartialPluginConfiguration(configuration);
+    const pluginConfiguration = await GetPartialPluginConfiguration(
+      configuration
+    );
 
-    this.ignoreFile = pluginConfiguration?.ignoreFile as Filename ?? this.ignoreFile;
+    this.ignoreFile =
+      (pluginConfiguration?.ignoreFile as Filename) ?? this.ignoreFile;
 
     for (const workspace of requiredWorkspaces) {
       for (const dependencyType of Manifest.hardDependencies) {
@@ -129,36 +129,38 @@ export default class Bundler extends BaseCommand {
   async removeExcluded(
     tmpDir: PortablePath,
     excluded: string[],
-    outputArchive: string,
+    outputArchive: string
   ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
-    
+
     try {
       if (await xfs.lstatPromise(gitDir)) {
         await xfs.removePromise(gitDir);
       }
     } catch (e) {}
 
-    await Promise.all(excluded.map(async (p) => {
-      p as PortablePath;
-      if (p === outputArchive) {
-        // Don't delete zip file
-        return;
-      }
-      if (!p.startsWith(tmpDir)) {
-        // Don't remove anything not in the tmp directory
-        return;
-      }
-
-      if (await xfs.lstatPromise(p as PortablePath)) {
-        // File might already be deleted. For example if parent folder was deleted first.
-        try {
-          await xfs.removePromise(p as PortablePath);
-        } catch(_e) {
-          // Empty on purpose
+    await Promise.all(
+      excluded.map(async (p) => {
+        p as PortablePath;
+        if (p === outputArchive) {
+          // Don't delete zip file
+          return;
         }
-      }
-    }));
+        if (!p.startsWith(tmpDir)) {
+          // Don't remove anything not in the tmp directory
+          return;
+        }
+
+        if (await xfs.lstatPromise(p as PortablePath)) {
+          // File might already be deleted. For example if parent folder was deleted first.
+          try {
+            await xfs.removePromise(p as PortablePath);
+          } catch (_e) {
+            // Empty on purpose
+          }
+        }
+      })
+    );
   }
 
   async execute(): Promise<0 | 1> {
@@ -245,7 +247,6 @@ export default class Bundler extends BaseCommand {
 
       const tmpPackageCwd = `${tmpDir}${packageCwd}` as PortablePath;
 
-
       const previousArchive =
         `${tmpPackageCwd}/${this.archiveName}` as PortablePath;
 
@@ -264,7 +265,7 @@ export default class Bundler extends BaseCommand {
       });
 
       // Remove stuff we dont need
-     await this.removeExcluded(tmpDir, exclude, outputArchive);
+      await this.removeExcluded(tmpDir, exclude, outputArchive);
       const configuration = await Configuration.find(
         tmpPackageCwd,
         this.context.plugins
@@ -272,16 +273,16 @@ export default class Bundler extends BaseCommand {
 
       const cache = await (async () => {
         // This can fail if we remove to aggresivly
-        // should we add more checks so the user 
+        // should we add more checks so the user
         // cannot delete wrong files or should we
         // allow him to do whatever and just break?
         //
-        // I choose the latter. 
+        // I choose the latter.
         try {
           const cache = await Cache.find(configuration);
 
           return cache;
-        } catch(e) {
+        } catch (e) {
           throw new Error("Failed fetching cache. Check out your config.");
         }
       })();
