@@ -12,9 +12,10 @@ import path from "path";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
-import RunSupervisor, { RunSupervisorReporterEvents } from "../supervisor";
+import RunSupervisor, { RunSupervisorReporterEvents } from "../../supervisor";
 
-import { addTargets } from "../supervisor/workspace";
+import { addTargets } from "../../supervisor/workspace";
+import { terminateProcess } from "../../supervisor/terminate";
 
 export default class Build extends BaseCommand {
   static paths = [[`build`]];
@@ -48,6 +49,10 @@ export default class Build extends BaseCommand {
     description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
   });
 
+  shouldBailInstantly = Option.Boolean("--bail", false, {
+    description: `exit immediately upon build failing`,
+  });
+
   public buildTarget: string[] = Option.Rest();
 
   static usage: Usage = Command.Usage({
@@ -61,6 +66,8 @@ export default class Build extends BaseCommand {
     `,
   });
 
+  forceQuit = false;
+
   // Keep track of what is built, and if it needs to be rebuilt
   buildLog: { [key: string]: { hash: string | undefined } } = {};
 
@@ -72,6 +79,9 @@ export default class Build extends BaseCommand {
 
     const pluginConfiguration: YarnBuildConfiguration =
       await GetPluginConfiguration(configuration);
+
+    this.shouldBailInstantly =
+      this.shouldBailInstantly ?? pluginConfiguration.bail;
 
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
@@ -126,7 +136,14 @@ export default class Build extends BaseCommand {
               chunk && chunk.toString()
             )
           );
+          if (this.forceQuit) {
+            stdout.destroy();
+            stderr.destroy();
+            stdout.end();
+            stderr.end();
 
+            return 2;
+          }
           try {
             const exitCode =
               (await this.cli.run(["run", command], {
@@ -146,7 +163,6 @@ export default class Build extends BaseCommand {
 
           return 2;
         };
-
         const supervisor = new RunSupervisor({
           project,
           configuration,
@@ -158,6 +174,11 @@ export default class Build extends BaseCommand {
           ignoreRunCache: this.ignoreBuildCache,
           verbose: this.verbose,
           concurrency: maxConcurrency,
+          shouldBailInstantly: this.shouldBailInstantly,
+        });
+
+        supervisor.runReporter.on(RunSupervisorReporterEvents.forceQuit, () => {
+          this.forceQuit = true;
         });
 
         await supervisor.setup();
@@ -171,6 +192,8 @@ export default class Build extends BaseCommand {
         }
       }
     );
+
+    terminateProcess.hasBeenTerminated = true;
 
     return report.exitCode();
   }

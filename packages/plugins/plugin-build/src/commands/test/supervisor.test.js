@@ -1,4 +1,4 @@
-const supervisor = require("../supervisor/index");
+const supervisor = require("../../supervisor/index");
 
 test(`ensure formatTimestampDifference copes with a variety of time ranges`, () => {
   const from = 0;

@@ -10,6 +10,7 @@ const isYarnBuildConfiguration = t.isObject({
     input: t.isString(),
     output: t.isString(),
   }),
+  bail: t.isBoolean(),
   maxConcurrency: t.isOptional(
     t.applyCascade(t.isNumber(), [t.isInteger(), t.isInInclusiveRange(1, 128)])
   ),
@@ -59,6 +60,7 @@ async function getConfiguration(
       input: ".",
       output: "build",
     },
+    bail: false,
     maxConcurrency: 8,
   };
 }

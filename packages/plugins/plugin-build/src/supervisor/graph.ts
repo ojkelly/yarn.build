@@ -167,13 +167,13 @@ class Graph {
 
   private static RunLogInit = { success: false, done: false };
 
-  private static QueueItemCanStart = (dependencies: string[]) => (
-    runLog: RunLog
-  ): boolean => {
-    return dependencies
-      .map((id) => runLog[id]?.done ?? true)
-      .every((v) => v === true);
-  };
+  private static QueueItemCanStart =
+    (dependencies: string[]) =>
+    (runLog: RunLog): boolean => {
+      return dependencies
+        .map((id) => runLog[id]?.done ?? true)
+        .every((v) => v === true);
+    };
 }
 
 type RunQueueItem = {
