@@ -965,7 +965,7 @@ class RunSupervisor {
       );
       const skippedString = formatUtils.pretty(
         this.configuration,
-        `Skipped:${skipped}`,
+        `Skipped: ${skipped}`,
         "white"
       );
 
