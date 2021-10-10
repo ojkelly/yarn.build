@@ -20,6 +20,9 @@ import {
 
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
+import { DEFAULT_IGNORE_FILE } from "../../modules/ignore";
+import { GetPartialPluginConfiguration  } from "../../config";
+import { getExcludedFiles } from "../../modules/ignore";
 
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
@@ -46,10 +49,18 @@ export default class Bundler extends BaseCommand {
     }
   );
 
-  exclude = Option.Array(`--exclude`, {
+  exclude = Option.Array(`--exclude`, [], {
     arity: 1,
     description: "Exclude specific paths from the final bundle.",
   });
+
+  ignoreFile: Filename = Option.String(
+    '--ignore-file',
+    DEFAULT_IGNORE_FILE,
+    {
+      description: 'set the name of ignore file. Files matching this in workspace root and package root will be used to indicate which files will be excluded from bundle.'
+    }
+  )
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -87,6 +98,9 @@ export default class Bundler extends BaseCommand {
       throw new WorkspaceRequiredError(project.cwd, tmpPackageCwd);
 
     const requiredWorkspaces = new Set<Workspace>([workspace]);
+    const pluginConfiguration = await GetPartialPluginConfiguration(configuration);
+
+    this.ignoreFile = pluginConfiguration?.ignoreFile as Filename ?? this.ignoreFile;
 
     for (const workspace of requiredWorkspaces) {
       for (const dependencyType of Manifest.hardDependencies) {
@@ -114,28 +128,37 @@ export default class Bundler extends BaseCommand {
 
   async removeExcluded(
     tmpDir: PortablePath,
-    excluded: string[]
+    excluded: string[],
+    outputArchive: string,
   ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
-
+    
     try {
       if (await xfs.lstatPromise(gitDir)) {
         await xfs.removePromise(gitDir);
       }
     } catch (e) {}
 
-    await excluded.map(async (p) => {
+    await Promise.all(excluded.map(async (p) => {
       p as PortablePath;
-
+      if (p === outputArchive) {
+        // Don't delete zip file
+        return;
+      }
       if (!p.startsWith(tmpDir)) {
         // Don't remove anything not in the tmp directory
         return;
       }
 
       if (await xfs.lstatPromise(p as PortablePath)) {
-        await xfs.removePromise(p as PortablePath);
+        // File might already be deleted. For example if parent folder was deleted first.
+        try {
+          await xfs.removePromise(p as PortablePath);
+        } catch(_e) {
+          // Empty on purpose
+        }
       }
-    });
+    }));
   }
 
   async execute(): Promise<0 | 1> {
@@ -222,10 +245,11 @@ export default class Bundler extends BaseCommand {
 
       const tmpPackageCwd = `${tmpDir}${packageCwd}` as PortablePath;
 
-      const exclude = this.exclude || [];
 
       const previousArchive =
         `${tmpPackageCwd}/${this.archiveName}` as PortablePath;
+
+      let exclude = this.exclude;
 
       try {
         if (await xfs.lstatPromise(previousArchive)) {
@@ -233,14 +257,34 @@ export default class Bundler extends BaseCommand {
         }
       } catch (e) {}
 
-      // Remove stuff we dont need
-      await this.removeExcluded(tmpDir, exclude);
+      exclude = await getExcludedFiles({
+        cwd: tmpDir,
+        ignoreFile: this.ignoreFile,
+        exclude,
+      });
 
+      // Remove stuff we dont need
+     await this.removeExcluded(tmpDir, exclude, outputArchive);
       const configuration = await Configuration.find(
         tmpPackageCwd,
         this.context.plugins
       );
-      const cache = await Cache.find(configuration);
+
+      const cache = await (async () => {
+        // This can fail if we remove to aggresivly
+        // should we add more checks so the user 
+        // cannot delete wrong files or should we
+        // allow him to do whatever and just break?
+        //
+        // I choose the latter. 
+        try {
+          const cache = await Cache.find(configuration);
+
+          return cache;
+        } catch(e) {
+          throw new Error("Failed fetching cache. Check out your config.");
+        }
+      })();
 
       await this.removeUnusedPackages(tmpDir, tmpPackageCwd, configuration);
 
@@ -268,7 +312,16 @@ export default class Bundler extends BaseCommand {
           }
         }
       }
+      // Remove from every workspace
+      for (const workspace of requiredWorkspaces) {
+        const workspaceExclude = await getExcludedFiles({
+          cwd: workspace.cwd,
+          ignoreFile: this.ignoreFile,
+          exclude,
+        });
 
+        await this.removeExcluded(tmpDir, workspaceExclude, outputArchive);
+      }
       for (const workspace of project.workspaces) {
         workspace.manifest.devDependencies.clear();
         if (requiredWorkspaces.has(workspace)) continue;
