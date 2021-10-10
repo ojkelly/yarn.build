@@ -393,13 +393,17 @@ class RunSupervisor {
     );
   };
 
-  async addRunTarget(workspace: Workspace, addToTotalJobs = false): Promise<void> {
+  async addRunTarget(
+    workspace: Workspace,
+    addToTotalJobs = false
+  ): Promise<void> {
     this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
     const shouldRun = await this.plan(workspace);
 
     if (addToTotalJobs) {
       // Get list of dependendecies
-      const dependenciesCount  = 1 + await this.getDependenciesCount(workspace);
+      const dependenciesCount =
+        1 + (await this.getDependenciesCount(workspace));
 
       this.runReport.totalJobs = dependenciesCount;
     }
@@ -416,17 +420,16 @@ class RunSupervisor {
       for (const descriptor of workspace.manifest
         .getForScope(dependencyType)
         .values()) {
-          const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
+        const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
 
-          if (depWorkspace === null) continue;
+        if (depWorkspace === null) continue;
 
-         value += 1;
-
-        }
+        value += 1;
       }
+    }
 
-      return value;
-  }
+    return value;
+  };
 
   plan = async (workspace: Workspace): Promise<boolean> => {
     const parent = this.runGraph
@@ -944,7 +947,12 @@ class RunSupervisor {
     let output = this.formatHeader("Summary") + "\n";
 
     if (this.runReport.runStart) {
-      const skipped = this.runReport.skipCount + (this.runReport.totalJobs - this.runReport.skipCount - this.runReport.failCount - this.runReport.successCount);
+      const skipped =
+        this.runReport.skipCount +
+        (this.runReport.totalJobs -
+          this.runReport.skipCount -
+          this.runReport.failCount -
+          this.runReport.successCount);
       const successString = formatUtils.pretty(
         this.configuration,
         `Success: ${this.runReport.successCount}`,
