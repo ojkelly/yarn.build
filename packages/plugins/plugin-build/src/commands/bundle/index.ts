@@ -129,7 +129,6 @@ export default class Bundler extends BaseCommand {
   async removeExcluded(
     tmpDir: PortablePath,
     excluded: string[],
-    outputArchive: string
   ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
@@ -142,10 +141,6 @@ export default class Bundler extends BaseCommand {
     await Promise.all(
       excluded.map(async (p) => {
         p as PortablePath;
-        if (p === outputArchive) {
-          // Don't delete zip file
-          return;
-        }
         if (!p.startsWith(tmpDir)) {
           // Don't remove anything not in the tmp directory
           return;
@@ -265,7 +260,7 @@ export default class Bundler extends BaseCommand {
       });
 
       // Remove stuff we dont need
-      await this.removeExcluded(tmpDir, exclude, outputArchive);
+      await this.removeExcluded(tmpDir, exclude);
       const configuration = await Configuration.find(
         tmpPackageCwd,
         this.context.plugins
@@ -321,7 +316,7 @@ export default class Bundler extends BaseCommand {
           exclude,
         });
 
-        await this.removeExcluded(tmpDir, workspaceExclude, outputArchive);
+        await this.removeExcluded(tmpDir, workspaceExclude);
       }
       for (const workspace of project.workspaces) {
         workspace.manifest.devDependencies.clear();
