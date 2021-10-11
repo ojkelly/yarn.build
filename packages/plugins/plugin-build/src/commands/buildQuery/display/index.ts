@@ -1,3 +1,4 @@
 export * from "./workspace";
 export * from "./paddingTop";
-export type {DisplayFormatType} from "./displayFormatType";
+export * from "./welcome";
+export type { DisplayFormatType } from "./displayFormatType";
