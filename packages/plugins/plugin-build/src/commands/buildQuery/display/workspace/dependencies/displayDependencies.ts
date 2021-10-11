@@ -8,6 +8,7 @@ interface DisplayDependenciesProps {
   workspace: Workspace;
   project: Project;
   padding?: number;
+  parents: string[];
   parent?: Maybe<string>;
   format: DisplayFormatType;
 }
@@ -15,6 +16,7 @@ export const displayDependencies = ({
   format,
   workspace,
   parent,
+  parents,
   project,
   padding = 0,
 }: DisplayDependenciesProps): void => {
@@ -27,8 +29,9 @@ export const displayDependencies = ({
       project,
       padding,
       parent,
+      parents,
       current: getName(workspace.manifest.name),
-      circular: parent === dependency,
+      circular: parent === dependency || parents.includes(dependency),
       dependency,
     });
   }

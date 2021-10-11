@@ -43,7 +43,7 @@ export default class BuildQuery extends BaseCommand {
 
     paddingTop({ padding: 1 });
     welcome({ workspace, format });
-    displayWorkspace({ workspace, project, format });
+    displayWorkspace({ parents: [], workspace, project, format });
     paddingTop({ padding: 2 });
 
     return 0;

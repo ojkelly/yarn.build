@@ -12,6 +12,7 @@ interface DisplayDependencyProps {
   padding?: number;
   current: string;
   parent?: Maybe<string>;
+  parents: string[];
   circular: boolean;
   format: DisplayFormatType;
 }
@@ -23,6 +24,7 @@ export const displayDependency = ({
   format,
   circular,
   dependency,
+  parents,
   current,
   project,
   padding = 0,
@@ -52,6 +54,7 @@ export const displayDependency = ({
     format,
     project,
     parent: current,
+    parents: [...parents, current],
     padding: padding + 1,
     workspace,
   });

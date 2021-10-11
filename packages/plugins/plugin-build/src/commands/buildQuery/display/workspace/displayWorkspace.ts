@@ -9,6 +9,7 @@ interface DisplayWorkspaceProps {
   project: Project;
   padding?: number;
   parent?: Maybe<string>;
+  parents: string[];
   format: DisplayFormatType;
 }
 
@@ -16,9 +17,10 @@ export const displayWorkspace = ({
   format,
   workspace,
   project,
+  parents,
   padding = 0,
   parent,
 }: DisplayWorkspaceProps): void => {
   displayName({ workspace, padding, format });
-  displayDependencies({ workspace, project, padding, parent, format });
+  displayDependencies({ parents, workspace, project, padding, parent, format });
 };
