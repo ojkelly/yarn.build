@@ -960,7 +960,7 @@ class RunSupervisor {
       );
       const failedString = formatUtils.pretty(
         this.configuration,
-        `Fail:${this.runReport.failCount}`,
+        `Fail: ${this.runReport.failCount}`,
         "red"
       );
       const skippedString = formatUtils.pretty(
