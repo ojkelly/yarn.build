@@ -357,7 +357,7 @@ export default class Bundler extends BaseCommand {
         await this.removeExcluded({tmpDir, excluded: workspaceExclude, nonRemovableFiles, yarnDirectory, cacheDirectory, shouldRemoveEmptyDirectories: false});
       }
       // Remove stuff we dont need globally
-      await this.removeExcluded({tmpDir, excluded: exclude, nonRemovableFiles, yarnDirectory, cacheDirectory});
+      await this.removeExcluded({tmpDir, excluded: exclude, nonRemovableFiles, yarnDirectory, cacheDirectory, shouldRemoveEmptyDirectories: true});
 
       for (const workspace of project.workspaces) {
         workspace.manifest.devDependencies.clear();
