@@ -126,44 +126,48 @@ export default class Bundler extends BaseCommand {
     }
   }
 
-  async removeEmptyDirectories({cwd}: {cwd:PortablePath}): Promise<boolean> {
-      const isDir = xfs.statSync(cwd).isDirectory();
+  async removeEmptyDirectories({
+    cwd,
+  }: {
+    cwd: PortablePath;
+  }): Promise<boolean> {
+    const isDir = xfs.statSync(cwd).isDirectory();
 
-      if (!isDir)  {
-        return false;
-      }
-      let files = await xfs.readdirPromise(cwd);
-
-      for (const file of files) {
-        await this.removeEmptyDirectories({cwd: path.join(cwd, file) as PortablePath});
-      }
-      files = await xfs.readdirPromise(cwd);
-      if (files.length === 0) {
-          await xfs.removePromise(cwd);
-
-          return true;
-      }
-
+    if (!isDir) {
       return false;
+    }
+    let files = await xfs.readdirPromise(cwd);
+
+    for (const file of files) {
+      await this.removeEmptyDirectories({
+        cwd: path.join(cwd, file) as PortablePath,
+      });
+    }
+    files = await xfs.readdirPromise(cwd);
+    if (files.length === 0) {
+      await xfs.removePromise(cwd);
+
+      return true;
+    }
+
+    return false;
   }
 
-  async removeExcluded(
-    {tmpDir,
+  async removeExcluded({
+    tmpDir,
     excluded,
     nonRemovableFiles,
     yarnDirectory,
     cacheDirectory,
-    shouldRemoveEmptyDirectories = false
-    }: 
-    {
-    tmpDir: PortablePath,
-    excluded: string[],
-    nonRemovableFiles: string[]
+    shouldRemoveEmptyDirectories = false,
+  }: {
+    tmpDir: PortablePath;
+    excluded: string[];
+    nonRemovableFiles: string[];
     yarnDirectory: string;
     cacheDirectory: string;
     shouldRemoveEmptyDirectories?: boolean;
-    }
-  ): Promise<void> {
+  }): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
     try {
@@ -175,11 +179,9 @@ export default class Bundler extends BaseCommand {
       excluded.map(async (p) => {
         p as PortablePath;
         if (p.startsWith(yarnDirectory)) {
-
           return;
         }
         if (p.startsWith(cacheDirectory)) {
-
           return;
         }
         if (nonRemovableFiles.includes(p)) {
@@ -192,16 +194,15 @@ export default class Bundler extends BaseCommand {
         try {
           if (await xfs.lstatPromise(p as PortablePath)) {
             // File might already be deleted. For example if parent folder was deleted first.
-              await xfs.removePromise(p as PortablePath);
-            }
+            await xfs.removePromise(p as PortablePath);
           }
-        catch (_e) {
+        } catch (_e) {
           // Empty on purpose
         }
       })
     );
     if (shouldRemoveEmptyDirectories) {
-      await this.removeEmptyDirectories({cwd: tmpDir});
+      await this.removeEmptyDirectories({ cwd: tmpDir });
     }
   }
 
@@ -308,10 +309,8 @@ export default class Bundler extends BaseCommand {
       const cache = await Cache.find(configuration);
       const yarnDirectory = `${tmpDir}/.yarn`;
       const cacheDirectory = cache.cwd;
-      
 
       await this.removeUnusedPackages(tmpDir, tmpPackageCwd, configuration);
-
 
       const { project, workspace } = await Project.find(
         configuration,
@@ -322,14 +321,16 @@ export default class Bundler extends BaseCommand {
         throw new WorkspaceRequiredError(project.cwd, tmpPackageCwd);
 
       const requiredWorkspaces = new Set<Workspace>([workspace]);
-      const nonRemovableFiles = getAllWorkspacesNonRemovables({workspaces: project.workspaces, rootDir: tmpDir});
+      const nonRemovableFiles = getAllWorkspacesNonRemovables({
+        workspaces: project.workspaces,
+        rootDir: tmpDir,
+      });
 
       exclude = await getExcludedFiles({
         cwd: tmpDir,
         ignoreFile: this.ignoreFile,
         exclude,
       });
-
 
       for (const workspace of requiredWorkspaces) {
         for (const dependencyType of Manifest.hardDependencies) {
@@ -354,10 +355,24 @@ export default class Bundler extends BaseCommand {
         });
 
         // Remove stuff we dont need from packages
-        await this.removeExcluded({tmpDir, excluded: workspaceExclude, nonRemovableFiles, yarnDirectory, cacheDirectory, shouldRemoveEmptyDirectories: false});
+        await this.removeExcluded({
+          tmpDir,
+          excluded: workspaceExclude,
+          nonRemovableFiles,
+          yarnDirectory,
+          cacheDirectory,
+          shouldRemoveEmptyDirectories: false,
+        });
       }
       // Remove stuff we dont need globally
-      await this.removeExcluded({tmpDir, excluded: exclude, nonRemovableFiles, yarnDirectory, cacheDirectory, shouldRemoveEmptyDirectories: true});
+      await this.removeExcluded({
+        tmpDir,
+        excluded: exclude,
+        nonRemovableFiles,
+        yarnDirectory,
+        cacheDirectory,
+        shouldRemoveEmptyDirectories: true,
+      });
 
       for (const workspace of project.workspaces) {
         workspace.manifest.devDependencies.clear();
