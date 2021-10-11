@@ -21,7 +21,6 @@ export const getExcludedFiles = async ({
     ...(await getIgnoreFile(ignoreFile)),
   ]);
   const allFiles = await getAllFiles({ cwd });
-  // DO THIS LATER
   const removeFiles = allFiles
     .filter((fileName) => ignores.ignores(fileName))
     .map((fileName) => `${cwd}/${fileName}`);
