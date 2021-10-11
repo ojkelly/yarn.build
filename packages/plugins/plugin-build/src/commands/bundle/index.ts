@@ -128,7 +128,7 @@ export default class Bundler extends BaseCommand {
 
   async removeExcluded(
     tmpDir: PortablePath,
-    excluded: string[],
+    excluded: string[]
   ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
