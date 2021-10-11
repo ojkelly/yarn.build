@@ -34,7 +34,7 @@ const NonRemovableFiles: Record<string, (props: {cwd: string, rootDir: string}) 
 };
 
 const getAllWorkspacesNonRemovablesHelper = ({cwd, rootDir}: {cwd: string, rootDir: string}) => { 
-    return Array.from(new Set(Object.values(NonRemovableFiles).map((fn) => fn({cwd, rootDir})).flat()));
+    return [...new Set(...[Object.values(NonRemovableFiles).map((fn) => fn({cwd, rootDir})).flat()])];
 };
 
 

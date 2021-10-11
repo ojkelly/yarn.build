@@ -126,10 +126,43 @@ export default class Bundler extends BaseCommand {
     }
   }
 
+  async removeEmptyDirectories({cwd}: {cwd:PortablePath}): Promise<boolean> {
+      const isDir = xfs.statSync(cwd).isDirectory();
+
+      if (!isDir)  {
+        return false;
+      }
+      let files = await xfs.readdirPromise(cwd);
+
+      for (const file of files) {
+        await this.removeEmptyDirectories({cwd: path.join(cwd, file) as PortablePath});
+      }
+      files = await xfs.readdirPromise(cwd);
+      if (files.length === 0) {
+          await xfs.removePromise(cwd);
+
+          return true;
+      }
+
+      return false;
+  }
+
   async removeExcluded(
+    {tmpDir,
+    excluded,
+    nonRemovableFiles,
+    yarnDirectory,
+    cacheDirectory,
+    shouldRemoveEmptyDirectories = false
+    }: 
+    {
     tmpDir: PortablePath,
     excluded: string[],
     nonRemovableFiles: string[]
+    yarnDirectory: string;
+    cacheDirectory: string;
+    shouldRemoveEmptyDirectories?: boolean;
+    }
   ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
@@ -141,6 +174,14 @@ export default class Bundler extends BaseCommand {
     await Promise.all(
       excluded.map(async (p) => {
         p as PortablePath;
+        if (p.startsWith(yarnDirectory)) {
+
+          return;
+        }
+        if (p.startsWith(cacheDirectory)) {
+
+          return;
+        }
         if (nonRemovableFiles.includes(p)) {
           return;
         }
@@ -148,17 +189,20 @@ export default class Bundler extends BaseCommand {
           // Don't remove anything not in the tmp directory
           return;
         }
-
-        if (await xfs.lstatPromise(p as PortablePath)) {
-          // File might already be deleted. For example if parent folder was deleted first.
-          try {
-            await xfs.removePromise(p as PortablePath);
-          } catch (_e) {
-            // Empty on purpose
+        try {
+          if (await xfs.lstatPromise(p as PortablePath)) {
+            // File might already be deleted. For example if parent folder was deleted first.
+              await xfs.removePromise(p as PortablePath);
+            }
           }
+        catch (_e) {
+          // Empty on purpose
         }
       })
     );
+    if (shouldRemoveEmptyDirectories) {
+      await this.removeEmptyDirectories({cwd: tmpDir});
+    }
   }
 
   async execute(): Promise<0 | 1> {
@@ -262,6 +306,9 @@ export default class Bundler extends BaseCommand {
       );
 
       const cache = await Cache.find(configuration);
+      const yarnDirectory = `${tmpDir}/.yarn`;
+      const cacheDirectory = cache.cwd;
+      
 
       await this.removeUnusedPackages(tmpDir, tmpPackageCwd, configuration);
 
@@ -283,8 +330,6 @@ export default class Bundler extends BaseCommand {
         exclude,
       });
 
-      // Remove stuff we dont need
-      await this.removeExcluded(tmpDir, exclude, nonRemovableFiles);
 
       for (const workspace of requiredWorkspaces) {
         for (const dependencyType of Manifest.hardDependencies) {
@@ -308,8 +353,12 @@ export default class Bundler extends BaseCommand {
           exclude,
         });
 
-        await this.removeExcluded(tmpDir, workspaceExclude, nonRemovableFiles);
+        // Remove stuff we dont need from packages
+        await this.removeExcluded({tmpDir, excluded: workspaceExclude, nonRemovableFiles, yarnDirectory, cacheDirectory, shouldRemoveEmptyDirectories: false});
       }
+      // Remove stuff we dont need globally
+      await this.removeExcluded({tmpDir, excluded: exclude, nonRemovableFiles, yarnDirectory, cacheDirectory});
+
       for (const workspace of project.workspaces) {
         workspace.manifest.devDependencies.clear();
         if (requiredWorkspaces.has(workspace)) continue;
