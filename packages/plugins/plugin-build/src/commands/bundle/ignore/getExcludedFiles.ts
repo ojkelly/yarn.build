@@ -1,8 +1,8 @@
 import { Filename } from "@yarnpkg/fslib";
-import { getIgnoreFile } from "./get_ignore_file";
-import { getIgnoreFilePath } from "./get_ignore_file_path";
+import { getIgnoreFile } from "./getIgnoreFile";
+import { getIgnoreFilePath } from "./getIgnoreFilePath";
 import ignore from "ignore";
-import { getAllFiles } from "./get_all_files";
+import { getAllFiles } from "./getAllFiles";
 interface GetExcludedFilesProps {
   ignoreFile: Filename;
   exclude: string[];
