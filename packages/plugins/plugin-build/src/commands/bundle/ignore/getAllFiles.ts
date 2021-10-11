@@ -12,7 +12,7 @@ export const getAllFiles = async ({
   cwd,
 }: GetAllFilesProps): Promise<Filename[]> => {
   try {
-    const files = (await glob(`${cwd}/**/*`)) as Filename[];
+    const files = (await glob(`${cwd}/**/*`, {dot: true})) as Filename[];
 
     return files
       .map((fileName) => fileName.split(`${cwd}/`)[1] ?? "")

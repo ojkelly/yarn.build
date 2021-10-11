@@ -1,2 +1,3 @@
 export * from "./maybe";
-export * from "./deep-optional";
+export * from "./deepOptional";
+export * from "./packageFiles";

@@ -20,7 +20,7 @@ import {
 
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
-import { DEFAULT_IGNORE_FILE } from "./ignore";
+import { DEFAULT_IGNORE_FILE, getAllWorkspacesNonRemovables } from "./ignore";
 import { GetPartialPluginConfiguration } from "../../config";
 import { getExcludedFiles } from "./ignore";
 
@@ -128,7 +128,8 @@ export default class Bundler extends BaseCommand {
 
   async removeExcluded(
     tmpDir: PortablePath,
-    excluded: string[]
+    excluded: string[],
+    nonRemovableFiles: string[]
   ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
@@ -137,10 +138,12 @@ export default class Bundler extends BaseCommand {
         await xfs.removePromise(gitDir);
       }
     } catch (e) {}
-
     await Promise.all(
       excluded.map(async (p) => {
         p as PortablePath;
+        if (nonRemovableFiles.includes(p)) {
+          return;
+        }
         if (!p.startsWith(tmpDir)) {
           // Don't remove anything not in the tmp directory
           return;
@@ -253,36 +256,15 @@ export default class Bundler extends BaseCommand {
         }
       } catch (e) {}
 
-      exclude = await getExcludedFiles({
-        cwd: tmpDir,
-        ignoreFile: this.ignoreFile,
-        exclude,
-      });
-
-      // Remove stuff we dont need
-      await this.removeExcluded(tmpDir, exclude);
       const configuration = await Configuration.find(
         tmpPackageCwd,
         this.context.plugins
       );
 
-      const cache = await (async () => {
-        // This can fail if we remove to aggresivly
-        // should we add more checks so the user
-        // cannot delete wrong files or should we
-        // allow him to do whatever and just break?
-        //
-        // I choose the latter.
-        try {
-          const cache = await Cache.find(configuration);
-
-          return cache;
-        } catch (e) {
-          throw new Error("Failed fetching cache. Check out your config.");
-        }
-      })();
+      const cache = await Cache.find(configuration);
 
       await this.removeUnusedPackages(tmpDir, tmpPackageCwd, configuration);
+
 
       const { project, workspace } = await Project.find(
         configuration,
@@ -293,6 +275,16 @@ export default class Bundler extends BaseCommand {
         throw new WorkspaceRequiredError(project.cwd, tmpPackageCwd);
 
       const requiredWorkspaces = new Set<Workspace>([workspace]);
+      const nonRemovableFiles = getAllWorkspacesNonRemovables({workspaces: project.workspaces, rootDir: tmpDir});
+
+      exclude = await getExcludedFiles({
+        cwd: tmpDir,
+        ignoreFile: this.ignoreFile,
+        exclude,
+      });
+
+      // Remove stuff we dont need
+      await this.removeExcluded(tmpDir, exclude, nonRemovableFiles);
 
       for (const workspace of requiredWorkspaces) {
         for (const dependencyType of Manifest.hardDependencies) {
@@ -316,7 +308,7 @@ export default class Bundler extends BaseCommand {
           exclude,
         });
 
-        await this.removeExcluded(tmpDir, workspaceExclude);
+        await this.removeExcluded(tmpDir, workspaceExclude, nonRemovableFiles);
       }
       for (const workspace of project.workspaces) {
         workspace.manifest.devDependencies.clear();
