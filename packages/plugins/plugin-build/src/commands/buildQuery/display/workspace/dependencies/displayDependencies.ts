@@ -1,6 +1,6 @@
 import { Project, Workspace } from "@yarnpkg/core";
-import { getInternalDependencies } from "../../../utils";
-import { Maybe } from "src/types";
+import { getInternalDependencies, getName } from "../../../utils";
+import { Maybe } from "../../../../../types";
 import { displayDependency } from "./displayDependency";
 import { DisplayFormatType } from "../..";
 
@@ -27,6 +27,7 @@ export const displayDependencies = ({
       project,
       padding,
       parent,
+      current: getName(workspace.manifest.name),
       circular: parent === dependency,
       dependency,
     });

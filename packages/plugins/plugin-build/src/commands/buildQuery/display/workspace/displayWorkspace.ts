@@ -1,5 +1,5 @@
 import { Project, Workspace } from "@yarnpkg/core";
-import { Maybe } from "src/types";
+import { Maybe } from "../../../../types";
 import { DisplayFormatType } from "..";
 import { displayDependencies } from "./dependencies";
 import { displayName } from "./displayName";
