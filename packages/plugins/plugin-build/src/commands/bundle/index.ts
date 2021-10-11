@@ -99,6 +99,10 @@ export default class Bundler extends BaseCommand {
       configuration
     );
 
+    this.exclude = pluginConfiguration.exclude
+      ? [...this.exclude, ...pluginConfiguration.exclude]
+      : this.exclude;
+
     this.ignoreFile =
       (pluginConfiguration?.ignoreFile as Filename) ?? this.ignoreFile;
 

@@ -12,6 +12,7 @@ const isYarnBuildConfiguration = t.isObject({
     input: t.isString(),
     output: t.isString(),
   }),
+  exclude: t.isArray(t.isString()),
   bail: t.isBoolean(),
   ignoreFile: t.isString(),
   maxConcurrency: t.isOptional(
@@ -26,6 +27,7 @@ const DEFAULT_CONFIG: YarnBuildConfiguration = {
     input: ".",
     output: "build",
   },
+  exclude: [],
   bail: false,
   ignoreFile: DEFAULT_IGNORE_FILE,
   maxConcurrency: 8,
