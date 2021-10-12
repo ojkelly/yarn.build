@@ -1,8 +1,5 @@
 import { Filename } from "@yarnpkg/fslib";
-import _glob from "glob";
-import { promisify } from "util";
-
-const glob = promisify(_glob);
+import glob from "glob-promise";
 
 interface GetAllFilesProps {
   cwd: string;
