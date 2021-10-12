@@ -1306,6 +1306,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["await-semaphore", "npm:0.1.3"],
             ["clipanion", "virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:3.0.1"],
             ["date-fns", "npm:2.23.0"],
+            ["glob", "npm:7.2.0"],
             ["glob-promise", "virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:4.2.1"],
             ["ignore", "npm:5.1.8"],
             ["is-ci", "npm:2.0.0"],
@@ -6375,6 +6376,19 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["path-is-absolute", "npm:1.0.1"]
           ],
           "linkType": "HARD",
+        }],
+        ["npm:7.2.0", {
+          "packageLocation": "./.yarn/cache/glob-npm-7.2.0-bb4644d239-78a8ea9423.zip/node_modules/glob/",
+          "packageDependencies": [
+            ["glob", "npm:7.2.0"],
+            ["fs.realpath", "npm:1.0.0"],
+            ["inflight", "npm:1.0.6"],
+            ["inherits", "npm:2.0.4"],
+            ["minimatch", "npm:3.0.4"],
+            ["once", "npm:1.4.0"],
+            ["path-is-absolute", "npm:1.0.1"]
+          ],
+          "linkType": "HARD",
         }]
       ]],
       ["glob-parent", [
@@ -6400,7 +6414,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["glob-promise", "virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:4.2.1"],
             ["@types/glob", "npm:7.1.4"],
-            ["glob", null]
+            ["glob", "npm:7.2.0"]
           ],
           "packagePeers": [
             "glob"
