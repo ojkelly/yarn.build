@@ -144,7 +144,7 @@ export default class Bundler extends BaseCommand {
 
     for (const file of files) {
       await this.removeEmptyDirectories({
-        cwd: path.join(cwd, file) as PortablePath,
+        cwd: ppath.join(cwd, file),
       });
     }
     files = await xfs.readdirPromise(cwd);
