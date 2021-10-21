@@ -1306,6 +1306,9 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["await-semaphore", "npm:0.1.3"],
             ["clipanion", "virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:3.0.1"],
             ["date-fns", "npm:2.23.0"],
+            ["glob", "npm:7.2.0"],
+            ["glob-promise", "virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:4.2.1"],
+            ["ignore", "npm:5.1.8"],
             ["is-ci", "npm:2.0.0"],
             ["jest", "npm:26.6.3"],
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],
@@ -1554,6 +1557,17 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD",
         }]
       ]],
+      ["@types/glob", [
+        ["npm:7.1.4", {
+          "packageLocation": "./.yarn/cache/@types-glob-npm-7.1.4-d45247eaa2-6911a95644.zip/node_modules/@types/glob/",
+          "packageDependencies": [
+            ["@types/glob", "npm:7.1.4"],
+            ["@types/minimatch", "npm:3.0.5"],
+            ["@types/node", "npm:16.4.1"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
       ["@types/graceful-fs", [
         ["npm:4.1.5", {
           "packageLocation": "./.yarn/cache/@types-graceful-fs-npm-4.1.5-91d62e1050-d076bb61f4.zip/node_modules/@types/graceful-fs/",
@@ -1656,6 +1670,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-lodash-npm-4.14.171-b4c768e142-d093d8ff8b.zip/node_modules/@types/lodash/",
           "packageDependencies": [
             ["@types/lodash", "npm:4.14.171"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["@types/minimatch", [
+        ["npm:3.0.5", {
+          "packageLocation": "./.yarn/cache/@types-minimatch-npm-3.0.5-802bb0797f-c41d136f67.zip/node_modules/@types/minimatch/",
+          "packageDependencies": [
+            ["@types/minimatch", "npm:3.0.5"]
           ],
           "linkType": "HARD",
         }]
@@ -6353,6 +6376,19 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["path-is-absolute", "npm:1.0.1"]
           ],
           "linkType": "HARD",
+        }],
+        ["npm:7.2.0", {
+          "packageLocation": "./.yarn/cache/glob-npm-7.2.0-bb4644d239-78a8ea9423.zip/node_modules/glob/",
+          "packageDependencies": [
+            ["glob", "npm:7.2.0"],
+            ["fs.realpath", "npm:1.0.0"],
+            ["inflight", "npm:1.0.6"],
+            ["inherits", "npm:2.0.4"],
+            ["minimatch", "npm:3.0.4"],
+            ["once", "npm:1.4.0"],
+            ["path-is-absolute", "npm:1.0.1"]
+          ],
+          "linkType": "HARD",
         }]
       ]],
       ["glob-parent", [
@@ -6361,6 +6397,27 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["glob-parent", "npm:5.1.2"],
             ["is-glob", "npm:4.0.1"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["glob-promise", [
+        ["npm:4.2.1", {
+          "packageLocation": "./.yarn/cache/glob-promise-npm-4.2.1-6e8e1a890c-51bbb658e2.zip/node_modules/glob-promise/",
+          "packageDependencies": [
+            ["glob-promise", "npm:4.2.1"]
+          ],
+          "linkType": "SOFT",
+        }],
+        ["virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:4.2.1", {
+          "packageLocation": "./.yarn/__virtual__/glob-promise-virtual-7d7caafe41/0/cache/glob-promise-npm-4.2.1-6e8e1a890c-51bbb658e2.zip/node_modules/glob-promise/",
+          "packageDependencies": [
+            ["glob-promise", "virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:4.2.1"],
+            ["@types/glob", "npm:7.1.4"],
+            ["glob", "npm:7.2.0"]
+          ],
+          "packagePeers": [
+            "glob"
           ],
           "linkType": "HARD",
         }]

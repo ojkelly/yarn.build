@@ -2,6 +2,8 @@ import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
 import { Configuration } from "@yarnpkg/core";
 import * as t from "typanion";
 import { load, JSON_SCHEMA } from "js-yaml";
+import { DEFAULT_IGNORE_FILE } from "./commands/bundle/ignore";
+import { DeepPartial } from "./types";
 
 const DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME = `.yarnbuildrc.yml` as Filename;
 
@@ -10,7 +12,9 @@ const isYarnBuildConfiguration = t.isObject({
     input: t.isString(),
     output: t.isString(),
   }),
+  exclude: t.isArray(t.isString()),
   bail: t.isBoolean(),
+  ignoreFile: t.isString(),
   maxConcurrency: t.isOptional(
     t.applyCascade(t.isNumber(), [t.isInteger(), t.isInInclusiveRange(1, 128)])
   ),
@@ -18,9 +22,20 @@ const isYarnBuildConfiguration = t.isObject({
 
 type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
 
+const DEFAULT_CONFIG: YarnBuildConfiguration = {
+  folders: {
+    input: ".",
+    output: "build",
+  },
+  exclude: [],
+  bail: false,
+  ignoreFile: DEFAULT_IGNORE_FILE,
+  maxConcurrency: 8,
+};
+
 async function getConfiguration(
   configuration: Configuration
-): Promise<YarnBuildConfiguration> {
+): Promise<DeepPartial<YarnBuildConfiguration>> {
   // TODO: make this more customisable
   const rcFilename = DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME;
 
@@ -55,20 +70,32 @@ async function getConfiguration(
   }
 
   // return default config if none found
-  return {
-    folders: {
-      input: ".",
-      output: "build",
-    },
-    bail: false,
-    maxConcurrency: 8,
-  };
+  return DEFAULT_CONFIG;
+}
+
+async function GetPartialPluginConfiguration(
+  configuration: Configuration
+): Promise<DeepPartial<YarnBuildConfiguration>> {
+  return await getConfiguration(configuration);
 }
 
 async function GetPluginConfiguration(
   configuration: Configuration
 ): Promise<YarnBuildConfiguration> {
-  return await getConfiguration(configuration);
+  const data = await getConfiguration(configuration);
+
+  return {
+    ...DEFAULT_CONFIG,
+    ...data,
+    folders: {
+      ...DEFAULT_CONFIG.folders,
+      ...(data.folders ?? {}),
+    },
+  };
 }
 
-export { YarnBuildConfiguration, GetPluginConfiguration };
+export {
+  YarnBuildConfiguration,
+  GetPluginConfiguration,
+  GetPartialPluginConfiguration,
+};

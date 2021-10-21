@@ -11,7 +11,7 @@ import { Command, Option, Usage } from "clipanion";
 import path from "path";
 
 import { EventEmitter } from "events";
-import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
+import { GetPluginConfiguration } from "../../config";
 import RunSupervisor, { RunSupervisorReporterEvents } from "../../supervisor";
 
 import { addTargets } from "../../supervisor/workspace";
@@ -77,8 +77,10 @@ export default class Build extends BaseCommand {
       this.context.plugins
     );
 
-    const pluginConfiguration: YarnBuildConfiguration =
-      await GetPluginConfiguration(configuration);
+    const pluginConfiguration = await GetPluginConfiguration(configuration);
+
+    this.shouldBailInstantly =
+      this.shouldBailInstantly ?? pluginConfiguration.bail;
 
     this.shouldBailInstantly =
       this.shouldBailInstantly ?? pluginConfiguration.bail;
