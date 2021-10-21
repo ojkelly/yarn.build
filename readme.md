@@ -53,6 +53,13 @@ or workspace layout to avoid it.
 As this is fundemental to ensuring sound builds, yarn build will never cache the
 input folder if it's changed.
 
+#### `query`
+
+Run `yarn build query` from within a package to see the dependency graph of what
+might be built.
+
+_Query doesn't currently show what's cached / needs to be rebuilt._
+
 ### `bundle`
 
 Bundle a package and its local dependencies, designed for containers and AWS lambda.
@@ -77,6 +84,21 @@ Choose an output directory outside your project and pass `--no-compress`.
 # or any path you want to put it in that's outside your project root
 yarn bundle --no-compress --output-directory /srv/app
 ```
+
+#### `.bundleignore` NEW!
+
+You can set files to be ignored when bundling for even smaller bundles.
+
+Add a `.bundleignore` file with the same format as `.gitignore` next to the
+`package.json` you are bundling.
+
+Optionally put one next to your root `package.json` to apply to all bundles.
+
+You can pass `--ignore-file` to specify a different ignore file.
+
+Or decide at bundle time what to ignore by passing `--exclude` along with the file path to ignore.
+
+See #112 for the original PR.
 
 ### `test`
 
