@@ -223,7 +223,7 @@ export default class Bundler extends BaseCommand {
       let outputArchive = ppath.join(originalCwd, this.archiveName);
 
       if (typeof this.outputDirectory == "string") {
-        const resolvedOutputDir = resolveUserDirectory(this.outputDirectory);
+        const resolvedOutputDir = resolveNativePath(this.outputDirectory);
 
         if (!fs.existsSync(resolvedOutputDir)) {
           // console.error("ERROR: --output-directory does not exist");
@@ -271,7 +271,7 @@ export default class Bundler extends BaseCommand {
 
           return 1;
         } else {
-          outputPath = resolveUserDirectory(this.outputDirectory);
+          outputPath = resolveNativePath(this.outputDirectory);
 
           if (outputPath.startsWith(sourceConfiguration.projectCwd)) {
             console.error(
@@ -466,11 +466,11 @@ exports.default = index;
 `;
 
 /**
- * Transform a user-given directory from native path format to portable path
+ * Resolves a user-given path from native path format to a portable path
  * format.
  * @internal
  */
-export function resolveUserDirectory(path: string): PortablePath {
+export function resolveNativePath(path: string): PortablePath {
   const portablePath = npath.toPortablePath(path);
 
   return ppath.resolve(portablePath);

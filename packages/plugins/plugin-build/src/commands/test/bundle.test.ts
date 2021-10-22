@@ -1,13 +1,13 @@
-import { resolveUserDirectory } from "../bundle";
+import { resolveNativePath } from "../bundle";
 
-describe("resolveUserDirectory", () => {
+describe("resolveNativePath", () => {
   const cases = [
     ["C:\\foo\\bar", "/C:/foo/bar"],
     ["/root/dir", "/root/dir"],
   ];
 
   test.each(cases)("%s => %s", (given, expected) => {
-    const result = resolveUserDirectory(given);
+    const result = resolveNativePath(given);
 
     expect(result).toEqual(expected);
   });
