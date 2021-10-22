@@ -233,7 +233,7 @@ export default class Bundler extends BaseCommand {
           await xfs.mkdirPromise(resolvedOutputDir);
         }
 
-        if (fs.readdirSync(resolvedOutputDir).length != 0) {
+        if (xfs.readdirSync(resolvedOutputDir).length != 0) {
           console.error("ERROR: --output-directory is not empty");
 
           return 1;
