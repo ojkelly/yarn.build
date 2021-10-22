@@ -10,19 +10,23 @@ import {
 } from "@yarnpkg/core";
 import { getLibzipPromise } from "@yarnpkg/libzip";
 import {
-  xfs,
+  Filename,
   NodeFS,
   PortablePath,
-  ZipFS,
+  npath,
   ppath,
-  Filename,
+  xfs,
+  ZipFS,
 } from "@yarnpkg/fslib";
 
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
-import { DEFAULT_IGNORE_FILE, getAllWorkspacesNonRemovables } from "./ignore";
+import {
+  DEFAULT_IGNORE_FILE,
+  getAllWorkspacesNonRemovables,
+  getExcludedFiles,
+} from "./ignore";
 import { GetPartialPluginConfiguration } from "../../config";
-import { getExcludedFiles } from "./ignore";
 
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
@@ -219,26 +223,24 @@ export default class Bundler extends BaseCommand {
       let outputArchive = ppath.join(originalCwd, this.archiveName);
 
       if (typeof this.outputDirectory == "string") {
-        const resovledOutputDir = ppath.resolve(
-          this.outputDirectory as PortablePath
-        );
+        const resolvedOutputDir = resolveUserDirectory(this.outputDirectory);
 
-        if (!fs.existsSync(resovledOutputDir)) {
+        if (!fs.existsSync(resolvedOutputDir)) {
           // console.error("ERROR: --output-directory does not exist");
 
           // return 1;
 
-          await xfs.mkdirPromise(resovledOutputDir);
+          await xfs.mkdirPromise(resolvedOutputDir);
         }
 
-        if (fs.readdirSync(resovledOutputDir).length != 0) {
+        if (fs.readdirSync(resolvedOutputDir).length != 0) {
           console.error("ERROR: --output-directory is not empty");
 
           return 1;
         }
 
         outputArchive = ppath.join(
-          resovledOutputDir as PortablePath,
+          resolvedOutputDir,
           this.archiveName
         );
       }
@@ -269,9 +271,7 @@ export default class Bundler extends BaseCommand {
 
           return 1;
         } else {
-          outputPath = ppath.resolve(
-            this.outputDirectory as PortablePath
-          ) as PortablePath;
+          outputPath = resolveUserDirectory(this.outputDirectory);
 
           if (outputPath.startsWith(sourceConfiguration.projectCwd)) {
             console.error(
@@ -464,3 +464,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 exports.default = index;
 `;
+
+/**
+ * Transform a user-given directory from native path format to portable path
+ * format.
+ * @internal
+ */
+export function resolveUserDirectory(path: string): PortablePath {
+  const portablePath = npath.toPortablePath(path);
+
+  return ppath.resolve(portablePath);
+}
