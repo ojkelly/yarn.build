@@ -1,6 +1,6 @@
-const { resolveNativePath } = require('../bundle');
-const os = require('os');
-const { npath, ppath } = require('@yarnpkg/fslib');
+import { resolveNativePath } from "../bundle";
+import * as os from "os";
+import { npath, ppath } from "@yarnpkg/fslib";
 
 describe("resolveNativePath", () => {
   const testWindows = os.platform().startsWith("win") ? test : test.skip;
@@ -19,6 +19,12 @@ describe("resolveNativePath", () => {
     const subdir = npath.toPortablePath("foo\\bar");
 
     expect(result).toEqual(ppath.join(cwd, subdir));
+  });
+
+  testNonWindows("non-windows absolute paths", () => {
+    const result = resolveNativePath("/some/root");
+
+    expect(result).toEqual("/some/root");
   });
 
   testNonWindows("non-windows relative paths", () => {
