@@ -18,6 +18,8 @@
     "jest": "^26.6.3",
     "jest-pnp-resolver": "^1.2.1",
     "js-yaml": "^4.1.0",
+    "replace": "^1.2.1",
+    "shx": "^0.3.3",
     "ts-jest": "^26.4.4",
     "tslib": "^2.3.0",
     "typanion": "^3.3.2",
@@ -47,12 +49,12 @@
   "scripts": {
     "dev": "yarn update:local",
     "build:plugin-stage": "builder build plugin",
-    "update:workspace": "mkdir -p ../../../.yarn/plugins/@ojkelly && cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@ojkelly/plugin-build.cjs",
-    "update:patch-name": "sed -i 's|@yarnpkg/plugin-build|@ojkelly/plugin-build|g' ./bundles/@yarnpkg/plugin-build.js",
+    "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@ojkelly/plugin-build.cjs",
+    "update:patch-name": "replace '@yarnpkg/plugin-build' '@ojkelly/plugin-build' ./bundles/@yarnpkg/plugin-build.js",
     "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "update:local": "yarn build:plugin-stage && yarn update:workspace",
     "release": "yarn build:plugin-stage && yarn update:patch-name",
-    "clean": "rimraf build bundles",
+    "clean": "shx rm -fr build bundles",
     "test": "jest"
   },
   "repository": {
