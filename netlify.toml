@@ -1,7 +1,7 @@
 # yarn.build plugin-build
 [[redirects]]
  from = "/latest"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.2.0/plugin-build.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.2.1/plugin-build.cjs"
  status = 200
  force = true
 
@@ -20,7 +20,7 @@
 # plugin-package-yaml
 [[redirects]]
  from = "/yaml"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.2.0/plugin-package-yaml.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.2.1/plugin-package-yaml.cjs"
  status = 200
  force = true
 
