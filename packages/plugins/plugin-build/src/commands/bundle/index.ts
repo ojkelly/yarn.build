@@ -239,10 +239,7 @@ export default class Bundler extends BaseCommand {
           return 1;
         }
 
-        outputArchive = ppath.join(
-          resolvedOutputDir,
-          this.archiveName
-        );
+        outputArchive = ppath.join(resolvedOutputDir, this.archiveName);
       }
       // Get the configuration where our source code is
       const sourceConfiguration = await Configuration.find(
