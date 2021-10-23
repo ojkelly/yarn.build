@@ -29,3 +29,27 @@ jobs:
       - name: Test
         run: |
           yarn test --ignore-cache
+      - uses: actions/upload-artifact@v2
+        with:
+          name: plugin-build
+          path: packages/plugins/plugin-build/bundles
+
+  integration-test:
+    name: Integration Test
+    needs: [build]
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: plugin-build
+          path: packages/plugins/plugin-build/bundles
+      - name: Install packages
+        run: yarn install
+      - name: Run integration tests
+        run: yarn test:integ

@@ -1,0 +1,6 @@
+{
+  "name": "lambda-project",
+  "workspaces": [
+    "packages/*"
+  ]
+}

@@ -412,7 +412,7 @@ export default class Bundler extends BaseCommand {
           if (noCompressIsSafe && typeof outputPath !== `undefined`) {
             report.reportInfo(null, "Moving build to output directory");
 
-            await baseFs.movePromise(tmpDir, outputPath);
+            await baseFs.copyPromise(outputPath, tmpDir);
           } else {
             const libzip = await getLibzipPromise();
 

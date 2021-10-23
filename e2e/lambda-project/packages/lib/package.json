@@ -1,0 +1,16 @@
+{
+  "name": "lib",
+  "version": "1.0.0",
+  "packageManager": "yarn@3.0.2",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.dev.json"
+  },
+  "devDependencies": {
+    "@types/uglify-js": "^3.13.1",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "uglify-js": "^3.14.2"
+  }
+}
