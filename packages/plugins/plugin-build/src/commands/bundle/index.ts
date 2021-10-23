@@ -1,5 +1,4 @@
 import { BaseCommand, WorkspaceRequiredError } from "@yarnpkg/cli";
-import fs from "fs";
 import {
   Cache,
   Configuration,
@@ -225,7 +224,7 @@ export default class Bundler extends BaseCommand {
       if (typeof this.outputDirectory == "string") {
         const resolvedOutputDir = resolveNativePath(this.outputDirectory);
 
-        if (!fs.existsSync(resolvedOutputDir)) {
+        if (!xfs.existsSync(resolvedOutputDir)) {
           // console.error("ERROR: --output-directory does not exist");
 
           // return 1;
