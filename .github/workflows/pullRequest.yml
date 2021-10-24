@@ -52,4 +52,4 @@ jobs:
       - name: Install packages
         run: yarn install
       - name: Run integration tests
-        run: yarn test:integ
+        run: yarn test:integration

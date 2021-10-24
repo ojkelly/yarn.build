@@ -3,6 +3,6 @@
 // unit tests.
 module.exports = Object.assign(require('./jest.config'), {
   testMatch: [
-    "**/*.integ.(ts|js)"
+    "**/*.integration.(ts|js)"
   ],
 });

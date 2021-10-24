@@ -17,7 +17,7 @@
     "clear:build-cache": "rimraf .yarn/local-build-cache.json",
     "style:check": "yarn prettier --check packages/**/*.ts",
     "style:fix": "yarn prettier --check packages/**/*.ts --write",
-    "test:integ": "jest --config jest.integ.config.js"
+    "test:integration": "jest --config jest.integration.config.js"
   },
   "devDependencies": {
     "@kablamo/eslint-plugin": "^1.0.1",
