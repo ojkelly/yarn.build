@@ -57,6 +57,7 @@ test("run lambda-project after bundling without compression", async () => {
   // THEN
   expect(fs.existsSync(path.join(bundleOutput, "package.json"))).toEqual(true);
   expect(fs.existsSync(path.join(bundleOutput, ".pnp.cjs"))).toEqual(true);
+  expect(fs.existsSync(path.join(bundleOutput, "entrypoint.js"))).toEqual(true);
   expect(fs.existsSync(path.join(bundleOutput, ".yarn"))).toEqual(true);
   expect(fs.readdirSync(path.join(bundleOutput, ".yarn", "cache"))).toEqual([
     ".gitignore",
@@ -67,13 +68,9 @@ test("run lambda-project after bundling without compression", async () => {
   // Now run the bundled code to see that it works!
   // lambda-project's dependencies look like this: lambda -> lib -> uglify-js
   // Calling the lambda's api handler tests the uglify-js transitive dependency
-  const execResult = execa.sync(
-    "node",
-    ["--require", "./.pnp.cjs", "packages/lambda/dist/api.js"],
-    {
-      cwd: bundleOutput,
-    }
-  );
+  const execResult = execa.sync("node", ["entrypoint.js"], {
+    cwd: bundleOutput,
+  });
 
   const responsePayload = JSON.parse(execResult.stdout);
 
