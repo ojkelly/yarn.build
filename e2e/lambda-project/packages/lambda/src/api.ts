@@ -19,14 +19,3 @@ export async function handler(): Promise<lambda.APIGatewayProxyResult> {
     };
   }
 }
-
-// When run, this file executes the handler and outputs the result.
-if (require.main === module) {
-  handler()
-    .then((res) => {
-      console.log(JSON.stringify(res));
-    })
-    .catch((e) => {
-      console.error(e);
-    });
-}
