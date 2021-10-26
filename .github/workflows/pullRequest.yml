@@ -50,8 +50,8 @@ jobs:
           name: plugin-build
           path: packages/plugins/plugin-build/bundles
       - name: Install packages
-        run: yarn install
+        run: yarn install --check-cache
       - name: Build plugin
         run: yarn integration:build
       - name: Run integration tests
-        run: cd e2e/lambda-project && yarn run integration
+        run: cd e2e/lambda-project && yarn install --check-cache && yarn run integration
