@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as crypto from "crypto";
@@ -53,6 +54,19 @@ test("run lambda-project after bundling without compression", async () => {
     bundleOutput,
     "--no-compress"
   );
+
+  // list all files in the directory
+  try {
+    fs.readdirSync(workDir).forEach((file) => {
+      console.log(`workDir/${file}`);
+    });
+
+    fs.readdirSync(bundleOutput).forEach((file) => {
+      console.log(`bundleOutput/${file}`);
+    });
+  } catch (err) {
+    console.log(err);
+  }
 
   // THEN
   expect(fs.existsSync(path.join(bundleOutput, "package.json"))).toEqual(true);
