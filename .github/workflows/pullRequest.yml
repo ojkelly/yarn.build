@@ -51,5 +51,7 @@ jobs:
           path: packages/plugins/plugin-build/bundles
       - name: Install packages
         run: yarn install
+      - name: Build plugin
+        run: yarn integration:build
       - name: Run integration tests
-        run: yarn test:integration
+        run: cd e2e && yarn run integration
