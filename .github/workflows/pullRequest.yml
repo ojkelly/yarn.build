@@ -54,4 +54,4 @@ jobs:
       - name: Build plugin
         run: yarn integration:build
       - name: Run integration tests
-        run: cd e2e && yarn run integration
+        run: cd e2e/lambda-project && yarn run integration
