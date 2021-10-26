@@ -89,7 +89,7 @@ export default class Test extends BaseCommand {
 
         if (typeof this.runTarget[0] === "string") {
           targetDirectory =
-            `${configuration.projectCwd}${path.sep}${this.runTarget[0]}` as PortablePath;
+            `${configuration.projectCwd}${path.posix}${this.runTarget[0]}` as PortablePath;
         }
 
         const { project, workspace: cwdWorkspace } = await Project.find(
