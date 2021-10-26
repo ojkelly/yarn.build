@@ -55,15 +55,6 @@ test("run lambda-project after bundling without compression", async () => {
     "--no-compress"
   );
 
-  // list all files in the directory
-  try {
-    fs.readdirSync(bundleOutput).forEach((file) => {
-      console.log(`bundleOutput/${file}`);
-    });
-  } catch (err) {
-    console.log(err);
-  }
-
   // THEN
   expect(fs.existsSync(path.join(bundleOutput, "package.json"))).toEqual(true);
   expect(fs.existsSync(path.join(bundleOutput, ".pnp.cjs"))).toEqual(true);
