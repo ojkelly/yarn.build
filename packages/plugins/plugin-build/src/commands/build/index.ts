@@ -104,7 +104,7 @@ export default class Build extends BaseCommand {
 
         if (typeof this.buildTarget[0] === "string") {
           targetDirectory =
-            `${configuration.projectCwd}${path.posix}${this.buildTarget[0]}` as PortablePath;
+            `${configuration.projectCwd}${path.posix.sep}${this.buildTarget[0]}` as PortablePath;
         }
 
         const { project, workspace: cwdWorkspace } = await Project.find(

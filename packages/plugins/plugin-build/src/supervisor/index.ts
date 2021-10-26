@@ -529,15 +529,15 @@ class RunSupervisor {
       typeof workspace?.manifest.raw["yarn.build"].output === "string"
     ) {
       ignore =
-        `${dir}${path.posix}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
+        `${dir}${path.posix.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
     } else if (this.pluginConfiguration.folders.output) {
       ignore =
-        `${dir}${path.posix}${this.pluginConfiguration.folders.output}` as PortablePath;
+        `${dir}${path.posix.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
     } else if (workspace?.manifest.raw.main) {
-      ignore = `${dir}${path.posix}${
+      ignore = `${dir}${path.posix.sep}${
         workspace?.manifest.raw.main.substring(
           0,
-          workspace?.manifest.raw.main.lastIndexOf(path.posix)
+          workspace?.manifest.raw.main.lastIndexOf(path.posix.sep)
         ) as PortablePath
       }` as PortablePath;
     }
@@ -547,10 +547,10 @@ class RunSupervisor {
       typeof workspace?.manifest.raw["yarn.build"].input === "string"
     ) {
       srcDir =
-        `${dir}${path.posix}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
+        `${dir}${path.posix.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
     } else if (this.pluginConfiguration.folders.input) {
       srcDir =
-        `${dir}${path.posix}${this.pluginConfiguration.folders.input}` as PortablePath;
+        `${dir}${path.posix.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
     }
 
     // If the source directory is the package root, remove `/.` from the end of
@@ -1172,7 +1172,7 @@ const getLastModifiedForFolder = async (
 
   await Promise.all(
     files.map(async (file) => {
-      const filePath = `${folder}${path.posix}${file}` as PortablePath;
+      const filePath = `${folder}${path.posix.sep}${file}` as PortablePath;
 
       if (ignore && filePath.startsWith(ignore)) {
         return;

@@ -57,10 +57,6 @@ test("run lambda-project after bundling without compression", async () => {
 
   // list all files in the directory
   try {
-    fs.readdirSync(workDir).forEach((file) => {
-      console.log(`workDir/${file}`);
-    });
-
     fs.readdirSync(bundleOutput).forEach((file) => {
       console.log(`bundleOutput/${file}`);
     });

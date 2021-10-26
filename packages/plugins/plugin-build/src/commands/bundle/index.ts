@@ -385,14 +385,16 @@ export default class Bundler extends BaseCommand {
         // Add entrypoint
         // TODO: make mainFile configurable
         const mainFile =
-          workspace.relativeCwd + path.posix + workspace?.manifest?.raw?.main;
+          workspace.relativeCwd +
+          path.posix.sep +
+          workspace?.manifest?.raw?.main;
 
         // TODO: check if it's .pnp.js or .pnp.cjs
         // https://github.com/yarnpkg/berry/pull/2286
         const pnp = `.pnp.cjs`;
 
         xfs.writeFilePromise(
-          `${tmpDir}${path.posix}entrypoint.js` as PortablePath,
+          `${tmpDir}${path.posix.sep}entrypoint.js` as PortablePath,
           generateEntrypointFile(mainFile, pnp)
         );
       }
