@@ -1,6 +1,24 @@
 {
   "name": "lambda-project",
+  "packageManager": "yarn@3.1.0",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "integration": "jest --config jest.config.js"
+  },
+  "dependencies": {
+    "@types/execa": "^2.0.0",
+    "@types/fs-extra": "^9.0.13",
+    "@types/jest": "^26.0.19",
+    "@types/node": "^14.16.0",
+    "execa": "^5.1.1",
+    "fs-extra": "^10.0.0",
+    "jest": "^26.6.3",
+    "jest-pnp-resolver": "^1.2.1",
+    "node-fetch": "^3.0.0",
+    "ts-jest": "^26.4.4",
+    "ts-pnp": "^1.2.0",
+    "typescript": "^4.3.2"
+  }
 }

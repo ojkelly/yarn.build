@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "author": "Owen Kelly",
   "license": "MIT",
+  "packageManager": "yarn@3.1.0",
   "workspaces": {
     "packages": [
       "packages/plugins/*",
@@ -13,11 +14,13 @@
   },
   "private": true,
   "scripts": {
-    "preinstall": "node -e \"if (process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('This project uses Yarn. Things wil not work properly with npm. Use yarn: https://yarnpkg.com/en/docs/install')\"",
     "clear:build-cache": "rimraf .yarn/local-build-cache.json",
     "style:check": "yarn prettier --check packages/**/*.ts",
     "style:fix": "yarn prettier --check packages/**/*.ts --write",
-    "test:integration": "jest --config jest.integration.config.js"
+    "build:plugin": "yarn workspace @ojkelly/yarn-plugin-build update:local",
+    "integration:build": "yarn build:plugin && yarn integration:mkdirp && yarn integration:copy",
+    "integration:mkdirp": "shx mkdir -p e2e/lambda-project/.yarn/plugins/@ojkelly",
+    "integration:copy": "shx cp packages/plugins/plugin-build/bundles/@yarnpkg/plugin-build.js e2e/lambda-project/.yarn/plugins/@ojkelly/plugin-build.cjs"
   },
   "devDependencies": {
     "@kablamo/eslint-plugin": "^1.0.1",
@@ -39,6 +42,7 @@
     "jest-pnp-resolver": "^1.2.1",
     "prettier": "^2.2.1",
     "rimraf": "^3.0.2",
+    "shx": "^0.3.3",
     "ts-jest": "^26.4.4",
     "ts-pnp": "^1.2.0",
     "typescript": "^4.3.2"
@@ -54,6 +58,5 @@
     "@kablamo/kerosene-ui": "^0.0.21",
     "@yarnpkg/pnpify": "^2.4.0",
     "is-ci": "^3.0.0"
-  },
-  "packageManager": "yarn@3.0.0-rc.12"
+  }
 }
