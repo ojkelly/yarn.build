@@ -408,7 +408,12 @@ export default class Bundler extends BaseCommand {
         },
         async (report: StreamReport) => {
           // Install and remove everything we dont need
-          await project.install({ cache, report });
+          await project.install({
+            cache,
+            report,
+            immutable: true,
+            lockfileOnly: true,
+          });
 
           // If flags set don't zip and copy to a tmp directory
           if (noCompressIsSafe && typeof outputPath !== `undefined`) {
