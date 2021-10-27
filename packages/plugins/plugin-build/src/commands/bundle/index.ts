@@ -306,6 +306,8 @@ export default class Bundler extends BaseCommand {
         this.context.plugins
       );
 
+      configuration.use("<custom>", { enableNetwork: false }, tmpPackageCwd);
+
       const cache = await Cache.find(configuration);
       const yarnDirectory = `${tmpDir}/.yarn`;
       const cacheDirectory = cache.cwd;
@@ -411,8 +413,6 @@ export default class Bundler extends BaseCommand {
           await project.install({
             cache,
             report,
-            immutable: true,
-            lockfileOnly: true,
           });
 
           // If flags set don't zip and copy to a tmp directory
