@@ -5,6 +5,7 @@
     "packages/*"
   ],
   "scripts": {
+    "start": "node entrypoint.js",
     "integration": "jest --config jest.config.js"
   },
   "dependencies": {
