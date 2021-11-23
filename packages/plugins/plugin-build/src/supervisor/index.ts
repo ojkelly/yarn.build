@@ -10,7 +10,7 @@ import {
 import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
-import { YarnBuildConfiguration } from "../config";
+import { isYarnBuildConfiguration, YarnBuildConfiguration } from "../config";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
@@ -511,6 +511,25 @@ class RunSupervisor {
     return false;
   };
 
+  private getWorkspaceConfig(workspace: Workspace): YarnBuildConfiguration {
+    const errors: string[] = [];
+    const workspaceConfiguration = {
+      ...this.pluginConfiguration,
+      folders: {
+        ...this.pluginConfiguration.folders,
+        ...workspace?.manifest.raw["yarn.build"],
+      },
+    };
+
+    if (isYarnBuildConfiguration(workspaceConfiguration, { errors })) {
+      return workspaceConfiguration;
+    }
+
+    console.warn(errors);
+
+    return this.pluginConfiguration;
+  }
+
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
     if (this.ignoreRunCache === true) {
       return true;
@@ -519,45 +538,32 @@ class RunSupervisor {
     let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
+    const workspaceConfiguration = this.getWorkspaceConfig(workspace);
+
     // Determine which folders (if any) may contain run artifacts
     // we need to ignore.
-    let ignore;
-    let srcDir;
 
-    if (
-      workspace?.manifest?.raw["yarn.build"] &&
-      typeof workspace?.manifest.raw["yarn.build"].output === "string"
-    ) {
-      ignore =
-        `${dir}${path.posix.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
-    } else if (this.pluginConfiguration.folders.output) {
-      ignore =
-        `${dir}${path.posix.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
-    } else if (workspace?.manifest.raw.main) {
-      ignore = `${dir}${path.posix.sep}${
-        workspace?.manifest.raw.main.substring(
-          0,
-          workspace?.manifest.raw.main.lastIndexOf(path.posix.sep)
-        ) as PortablePath
-      }` as PortablePath;
-    }
+    const main =
+      typeof workspace?.manifest.raw.main === "string"
+        ? workspace.manifest.raw.main
+        : undefined;
 
-    if (
-      workspace?.manifest?.raw["yarn.build"] &&
-      typeof workspace?.manifest.raw["yarn.build"].input === "string"
-    ) {
-      srcDir =
-        `${dir}${path.posix.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
-    } else if (this.pluginConfiguration.folders.input) {
-      srcDir =
-        `${dir}${path.posix.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
-    }
+    const output =
+      workspaceConfiguration.folders.output ??
+      main?.substring(0, main?.lastIndexOf(path.posix.sep));
 
-    // If the source directory is the package root, remove `/.` from the end of
-    // the path, so getLastModifiedForFolder can compare the paths correctly
-    if (srcDir?.endsWith("/.")) {
-      srcDir = srcDir.substring(0, srcDir.length - 2) as PortablePath;
-    }
+    const outputDirs = typeof output === "string" ? [output] : output;
+    const ignoreDirs = outputDirs.map(
+      (d) => `${dir}${path.posix.sep}${d}` as PortablePath
+    );
+
+    const input = workspaceConfiguration.folders.input;
+    const inputDirs = typeof input === "string" ? [input] : input;
+    const srcDirs = inputDirs
+      ?.map((d) => `${dir}${path.posix.sep}${d}` as PortablePath)
+      .map((d) =>
+        d?.endsWith("/.") ? (d.substring(0, d.length - 2) as PortablePath) : d
+      );
 
     // Traverse the dirs and see if they've been modified
     const release = await this.runReport.mutex.acquire();
@@ -570,9 +576,9 @@ class RunSupervisor {
       if (previousRunLog?.haveCheckedForRerun) {
         return previousRunLog?.rerun ?? true;
       }
-      const currentLastModified = await getLastModifiedForFolder(
-        srcDir ?? dir,
-        ignore
+      const currentLastModified = await getLastModifiedForFolders(
+        srcDirs ?? [dir],
+        ignoreDirs
       );
 
       if (previousRunLog?.lastModified !== currentLastModified) {
@@ -1162,39 +1168,43 @@ class RunSupervisor {
   };
 }
 
-const getLastModifiedForFolder = async (
-  folder: PortablePath,
-  ignore: PortablePath | undefined
+const getLastModifiedForFolders = async (
+  folders: PortablePath[],
+  ignoreDirs: PortablePath[] | undefined
 ): Promise<number> => {
   let lastModified = 0;
 
-  const files = await xfs.readdirPromise(folder);
-
   await Promise.all(
-    files.map(async (file) => {
-      const filePath = `${folder}${path.posix.sep}${file}` as PortablePath;
+    folders.map(async (folder) => {
+      const files = await xfs.readdirPromise(folder);
 
-      if (ignore && filePath.startsWith(ignore)) {
-        return;
-      }
+      await Promise.all(
+        files.map(async (file) => {
+          const filePath = `${folder}${path.posix.sep}${file}` as PortablePath;
 
-      const stat = await xfs.statPromise(filePath);
+          if (ignoreDirs?.some((ignore) => filePath.startsWith(ignore))) {
+            return;
+          }
 
-      if (stat.isFile()) {
-        if (stat.mtimeMs > lastModified) {
-          lastModified = stat.mtimeMs;
-        }
-      }
-      if (stat.isDirectory()) {
-        const folderLastModified = await getLastModifiedForFolder(
-          filePath,
-          ignore
-        );
+          const stat = await xfs.statPromise(filePath);
 
-        if (folderLastModified > lastModified) {
-          lastModified = folderLastModified;
-        }
-      }
+          if (stat.isFile()) {
+            if (stat.mtimeMs > lastModified) {
+              lastModified = stat.mtimeMs;
+            }
+          }
+          if (stat.isDirectory()) {
+            const folderLastModified = await getLastModifiedForFolders(
+              [filePath],
+              ignoreDirs
+            );
+
+            if (folderLastModified > lastModified) {
+              lastModified = folderLastModified;
+            }
+          }
+        })
+      );
     })
   );
 

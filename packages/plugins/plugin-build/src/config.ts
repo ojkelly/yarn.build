@@ -9,8 +9,8 @@ const DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME = `.yarnbuildrc.yml` as Filename;
 
 const isYarnBuildConfiguration = t.isObject({
   folders: t.isObject({
-    input: t.isString(),
-    output: t.isString(),
+    input: t.isOneOf([t.isString(), t.isArray(t.isString())]),
+    output: t.isOneOf([t.isString(), t.isArray(t.isString())]),
   }),
   exclude: t.isArray(t.isString()),
   bail: t.isBoolean(),
@@ -25,7 +25,7 @@ type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
 const DEFAULT_CONFIG: YarnBuildConfiguration = {
   folders: {
     input: ".",
-    output: "build",
+    output: ["build", "node_modules"],
   },
   exclude: [],
   bail: false,
@@ -95,6 +95,7 @@ async function GetPluginConfiguration(
 }
 
 export {
+  isYarnBuildConfiguration,
   YarnBuildConfiguration,
   GetPluginConfiguration,
   GetPartialPluginConfiguration,
