@@ -1,14 +1,17 @@
-import { BaseCommand } from "@yarnpkg/cli";
+import { BaseCommand, WorkspaceRequiredError } from "@yarnpkg/cli";
 import {
   Configuration,
   MessageName,
   Project,
   StreamReport,
   miscUtils,
+  Workspace,
+  structUtils,
 } from "@yarnpkg/core";
 import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
+import micromatch from "micromatch";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration } from "../../config";
@@ -23,6 +26,10 @@ export default class Build extends BaseCommand {
   json = Option.Boolean(`--json`, false, {
     description: `flag is set the output will follow a JSON-stream output
       also known as NDJSON (https://github.com/ndjson/ndjson-spec).`,
+  });
+
+  all = Option.Boolean(`-A,--all`, false, {
+    description: `Build all workspaces of a project`,
   });
 
   buildCommand = Option.String(`-c,--build-command`, `build`, {
@@ -53,7 +60,7 @@ export default class Build extends BaseCommand {
     description: `exit immediately upon build failing`,
   });
 
-  public buildTarget: string[] = Option.Rest();
+  public buildTargets = Option.Rest({ name: "workspaceNames" });
 
   static usage: Usage = Command.Usage({
     category: `Build commands`,
@@ -76,6 +83,40 @@ export default class Build extends BaseCommand {
       this.context.cwd,
       this.context.plugins
     );
+    const { project, workspace: cwdWorkspace } = await Project.find(
+      configuration,
+      this.context.cwd
+    );
+
+    if (!cwdWorkspace)
+      throw new WorkspaceRequiredError(project.cwd, this.context.cwd);
+
+    const rootWorkspace = this.all ? project.topLevelWorkspace : cwdWorkspace;
+
+    const rootCandidates = [
+      rootWorkspace,
+      ...(this.buildTargets.length > 0
+        ? rootWorkspace.getRecursiveWorkspaceChildren()
+        : []),
+    ];
+
+    const buildTargetPredicate = (workspace: Workspace) =>
+      this.buildTargets.some(
+        (t) =>
+          micromatch.isMatch(
+            structUtils.stringifyIdent(workspace.locator),
+            t
+          ) ||
+          micromatch.isMatch(
+            workspace.cwd,
+            `${configuration.projectCwd}${path.posix.sep}${t}`
+          )
+      );
+
+    const buildTargetCandidates: Array<Workspace> =
+      this.buildTargets.length > 0
+        ? rootCandidates.filter(buildTargetPredicate)
+        : rootCandidates;
 
     const pluginConfiguration = await GetPluginConfiguration(configuration);
 
@@ -100,18 +141,6 @@ export default class Build extends BaseCommand {
         includeLogs: true,
       },
       async (report: StreamReport) => {
-        let targetDirectory = this.context.cwd;
-
-        if (typeof this.buildTarget[0] === "string") {
-          targetDirectory =
-            `${configuration.projectCwd}${path.posix.sep}${this.buildTarget[0]}` as PortablePath;
-        }
-
-        const { project, workspace: cwdWorkspace } = await Project.find(
-          configuration,
-          targetDirectory
-        );
-        const targetWorkspace = cwdWorkspace || project.topLevelWorkspace;
 
         const runScript = async (
           command: string,
@@ -185,7 +214,10 @@ export default class Build extends BaseCommand {
 
         await supervisor.setup();
 
-        await addTargets({ targetWorkspace, project, supervisor });
+        for (const targetWorkspace of buildTargetCandidates) {
+          await addTargets({ targetWorkspace, project, supervisor });
+        }
+
         // build all the things
         const ranWithoutErrors = await supervisor.run();
 

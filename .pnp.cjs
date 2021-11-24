@@ -1314,6 +1314,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/is-ci", "npm:2.0.0"],
             ["@types/jest", "npm:26.0.24"],
             ["@types/js-yaml", "npm:4.0.2"],
+            ["@types/micromatch", "npm:4.0.2"],
             ["@types/slice-ansi", "npm:4.0.0"],
             ["@types/yup", "npm:0.26.37"],
             ["@yarnpkg/builder", "virtual:5485731961a227d8a1a3ebfe880f1f44a26873006cc88cc63914d22f32921a39a033b64efe40a5a44270c4b762fe09dc6a787f528ac5dc537e57e12134207ed7#npm:3.1.0"],
@@ -1336,6 +1337,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["jest", "npm:26.6.3"],
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],
             ["js-yaml", "npm:4.1.0"],
+            ["micromatch", "npm:4.0.4"],
             ["p-limit", "npm:2.3.0"],
             ["p-queue", "npm:6.6.2"],
             ["replace", "npm:1.2.1"],
@@ -1518,6 +1520,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["@types/babel__traverse", "npm:7.14.2"],
             ["@babel/types", "npm:7.14.8"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["@types/braces", [
+        ["npm:3.0.1", {
+          "packageLocation": "./.yarn/cache/@types-braces-npm-3.0.1-0c7465c9fb-3749f7673a.zip/node_modules/@types/braces/",
+          "packageDependencies": [
+            ["@types/braces", "npm:3.0.1"]
           ],
           "linkType": "HARD",
         }]
@@ -1717,6 +1728,16 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-lodash-npm-4.14.171-b4c768e142-d093d8ff8b.zip/node_modules/@types/lodash/",
           "packageDependencies": [
             ["@types/lodash", "npm:4.14.171"]
+          ],
+          "linkType": "HARD",
+        }]
+      ]],
+      ["@types/micromatch", [
+        ["npm:4.0.2", {
+          "packageLocation": "./.yarn/cache/@types-micromatch-npm-4.0.2-f1717d74e1-6c678e9c62.zip/node_modules/@types/micromatch/",
+          "packageDependencies": [
+            ["@types/micromatch", "npm:4.0.2"],
+            ["@types/braces", "npm:3.0.1"]
           ],
           "linkType": "HARD",
         }]
