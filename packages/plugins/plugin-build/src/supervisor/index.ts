@@ -10,7 +10,7 @@ import {
 import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
-import { YarnBuildConfiguration } from "../config";
+import { isYarnBuildConfiguration, YarnBuildConfiguration } from "../config";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
@@ -57,6 +57,7 @@ enum RunSupervisorReporterEvents {
   info = "info",
   error = "error",
   skipped = "skipped",
+  ignored = "ignored",
   success = "success",
   fail = "fail",
   finish = "finish",
@@ -72,6 +73,7 @@ type RunReport = {
   successCount: number;
   failCount: number;
   skipCount: number;
+  ignoredCount: number;
   done: boolean;
   workspaces: {
     // Matches the workspace to its pseudo-thread
@@ -85,6 +87,7 @@ type RunReport = {
       stderr: Error[];
       runtimeSeconds?: number;
       skipped?: boolean;
+      ignored?: boolean;
     };
   };
 };
@@ -146,6 +149,7 @@ class RunSupervisor {
     previousOutput: ``,
     successCount: 0,
     failCount: 0,
+    ignoredCount: 0,
     bail: false,
     workspaces: {},
     done: false,
@@ -376,6 +380,18 @@ class RunSupervisor {
       }
     );
     this.runReporter.on(
+      RunSupervisorReporterEvents.ignored,
+      (relativeCwd: PortablePath) => {
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd].done = true;
+          this.runReport.workspaces[relativeCwd].ignored = true;
+
+          this.runReport.ignoredCount++;
+          release();
+        });
+      }
+    );
+    this.runReporter.on(
       RunSupervisorReporterEvents.fail,
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
@@ -393,20 +409,9 @@ class RunSupervisor {
     );
   };
 
-  async addRunTarget(
-    workspace: Workspace,
-    addToTotalJobs = false
-  ): Promise<void> {
+  async addRunTarget(workspace: Workspace): Promise<void> {
     this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
     const shouldRun = await this.plan(workspace);
-
-    if (addToTotalJobs) {
-      // Get list of dependendecies
-      const dependenciesCount =
-        1 + (await this.getDependenciesCount(workspace));
-
-      this.runReport.totalJobs = dependenciesCount;
-    }
 
     if (shouldRun) {
       this.runTargets.push(workspace);
@@ -511,6 +516,25 @@ class RunSupervisor {
     return false;
   };
 
+  private getWorkspaceConfig(workspace: Workspace): YarnBuildConfiguration {
+    const errors: string[] = [];
+    const workspaceConfiguration = {
+      ...this.pluginConfiguration,
+      folders: {
+        ...this.pluginConfiguration.folders,
+        ...workspace?.manifest.raw["yarn.build"],
+      },
+    };
+
+    if (isYarnBuildConfiguration(workspaceConfiguration, { errors })) {
+      return workspaceConfiguration;
+    }
+
+    console.warn(errors);
+
+    return this.pluginConfiguration;
+  }
+
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
     if (this.ignoreRunCache === true) {
       return true;
@@ -519,45 +543,32 @@ class RunSupervisor {
     let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
+    const workspaceConfiguration = this.getWorkspaceConfig(workspace);
+
     // Determine which folders (if any) may contain run artifacts
     // we need to ignore.
-    let ignore;
-    let srcDir;
 
-    if (
-      workspace?.manifest?.raw["yarn.build"] &&
-      typeof workspace?.manifest.raw["yarn.build"].output === "string"
-    ) {
-      ignore =
-        `${dir}${path.posix.sep}${workspace?.manifest.raw["yarn.build"].output}` as PortablePath;
-    } else if (this.pluginConfiguration.folders.output) {
-      ignore =
-        `${dir}${path.posix.sep}${this.pluginConfiguration.folders.output}` as PortablePath;
-    } else if (workspace?.manifest.raw.main) {
-      ignore = `${dir}${path.posix.sep}${
-        workspace?.manifest.raw.main.substring(
-          0,
-          workspace?.manifest.raw.main.lastIndexOf(path.posix.sep)
-        ) as PortablePath
-      }` as PortablePath;
-    }
+    const main =
+      typeof workspace?.manifest.raw.main === "string"
+        ? workspace.manifest.raw.main
+        : undefined;
 
-    if (
-      workspace?.manifest?.raw["yarn.build"] &&
-      typeof workspace?.manifest.raw["yarn.build"].input === "string"
-    ) {
-      srcDir =
-        `${dir}${path.posix.sep}${workspace?.manifest.raw["yarn.build"].input}` as PortablePath;
-    } else if (this.pluginConfiguration.folders.input) {
-      srcDir =
-        `${dir}${path.posix.sep}${this.pluginConfiguration.folders.input}` as PortablePath;
-    }
+    const output =
+      workspaceConfiguration.folders.output ??
+      main?.substring(0, main?.lastIndexOf(path.posix.sep));
 
-    // If the source directory is the package root, remove `/.` from the end of
-    // the path, so getLastModifiedForFolder can compare the paths correctly
-    if (srcDir?.endsWith("/.")) {
-      srcDir = srcDir.substring(0, srcDir.length - 2) as PortablePath;
-    }
+    const outputDirs = typeof output === "string" ? [output] : output;
+    const ignoreDirs = outputDirs.map(
+      (d) => `${dir}${path.posix.sep}${d}` as PortablePath
+    );
+
+    const input = workspaceConfiguration.folders.input;
+    const inputDirs = typeof input === "string" ? [input] : input;
+    const srcDirs = inputDirs
+      ?.map((d) => `${dir}${path.posix.sep}${d}` as PortablePath)
+      .map((d) =>
+        d?.endsWith("/.") ? (d.substring(0, d.length - 2) as PortablePath) : d
+      );
 
     // Traverse the dirs and see if they've been modified
     const release = await this.runReport.mutex.acquire();
@@ -570,9 +581,9 @@ class RunSupervisor {
       if (previousRunLog?.haveCheckedForRerun) {
         return previousRunLog?.rerun ?? true;
       }
-      const currentLastModified = await getLastModifiedForFolder(
-        srcDir ?? dir,
-        ignore
+      const currentLastModified = await getLastModifiedForFolders(
+        srcDirs ?? [dir],
+        ignoreDirs
       );
 
       if (previousRunLog?.lastModified !== currentLastModified) {
@@ -947,45 +958,46 @@ class RunSupervisor {
     let output = this.formatHeader("Summary") + "\n";
 
     if (this.runReport.runStart) {
-      const skipped =
-        this.runReport.skipCount +
-        (this.runReport.totalJobs -
-          this.runReport.skipCount -
-          this.runReport.failCount -
-          this.runReport.successCount);
+      const { successCount, failCount, ignoredCount, skipCount } =
+        this.runReport;
+
+      const total = this.runGraph.size - ignoredCount;
+
+      const upToDate = total - failCount - successCount - skipCount;
+
       const successString = formatUtils.pretty(
         this.configuration,
-        `Success: ${this.runReport.successCount}`,
+        `Success: ${successCount}`,
         "green"
       );
       const failedString = formatUtils.pretty(
         this.configuration,
-        `Fail: ${this.runReport.failCount}`,
+        `Fail: ${failCount}`,
         "red"
       );
       const skippedString = formatUtils.pretty(
         this.configuration,
-        `Skipped: ${skipped}`,
+        `Skipped: ${skipCount}`,
+        "white"
+      );
+      const upToDateString = formatUtils.pretty(
+        this.configuration,
+        `Up to date: ${upToDate}`,
         "white"
       );
 
       const totalString = formatUtils.pretty(
         this.configuration,
-        `Total: ${this.runReport.totalJobs}`,
+        `Total: ${total}`,
         "white"
       );
 
       output +=
-        successString +
-        "\n" +
-        failedString +
-        "\n" +
-        skippedString +
-        "\n" +
-        totalString +
-        "\n" +
-        this.grey("---") +
-        "\n";
+        successString + "\n" + failedString + "\n" + skippedString + "\n";
+
+      if (!this.ignoreRunCache) output += upToDateString + "\n";
+
+      output += totalString + "\n" + this.grey("---") + "\n";
     }
 
     let totalMs = 50;
@@ -1054,7 +1066,7 @@ class RunSupervisor {
           }
 
           this.runReporter.emit(
-            RunSupervisorReporterEvents.success,
+            RunSupervisorReporterEvents.ignored,
             workspace.relativeCwd
           );
 
@@ -1162,39 +1174,43 @@ class RunSupervisor {
   };
 }
 
-const getLastModifiedForFolder = async (
-  folder: PortablePath,
-  ignore: PortablePath | undefined
+const getLastModifiedForFolders = async (
+  folders: PortablePath[],
+  ignoreDirs: PortablePath[] | undefined
 ): Promise<number> => {
   let lastModified = 0;
 
-  const files = await xfs.readdirPromise(folder);
-
   await Promise.all(
-    files.map(async (file) => {
-      const filePath = `${folder}${path.posix.sep}${file}` as PortablePath;
+    folders.map(async (folder) => {
+      const files = await xfs.readdirPromise(folder);
 
-      if (ignore && filePath.startsWith(ignore)) {
-        return;
-      }
+      await Promise.all(
+        files.map(async (file) => {
+          const filePath = `${folder}${path.posix.sep}${file}` as PortablePath;
 
-      const stat = await xfs.statPromise(filePath);
+          if (ignoreDirs?.some((ignore) => filePath.startsWith(ignore))) {
+            return;
+          }
 
-      if (stat.isFile()) {
-        if (stat.mtimeMs > lastModified) {
-          lastModified = stat.mtimeMs;
-        }
-      }
-      if (stat.isDirectory()) {
-        const folderLastModified = await getLastModifiedForFolder(
-          filePath,
-          ignore
-        );
+          const stat = await xfs.statPromise(filePath);
 
-        if (folderLastModified > lastModified) {
-          lastModified = folderLastModified;
-        }
-      }
+          if (stat.isFile()) {
+            if (stat.mtimeMs > lastModified) {
+              lastModified = stat.mtimeMs;
+            }
+          }
+          if (stat.isDirectory()) {
+            const folderLastModified = await getLastModifiedForFolders(
+              [filePath],
+              ignoreDirs
+            );
+
+            if (folderLastModified > lastModified) {
+              lastModified = folderLastModified;
+            }
+          }
+        })
+      );
     })
   );
 
