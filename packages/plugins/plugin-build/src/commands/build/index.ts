@@ -141,7 +141,6 @@ export default class Build extends BaseCommand {
         includeLogs: true,
       },
       async (report: StreamReport) => {
-
         const runScript = async (
           command: string,
           cwd: PortablePath,
