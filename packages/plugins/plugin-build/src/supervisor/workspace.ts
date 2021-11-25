@@ -37,8 +37,6 @@ const addTargets = async ({
       project
     );
 
-    supervisor.runReport.totalJobs = workspaceList.length;
-
     for (const workspace of workspaceList) {
       for (const dependencyType of Manifest.hardDependencies) {
         for (const descriptor of workspace.manifest
@@ -58,7 +56,7 @@ const addTargets = async ({
     await supervisor.addRunTarget(targetWorkspace);
   } else {
     // we're in a specific target
-    await supervisor.addRunTarget(targetWorkspace, true);
+    await supervisor.addRunTarget(targetWorkspace);
   }
 };
 
