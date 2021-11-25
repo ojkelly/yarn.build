@@ -57,6 +57,7 @@ enum RunSupervisorReporterEvents {
   info = "info",
   error = "error",
   skipped = "skipped",
+  ignored = "ignored",
   success = "success",
   fail = "fail",
   finish = "finish",
@@ -72,6 +73,7 @@ type RunReport = {
   successCount: number;
   failCount: number;
   skipCount: number;
+  ignoredCount: number;
   done: boolean;
   workspaces: {
     // Matches the workspace to its pseudo-thread
@@ -85,6 +87,7 @@ type RunReport = {
       stderr: Error[];
       runtimeSeconds?: number;
       skipped?: boolean;
+      ignored?: boolean;
     };
   };
 };
@@ -146,6 +149,7 @@ class RunSupervisor {
     previousOutput: ``,
     successCount: 0,
     failCount: 0,
+    ignoredCount: 0,
     bail: false,
     workspaces: {},
     done: false,
@@ -376,6 +380,18 @@ class RunSupervisor {
       }
     );
     this.runReporter.on(
+      RunSupervisorReporterEvents.ignored,
+      (relativeCwd: PortablePath) => {
+        this.runReport.mutex.acquire().then((release: () => void) => {
+          this.runReport.workspaces[relativeCwd].done = true;
+          this.runReport.workspaces[relativeCwd].ignored = true;
+
+          this.runReport.ignoredCount++;
+          release();
+        });
+      }
+    );
+    this.runReporter.on(
       RunSupervisorReporterEvents.fail,
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
@@ -393,20 +409,9 @@ class RunSupervisor {
     );
   };
 
-  async addRunTarget(
-    workspace: Workspace,
-    addToTotalJobs = false
-  ): Promise<void> {
+  async addRunTarget(workspace: Workspace): Promise<void> {
     this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
     const shouldRun = await this.plan(workspace);
-
-    if (addToTotalJobs) {
-      // Get list of dependendecies
-      const dependenciesCount =
-        1 + (await this.getDependenciesCount(workspace));
-
-      this.runReport.totalJobs = dependenciesCount;
-    }
 
     if (shouldRun) {
       this.runTargets.push(workspace);
@@ -947,45 +952,46 @@ class RunSupervisor {
     let output = this.formatHeader("Summary") + "\n";
 
     if (this.runReport.runStart) {
-      const skipped =
-        this.runReport.skipCount +
-        (this.runReport.totalJobs -
-          this.runReport.skipCount -
-          this.runReport.failCount -
-          this.runReport.successCount);
+      const { successCount, failCount, ignoredCount, skipCount } =
+        this.runReport;
+
+      const total = this.runGraph.size - ignoredCount;
+
+      const upToDate = total - failCount - successCount - skipCount;
+
       const successString = formatUtils.pretty(
         this.configuration,
-        `Success: ${this.runReport.successCount}`,
+        `Success: ${successCount}`,
         "green"
       );
       const failedString = formatUtils.pretty(
         this.configuration,
-        `Fail: ${this.runReport.failCount}`,
+        `Fail: ${failCount}`,
         "red"
       );
       const skippedString = formatUtils.pretty(
         this.configuration,
-        `Skipped: ${skipped}`,
+        `Skipped: ${skipCount}`,
+        "white"
+      );
+      const upToDateString = formatUtils.pretty(
+        this.configuration,
+        `Up to date: ${upToDate}`,
         "white"
       );
 
       const totalString = formatUtils.pretty(
         this.configuration,
-        `Total: ${this.runReport.totalJobs}`,
+        `Total: ${total}`,
         "white"
       );
 
       output +=
-        successString +
-        "\n" +
-        failedString +
-        "\n" +
-        skippedString +
-        "\n" +
-        totalString +
-        "\n" +
-        this.grey("---") +
-        "\n";
+        successString + "\n" + failedString + "\n" + skippedString + "\n";
+
+      if (!this.ignoreRunCache) output += upToDateString + "\n";
+
+      output += totalString + "\n" + this.grey("---") + "\n";
     }
 
     let totalMs = 50;
@@ -1054,7 +1060,7 @@ class RunSupervisor {
           }
 
           this.runReporter.emit(
-            RunSupervisorReporterEvents.success,
+            RunSupervisorReporterEvents.ignored,
             workspace.relativeCwd
           );
 
