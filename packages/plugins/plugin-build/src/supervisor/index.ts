@@ -557,14 +557,14 @@ class RunSupervisor {
       workspaceConfiguration.folders.output ??
       main?.substring(0, main?.lastIndexOf(path.posix.sep));
 
-    const outputDirs = typeof output === "string" ? [output] : output;
-    const ignoreDirs = outputDirs.map(
+    const outputPaths = typeof output === "string" ? [output] : output;
+    const ignorePaths = outputPaths.map(
       (d) => `${dir}${path.posix.sep}${d}` as PortablePath
     );
 
     const input = workspaceConfiguration.folders.input;
-    const inputDirs = typeof input === "string" ? [input] : input;
-    const srcDirs = inputDirs
+    const inputPaths = typeof input === "string" ? [input] : input;
+    const srcPaths = inputPaths
       ?.map((d) => `${dir}${path.posix.sep}${d}` as PortablePath)
       .map((d) =>
         d?.endsWith("/.") ? (d.substring(0, d.length - 2) as PortablePath) : d
@@ -581,9 +581,9 @@ class RunSupervisor {
       if (previousRunLog?.haveCheckedForRerun) {
         return previousRunLog?.rerun ?? true;
       }
-      const currentLastModified = await getLastModifiedForFolders(
-        srcDirs ?? [dir],
-        ignoreDirs
+      const currentLastModified = await getLastModifiedForPaths(
+        srcPaths ?? [dir],
+        ignorePaths
       );
 
       if (previousRunLog?.lastModified !== currentLastModified) {
@@ -1174,47 +1174,36 @@ class RunSupervisor {
   };
 }
 
-const getLastModifiedForFolders = async (
-  folders: PortablePath[],
-  ignoreDirs: PortablePath[] | undefined
+const getLastModifiedForPaths = async (
+  paths: PortablePath[],
+  ignored: PortablePath[] | undefined
 ): Promise<number> => {
-  let lastModified = 0;
+  const lastModifiedTimestamps = await Promise.all(
+    paths.map(async (p) => {
+      if (ignored?.some((ignore) => p.startsWith(ignore))) {
+        return 0;
+      }
 
-  await Promise.all(
-    folders.map(async (folder) => {
-      const files = await xfs.readdirPromise(folder);
+      const stat = await xfs.statPromise(p);
 
-      await Promise.all(
-        files.map(async (file) => {
-          const filePath = `${folder}${path.posix.sep}${file}` as PortablePath;
+      if (stat.isFile()) {
+        return stat.mtimeMs;
+      }
 
-          if (ignoreDirs?.some((ignore) => filePath.startsWith(ignore))) {
-            return;
-          }
+      if (stat.isDirectory()) {
+        const contents = await xfs.readdirPromise(p);
 
-          const stat = await xfs.statPromise(filePath);
+        return await getLastModifiedForPaths(
+          contents.map((c) => `${p}${path.posix.sep}${c}` as PortablePath),
+          ignored
+        );
+      }
 
-          if (stat.isFile()) {
-            if (stat.mtimeMs > lastModified) {
-              lastModified = stat.mtimeMs;
-            }
-          }
-          if (stat.isDirectory()) {
-            const folderLastModified = await getLastModifiedForFolders(
-              [filePath],
-              ignoreDirs
-            );
-
-            if (folderLastModified > lastModified) {
-              lastModified = folderLastModified;
-            }
-          }
-        })
-      );
+      return 0;
     })
   );
 
-  return lastModified;
+  return Math.max(...lastModifiedTimestamps);
 };
 
 export const formatTimestampDifference = (from: number, to: number): string => {
