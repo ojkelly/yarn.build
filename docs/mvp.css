@@ -464,3 +464,35 @@ h2 {
 h2 + p {
   margin-top: -0.4rem;
 }
+
+input[class="code"] {
+  background-color: var(--color-secondary);
+  border-radius: var(--border-radius);
+  border-color: var(--color-bg-secondary);
+  color: var(--color-bg);
+  display: inline-block;
+  margin: 0.3rem auto;
+  display: block;
+  overflow: none;
+  padding: 0.6rem 0.8rem;
+  width: 100%;
+  max-width: 98%;
+  text-align: center;
+  font-family: monospace;
+}
+
+input[class="code-subtle"] {
+  background-color: var(--color-shadow);
+  border-radius: var(--border-radius);
+  border-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  display: inline-block;
+  margin: 0.3rem auto;
+  display: block;
+  overflow: none;
+  padding: 0.6rem 0.8rem;
+  width: 100%;
+  max-width: 98%;
+  text-align: center;
+  font-family: monospace;
+}

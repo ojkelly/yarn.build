@@ -12,6 +12,14 @@ To install for Yarn 3:
 yarn plugin import https://yarn.build/latest
 ```
 
+Or install any of the commands individually with
+
+```
+yarn plugin import https://yarn.build/latest/build
+yarn plugin import https://yarn.build/latest/test
+yarn plugin import https://yarn.build/latest/bundle
+```
+
 Install for Yarn 2:
 
 ```

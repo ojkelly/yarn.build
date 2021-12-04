@@ -14,11 +14,13 @@ import path from "path";
 import micromatch from "micromatch";
 
 import { EventEmitter } from "events";
-import { GetPluginConfiguration } from "../../config";
-import RunSupervisor, { RunSupervisorReporterEvents } from "../../supervisor";
+import { GetPluginConfiguration } from "@ojkelly/yarn-build-shared/src/config";
+import RunSupervisor, {
+  RunSupervisorReporterEvents,
+} from "@ojkelly/yarn-build-shared/src/supervisor";
 
-import { addTargets } from "../../supervisor/workspace";
-import { terminateProcess } from "../../supervisor/terminate";
+import { addTargets } from "@ojkelly/yarn-build-shared/src/supervisor/workspace";
+import { terminateProcess } from "@ojkelly/yarn-build-shared/src/supervisor/terminate";
 
 export default class Build extends BaseCommand {
   static paths = [[`build`]];

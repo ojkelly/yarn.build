@@ -1,5 +1,5 @@
 {
-  "name": "@ojkelly/yarn-plugin-build",
+  "name": "@ojkelly/yarn-plugin-all",
   "version": "0.9.1",
   "main": "./src/index.ts",
   "homepage": "https://yarn.build",
@@ -28,6 +28,9 @@
   },
   "dependencies": {
     "@ojkelly/yarn-build-shared": "workspace:*",
+    "@ojkelly/yarn-plugin-build": "workspace:*",
+    "@ojkelly/yarn-plugin-bundle": "workspace:*",
+    "@ojkelly/yarn-plugin-test": "workspace:*",
     "@types/slice-ansi": "^4.0.0",
     "@yarnpkg/fslib": "^3",
     "@yarnpkg/libzip": "^3",
@@ -53,8 +56,8 @@
     "dev": "yarn update:local",
     "build": "yarn build:plugin-stage",
     "build:plugin-stage": "builder build plugin",
-    "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@ojkelly/plugin-build.cjs",
-    "update:patch-name": "replace '@yarnpkg/plugin-build' '@ojkelly/plugin-build' ./bundles/@yarnpkg/plugin-build.js",
+    "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-all.js ../../../.yarn/plugins/@ojkelly/plugin-all.cjs",
+    "update:patch-name": "replace '@yarnpkg/plugin-all' '@ojkelly/plugin-all' ./bundles/@yarnpkg/plugin-all.js",
     "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "update:local": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "clean": "shx rm -fr build bundles",
@@ -65,7 +68,7 @@
     "url": "ssh://git@github.com/ojkelly/yarn.build.git"
   },
   "publishConfig": {
-    "main": "./bundles/@ojkelly/plugin-build.js"
+    "main": "./bundles/@ojkelly/plugin-all.js"
   },
   "files": [
     "/bundles/**/*"

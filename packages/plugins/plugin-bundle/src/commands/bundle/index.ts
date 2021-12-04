@@ -20,12 +20,11 @@ import {
 
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
+import { getAllWorkspacesNonRemovables, getExcludedFiles } from "./ignore";
 import {
   DEFAULT_IGNORE_FILE,
-  getAllWorkspacesNonRemovables,
-  getExcludedFiles,
-} from "./ignore";
-import { GetPartialPluginConfiguration } from "../../config";
+  GetPartialPluginConfiguration,
+} from "@ojkelly/yarn-build-shared/src/config";
 
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {

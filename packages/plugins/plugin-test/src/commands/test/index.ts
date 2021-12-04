@@ -11,11 +11,16 @@ import { Command, Option, Usage } from "clipanion";
 import path from "path";
 
 import { EventEmitter } from "events";
-import { GetPluginConfiguration, YarnBuildConfiguration } from "../../config";
-import RunSupervisor, { RunSupervisorReporterEvents } from "../../supervisor";
+import {
+  GetPluginConfiguration,
+  YarnBuildConfiguration,
+} from "@ojkelly/yarn-build-shared/src/config";
+import RunSupervisor, {
+  RunSupervisorReporterEvents,
+} from "@ojkelly/yarn-build-shared/src/supervisor";
 
-import { addTargets } from "../../supervisor/workspace";
-import { terminateProcess } from "../../supervisor/terminate";
+import { addTargets } from "@ojkelly/yarn-build-shared/src/supervisor/workspace";
+import { terminateProcess } from "@ojkelly/yarn-build-shared/src/supervisor/terminate";
 
 export default class Test extends BaseCommand {
   static paths = [[`test`]];

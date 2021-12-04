@@ -19,7 +19,7 @@ export default class BuildQuery extends BaseCommand {
           In a monorepo with internal packages that depend on others, this command
           will traverse the dependency graph and efficiently ensure, the packages
           are built in the right order.
-    
+
         `,
   });
 

@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./.",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react",
+    "lib": [
+      "dom",
+      "esnext",
+      "esnext.asynciterable"
+    ],
+    "module": "commonjs",
+    "strict": true,
+    "target": "es2018",
+    "declaration": true,
+    "downlevelIteration": true,
+    "importHelpers": true,
+    "skipLibCheck": true,
+    "types": [
+      "jest"
+    ]
+  },
+  "exclude": [
+    "packages/*/lib",
+    "packages/yarnpkg-doctor/fixtures"
+  ]
+}

@@ -18,7 +18,7 @@ jobs:
           yarn install --immutable-cache --check-cache && \
           yarn build && \
           yarn test && \
-          yarn build -c release
+          yarn build -c update:local
 
       - name: Create Release
         id: create_release
@@ -31,15 +31,48 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload yarn.build
-        id: upload-release-asset-yarn-build
+      - name: Upload plugin-all
+        id: upload-release-asset-yarn-plugin-all
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./packages/plugins/plugin-build/bundles/@yarnpkg/plugin-build.js
+          asset_path: .yarn/plugins/@ojkelly/plugin-all.js
+          asset_name: "plugin-all.cjs"
+          asset_content_type: text/javascript
+
+      - name: Upload plugin-build
+        id: upload-release-asset-yarn-plugin-build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .yarn/plugins/@ojkelly/plugin-build.js
           asset_name: "plugin-build.cjs"
+          asset_content_type: text/javascript
+
+      - name: Upload plugin-bundle
+        id: upload-release-asset-yarn-plugin-bundle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .yarn/plugins/@ojkelly/plugin-bundle.js
+          asset_name: "plugin-bundle.cjs"
+          asset_content_type: text/javascript
+
+      - name: Upload plugin-test
+        id: upload-release-asset-yarn-plugin-test
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .yarn/plugins/@ojkelly/plugin-test.js
+          asset_name: "plugin-test.cjs"
           asset_content_type: text/javascript
 
       - name: Upload package-yaml
@@ -49,15 +82,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./packages/plugins/plugin-package-yaml/bundles/@yarnpkg/plugin-package-yaml.js
+          asset_path: .yarn/plugins/@ojkelly/plugin-package-yaml.js
           asset_name: "plugin-package-yaml.cjs"
           asset_content_type: text/javascript
 
       - name: Update release redirects
         run: |
           export TAGNAME=$(echo "${{ github.ref }}" | sed 's|refs/tags/||g')
-          sed -i'' "4s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-build.cjs\"|" netlify.toml
-          sed -i'' "23s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-package-yaml.cjs\"|" netlify.toml
+          sed -i'' "4s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-all.cjs\"|" netlify.toml
+          sed -i'' "10s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-build.cjs\"|" netlify.toml
+          sed -i'' "16s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-build.cjs\"|" netlify.toml
+          sed -i'' "22s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-bundle.cjs\"|" netlify.toml
+          sed -i'' "28s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-bundle.cjs\"|" netlify.toml
+          sed -i'' "34s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-test.cjs\"|" netlify.toml
+          sed -i'' "40s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-test.cjs\"|" netlify.toml
+          sed -i'' "54s|.*| to = \"https://github.com/ojkelly/yarn.build/releases/download/$TAGNAME/plugin-package-yaml.cjs\"|" netlify.toml
 
       # Commit new version
       - name: Create Pull Request
@@ -70,7 +109,7 @@ jobs:
           signoff: false
           branch: update-release-version
           delete-branch: true
-          title: 'release: Update release version to  ${{ github.ref }}'
+          title: "release: Update release version to  ${{ github.ref }}"
           base: main
           labels: |
             report
