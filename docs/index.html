@@ -17,7 +17,8 @@
     />
     <link rel="stylesheet" type="text/css" href="/asciinema-player.css" />
     <title>
-      yarn.BUILD | A fast monorepo build tool for Javascript, Typescript and more
+      yarn.BUILD | A fast monorepo build tool for Javascript, Typescript and
+      more
     </title>
   </head>
 
@@ -68,18 +69,45 @@
             to) versions.
           </p>
         </header>
-        <p>
+
+        <article style="text-align: center; min-width: 50%">
           <small style="text-transform: uppercase">Yarn 3</small><br />
-          <code style="overflow: none; padding: 0.4rem 0.8rem">
-            yarn plugin import https://yarn.build/latest
-          </code>
-        </p>
-        <p>
+          <input
+            readonly
+            class="code"
+            onclick="this.setSelectionRange(0, this.value.length)"
+            value="yarn plugin import https://yarn.build/latest"
+          />
+          <p>Or install just the commands you want:</p>
+          <input
+            readonly
+            class="code-subtle"
+            onclick="this.setSelectionRange(0, this.value.length)"
+            value="yarn plugin import https://yarn.build/build"
+          />
+          <input
+            readonly
+            class="code-subtle"
+            onclick="this.setSelectionRange(0, this.value.length)"
+            value="yarn plugin import https://yarn.build/test"
+          />
+          <input
+            readonly
+            class="code-subtle"
+            onclick="this.setSelectionRange(0, this.value.length)"
+            value="yarn plugin import https://yarn.build/bundle"
+          />
+
+          <hr />
+
           <small style="text-transform: uppercase">Yarn 2</small><br />
-          <code style="overflow: none; padding: 0.4rem 0.8rem; opacity: 0.8">
-            yarn plugin import https://yarn.build/v2
-          </code>
-        </p>
+          <input
+            readonly
+            class="code-subtle"
+            onclick="this.setSelectionRange(0, this.value.length)"
+            value="yarn plugin import https://yarn.build/v2"
+          />
+        </article>
       </section>
       <hr />
       <section id="about">

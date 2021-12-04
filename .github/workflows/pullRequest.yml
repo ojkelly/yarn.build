@@ -23,7 +23,7 @@ jobs:
         run: |
           yarn build -c update-local
 
-          mkdir ./e2e/lambda-project/.yarn/plugins/@ojkelly
+          mkdir -p ./e2e/lambda-project/.yarn/plugins/@ojkelly
           cp ./.yarn/plugins/@ojkelly ./e2e/lambda-project/.yarn/plugins/@ojkelly
       - name: Build Example
         run: |
