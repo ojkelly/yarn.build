@@ -22,6 +22,9 @@ jobs:
       - name: Build plugins
         run: |
           yarn build -c update-local
+
+          mkdir ./e2e/lambda-project/.yarn/plugins/@ojkelly
+          cp ./.yarn/plugins/@ojkelly ./e2e/lambda-project/.yarn/plugins/@ojkelly
       - name: Build Example
         run: |
           yarn build --ignore-cache packages/examples/lorem-ipsum
