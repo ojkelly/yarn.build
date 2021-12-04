@@ -22,9 +22,6 @@ jobs:
       - name: Build plugins
         run: |
           yarn build -c update-local
-
-          mkdir -p ./e2e/lambda-project/.yarn/plugins/@ojkelly
-          cp -r ./.yarn/plugins/@ojkelly ./e2e/lambda-project/.yarn/plugins/@ojkelly
       - name: Build Example
         run: |
           yarn build --ignore-cache packages/examples/lorem-ipsum
@@ -50,7 +47,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: plugins-all
-          path: .yarn/plugins/@ojkelly
+          path: ./e2e/lmabda-project/.yarn/plugins/@ojkelly
       - name: Install packages
         run: yarn install --immutable --immutable-cache
       - name: Build plugin
