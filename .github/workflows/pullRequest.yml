@@ -24,7 +24,7 @@ jobs:
           yarn build -c update-local
       - name: Build Example
         run: |
-          yarn build --ignore-cache packages/examples/lorem-ipsum/
+          yarn build --ignore-cache packages/examples/lorem-ipsum
       - name: Test
         run: |
           yarn test --ignore-cache
