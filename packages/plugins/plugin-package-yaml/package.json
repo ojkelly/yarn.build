@@ -46,6 +46,7 @@
     "yawn-yaml": "^1.5.0"
   },
   "scripts": {
+    "build": "yarn build:plugin-stage",
     "build:plugin-stage": "builder build plugin",
     "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-package-yaml.js ../../../.yarn/plugins/@ojkelly/plugin-package-yaml.cjs",
     "update:patch-name": "replace '@yarnpkg/plugin-package-yaml' '@ojkelly/plugin-package-yaml' ./bundles/@yarnpkg/plugin-package-yaml.js",

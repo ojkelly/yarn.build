@@ -1,5 +1,5 @@
 {
-  "name": "@ojkelly/yarn-plugin-build",
+  "name": "@ojkelly/yarn-plugin-bundle",
   "version": "0.9.1",
   "main": "./src/index.ts",
   "homepage": "https://yarn.build",
@@ -53,8 +53,8 @@
     "dev": "yarn update:local",
     "build": "yarn build:plugin-stage",
     "build:plugin-stage": "builder build plugin",
-    "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@ojkelly/plugin-build.cjs",
-    "update:patch-name": "replace '@yarnpkg/plugin-build' '@ojkelly/plugin-build' ./bundles/@yarnpkg/plugin-build.js",
+    "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-bundle.js ../../../.yarn/plugins/@ojkelly/plugin-bundle.cjs",
+    "update:patch-name": "replace '@yarnpkg/plugin-bundle' '@ojkelly/plugin-bundle' ./bundles/@yarnpkg/plugin-bundle.js",
     "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "update:local": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "release": "yarn build:plugin-stage && yarn update:patch-name",
@@ -66,7 +66,7 @@
     "url": "ssh://git@github.com/ojkelly/yarn.build.git"
   },
   "publishConfig": {
-    "main": "./bundles/@ojkelly/plugin-build.js"
+    "main": "./bundles/@ojkelly/plugin-bundle.js"
   },
   "files": [
     "/bundles/**/*"

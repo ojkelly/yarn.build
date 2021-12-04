@@ -2,10 +2,11 @@ import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
 import { Configuration } from "@yarnpkg/core";
 import * as t from "typanion";
 import { load, JSON_SCHEMA } from "js-yaml";
-import { DEFAULT_IGNORE_FILE } from "./commands/bundle/ignore";
 import { DeepPartial } from "./types";
 
 const DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME = `.yarnbuildrc.yml` as Filename;
+
+const DEFAULT_IGNORE_FILE = ".bundleignore" as Filename;
 
 const isYarnBuildConfiguration = t.isObject({
   folders: t.isObject({
@@ -99,4 +100,6 @@ export {
   YarnBuildConfiguration,
   GetPluginConfiguration,
   GetPartialPluginConfiguration,
+  DEFAULT_IGNORE_FILE,
+  DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME,
 };

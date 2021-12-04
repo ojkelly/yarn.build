@@ -1,21 +1,21 @@
 import { Workspace } from "@yarnpkg/core";
-import { PackageFiles } from "../../../types";
+import { PackageFiles } from "@ojkelly/yarn-build-shared/src/types";
 import { join, dirname } from "path";
 
 const NonRemovableFiles: Record<
   string,
   (props: { cwd: string; rootDir: string }) => string[]
 > = {
-  /* 
+  /*
     Make sure the directory for package is not removed
     */
   directory: ({ cwd }) => [cwd],
-  /* 
+  /*
     Make sure that parent directories are not removed, for example a workspace with path:
     /extrafolder/packages/backend
 
     both /extrafolder
-    and /extrafolder/package are kept safe 
+    and /extrafolder/package are kept safe
     */
   parentDirectories: ({ cwd, rootDir }) => {
     if (!cwd.startsWith(rootDir)) {
