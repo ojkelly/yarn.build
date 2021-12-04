@@ -38,7 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .yarn/plugins/@ojkelly/plugin-all.js
+          asset_path: .yarn/plugins/@ojkelly/plugin-all.cjs
           asset_name: "plugin-all.cjs"
           asset_content_type: text/javascript
 
@@ -49,7 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .yarn/plugins/@ojkelly/plugin-build.js
+          asset_path: .yarn/plugins/@ojkelly/plugin-build.cjs
           asset_name: "plugin-build.cjs"
           asset_content_type: text/javascript
 
@@ -60,7 +60,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .yarn/plugins/@ojkelly/plugin-bundle.js
+          asset_path: .yarn/plugins/@ojkelly/plugin-bundle.cjs
           asset_name: "plugin-bundle.cjs"
           asset_content_type: text/javascript
 
@@ -71,7 +71,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .yarn/plugins/@ojkelly/plugin-test.js
+          asset_path: .yarn/plugins/@ojkelly/plugin-test.cjs
           asset_name: "plugin-test.cjs"
           asset_content_type: text/javascript
 
@@ -82,7 +82,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .yarn/plugins/@ojkelly/plugin-package-yaml.js
+          asset_path: .yarn/plugins/@ojkelly/plugin-package-yaml.cjs
           asset_name: "plugin-package-yaml.cjs"
           asset_content_type: text/javascript
 
