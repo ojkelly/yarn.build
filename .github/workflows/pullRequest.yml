@@ -19,10 +19,9 @@ jobs:
         run: |
           yarn style:check
 
-      - name: Build plugin
+      - name: Build plugins
         run: |
-          cd ./packages/plugins/plugin-build && \
-          yarn release
+          yarn build -c update-local
       - name: Build Example
         run: |
           yarn build --ignore-cache packages/examples/lorem-ipsum/
@@ -31,8 +30,8 @@ jobs:
           yarn test --ignore-cache
       - uses: actions/upload-artifact@v2
         with:
-          name: plugin-build
-          path: packages/plugins/plugin-build/bundles
+          name: plugins-all
+          path: .yarn/plugins/@ojkelly
 
   integration-test:
     name: Integration Test
@@ -47,8 +46,8 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v2
         with:
-          name: plugin-build
-          path: packages/plugins/plugin-build/bundles
+          name: plugins-all
+          path: .yarn/plugins/@ojkelly
       - name: Install packages
         run: yarn install --immutable --immutable-cache
       - name: Build plugin

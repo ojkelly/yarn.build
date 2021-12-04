@@ -57,7 +57,6 @@
     "update:patch-name": "replace '@yarnpkg/plugin-build' '@ojkelly/plugin-build' ./bundles/@yarnpkg/plugin-build.js",
     "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "update:local": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
-    "release": "yarn build:plugin-stage && yarn update:patch-name",
     "clean": "shx rm -fr build bundles",
     "test": "jest --passWithNoTests"
   },
