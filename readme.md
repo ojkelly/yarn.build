@@ -180,15 +180,15 @@ RUN env CI=true yarn build
 
 Have you ever wanted to write you `package.json` as `package.yaml` or even `package.yml`?
 
-Well now you can!\*
-
-\*This is an initial seemingly stable release, but may break things - raise an issue if it does.
+Well now you can!
 
 To install:
 
 ```
 yarn plugin import https://yarn.build/yaml
 ```
+
+Once installed, any folder with a `package.yaml` and without a `package.json` will run through this plugin. This lets you opt-in packages that don't have any tooling that _requires_ `package.json` to be present on disk.
 
 Swap an existing `package.json` over to a `package.yaml` by converting it's contents to YAML, and renaming the file.
 
@@ -235,9 +235,7 @@ yarn.build:
 
 ### Caveats
 
-PNP is not supported yet, as neither is a node.
-
-You can still read the yaml file directly (it is just a file after all), but existing tooling that wants to read from your `package.json` will break.
+Existing tooling that wants to read from your `package.json` will break, unless it reads it via Yarn.
 
 #### Troubleshooting
 
@@ -273,5 +271,7 @@ yarn.build:
   input: .
   output: .build
 ```
+
+---
 
 For developing on this repository see [packages/plugins/plugin-build/readme.md](packages/plugins/plugin-build/readme.md)
