@@ -294,12 +294,6 @@ class RunSupervisor {
     await xfs.writeJsonPromise(this.getRunLogPath(), runLogFile);
   }
 
-  logError(s: string): void {
-    if (this.verbose) {
-      process.stderr.write(stripAnsi(s) + "\n");
-    }
-  }
-
   setupRunReporter = (): void => {
     this.runReporter.on(
       RunSupervisorReporterEvents.pending,
@@ -347,7 +341,6 @@ class RunSupervisor {
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd].stderr.push(error);
-          this.logError(`${relativeCwd} ${error}`);
           release();
         });
       }
@@ -397,7 +390,6 @@ class RunSupervisor {
           this.runReport.workspaces[relativeCwd].done = true;
           this.runReport.workspaces[relativeCwd].fail = true;
           this.runReport.failCount++;
-          this.logError(`${relativeCwd} ${error}`);
           release();
         });
       }
@@ -599,8 +591,8 @@ class RunSupervisor {
         command: this.runCommand,
       });
     } catch (e) {
-      this.logError(
-        `${workspace.relativeCwd}: failed to get lastModified (${e})`
+      this.runReport.workspaces[workspace.relativeCwd].stderr.push(
+        new Error(`${workspace.relativeCwd}: failed to get lastModified (${e})`)
       );
     } finally {
       release();
