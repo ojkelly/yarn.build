@@ -1,20 +1,10 @@
 module.exports = {
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "@kablamo"],
-  extends: [
-    "plugin:react/recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier",
-    "plugin:@kablamo/recommended",
-  ],
+  plugins: ["@typescript-eslint"],
+  extends: ["plugin:@typescript-eslint/recommended", "prettier"],
 
   parser: require.resolve(`@typescript-eslint/parser`),
 
-  settings: {
-    react: {
-      version: "detect",
-    },
-  },
   env: {
     es6: true,
     browser: true,
@@ -43,8 +33,6 @@ module.exports = {
         allow: ["warn", "error", "info"],
       },
     ],
-    "react/display-name": 0,
-    "react/prop-types": 0,
     "lines-between-class-members": ["error", "always"],
     "padding-line-between-statements": [
       "error",

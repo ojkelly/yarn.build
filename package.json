@@ -23,7 +23,6 @@
     "integration:copy": "shx cp packages/plugins/plugin-build/bundles/@yarnpkg/plugin-build.js e2e/lambda-project/.yarn/plugins/@ojkelly/plugin-build.cjs"
   },
   "devDependencies": {
-    "@kablamo/eslint-plugin": "^1.0.1",
     "@types/execa": "^2.0.0",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^26.0.19",
@@ -47,16 +46,22 @@
     "ts-pnp": "^1.2.0",
     "typescript": "^4.3.2"
   },
-  "resolutions": {
-    "typescript": "^4.3.2"
-  },
   "engines": {
     "node": ">=12 <14 || 14.2 - 14.9 || >14.10.0"
   },
   "dependencies": {
     "@kablamo/kerosene": "^0.0.20",
-    "@kablamo/kerosene-ui": "^0.0.21",
-    "@yarnpkg/pnpify": "^2.4.0",
     "is-ci": "^3.0.0"
+  },
+  "resolutions": {
+    "typescript": "^4.3.2",
+    "@yarnpkg/builder": "^3",
+    "@yarnpkg/cli": "^3",
+    "@yarnpkg/core": "^3",
+    "@yarnpkg/fslib": "^2.5",
+    "@yarnpkg/libzip": "^2",
+    "@yarnpkg/plugin-pack": "^3",
+    "@yarnpkg/parsers": "^2",
+    "@yarnpkg/pnpify": "^2.4.0"
   }
 }
