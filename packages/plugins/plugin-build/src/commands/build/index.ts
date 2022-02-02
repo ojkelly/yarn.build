@@ -50,7 +50,7 @@ export default class Build extends BaseCommand {
     description: `simulate running a build, but not actually run it`,
   });
 
-  ignoreBuildCache = Option.Boolean(`--ignore-cache`, false, {
+  ignoreBuildCache = Option.Boolean(`-r,--ignore-cache`, false, {
     description: `every package will be built, regardless of whether is has changed or not.`,
   });
 

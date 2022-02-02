@@ -274,4 +274,4 @@ yarn.build:
 
 ---
 
-For developing on this repository see [packages/plugins/plugin-build/readme.md](packages/plugins/plugin-build/readme.md)
+For developing on this repository see [packages/plugins/readme.md](packages/plugins/readme.md)

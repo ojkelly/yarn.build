@@ -22,3 +22,5 @@ bundle.zip
 
 build.log
 build-error.log
+
+yarn.build-error.log

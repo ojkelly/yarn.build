@@ -11,6 +11,7 @@ import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
 import { isYarnBuildConfiguration, YarnBuildConfiguration } from "../config";
+import micromatch from "micromatch";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
@@ -347,7 +348,6 @@ class RunSupervisor {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd].stderr.push(error);
           this.logError(`${relativeCwd} ${error}`);
-
           release();
         });
       }
@@ -373,7 +373,6 @@ class RunSupervisor {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd].done = true;
           this.runReport.workspaces[relativeCwd].skipped = true;
-
           this.runReport.skipCount++;
           release();
         });
@@ -385,7 +384,6 @@ class RunSupervisor {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd].done = true;
           this.runReport.workspaces[relativeCwd].ignored = true;
-
           this.runReport.ignoredCount++;
           release();
         });
@@ -396,12 +394,9 @@ class RunSupervisor {
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd].stderr.push(error);
-
           this.runReport.workspaces[relativeCwd].done = true;
           this.runReport.workspaces[relativeCwd].fail = true;
-
           this.runReport.failCount++;
-
           this.logError(`${relativeCwd} ${error}`);
           release();
         });
@@ -547,17 +542,22 @@ class RunSupervisor {
 
     // Determine which folders (if any) may contain run artifacts
     // we need to ignore.
+    const outputPaths = Array.isArray(workspaceConfiguration.folders.output)
+      ? [...workspaceConfiguration.folders.output]
+      : [workspaceConfiguration.folders.output];
 
-    const main =
-      typeof workspace?.manifest.raw.main === "string"
-        ? workspace.manifest.raw.main
-        : undefined;
+    if (typeof workspace?.manifest?.raw?.bin === "string") {
+      outputPaths.push(workspace.manifest.raw.bin);
+    } else if (typeof workspace?.manifest?.raw?.directories?.bin === "string") {
+      outputPaths.push(workspace.manifest.raw.directories.bin);
+    } else if (typeof workspace?.manifest?.raw?.files === "string") {
+      outputPaths.push(workspace.manifest.raw.files);
+    } else if (Array.isArray(workspace?.manifest?.raw?.files)) {
+      outputPaths.push(...workspace.manifest.raw.files);
+    } else if (typeof workspace?.manifest?.raw?.main === "string") {
+      outputPaths.push(workspace.manifest.raw.main);
+    }
 
-    const output =
-      workspaceConfiguration.folders.output ??
-      main?.substring(0, main?.lastIndexOf(path.posix.sep));
-
-    const outputPaths = typeof output === "string" ? [output] : output;
     const ignorePaths = outputPaths.map(
       (d) => `${dir}${path.posix.sep}${d}` as PortablePath
     );
@@ -581,6 +581,7 @@ class RunSupervisor {
       if (previousRunLog?.haveCheckedForRerun) {
         return previousRunLog?.rerun ?? true;
       }
+
       const currentLastModified = await getLastModifiedForPaths(
         srcPaths ?? [dir],
         ignorePaths
@@ -659,8 +660,22 @@ class RunSupervisor {
       Hansi.clearScreenDown();
     }
 
+    let printOutput = false;
+
     // Check if there were errors, and print them out
     if (this.runReport.failCount !== 0) {
+      printOutput = true;
+    }
+
+    if (this.verbose) {
+      printOutput = true;
+    }
+
+    if (isCI) {
+      printOutput = true;
+    }
+
+    if (printOutput) {
       const packagesWithErrors: string[] = [];
 
       process.stdout.write(this.formatHeader(header) + "\n");
@@ -687,13 +702,14 @@ class RunSupervisor {
 
           process.stdout.write(lineHeader + "\n");
         }
+
         if (workspace.stdout.length !== 0) {
           hasOutput = true;
           workspace.stdout.forEach((m) => {
             const lines = m.split("\n");
 
             lines.forEach((line) => {
-              if (line.length !== 0) {
+              if (typeof line != `undefined` && line.length !== 0) {
                 process.stdout.write(line + "\n");
               }
             });
@@ -741,15 +757,19 @@ class RunSupervisor {
 
           process.stderr.write(lineTail + "\n");
         });
+        process.stderr.write(
+          this.grey(
+            `Search \`Output: path\` to find the start of the output.\n`
+          )
+        );
       }
-      process.stderr.write(
-        this.grey(`Search \`Output: path\` to find the start of the output.\n`)
-      );
     }
 
     const finalLine = this.generateFinalReport();
 
-    process.stdout.write(finalLine);
+    if (typeof finalLine === `string`) {
+      process.stdout.write(finalLine);
+    }
 
     // commit the run log
     await this.saveRunLog();
@@ -773,7 +793,9 @@ class RunSupervisor {
     );
     Hansi.clearScreenDown();
 
-    process.stdout.write(output);
+    if (typeof output != `undefined` && typeof output === `string`) {
+      process.stdout.write(output);
+    }
 
     this.runReport.previousOutput = output;
 
@@ -836,7 +858,7 @@ class RunSupervisor {
       const pathString = formatUtils.pretty(
         this.configuration,
         relativePath,
-        FormatType.NAME
+        FormatType.PATH
       );
 
       const runScriptString = formatUtils.pretty(
@@ -961,7 +983,7 @@ class RunSupervisor {
       const { successCount, failCount, ignoredCount, skipCount } =
         this.runReport;
 
-      const total = this.runGraph.size - ignoredCount;
+      const total = this.runGraph.runSize - ignoredCount;
 
       const upToDate = total - failCount - successCount - skipCount;
 
@@ -995,7 +1017,7 @@ class RunSupervisor {
       output +=
         successString + "\n" + failedString + "\n" + skippedString + "\n";
 
-      if (!this.ignoreRunCache) output += upToDateString + "\n";
+      output += upToDateString + "\n";
 
       output += totalString + "\n" + this.grey("---") + "\n";
     }
@@ -1180,7 +1202,11 @@ const getLastModifiedForPaths = async (
 ): Promise<number> => {
   const lastModifiedTimestamps = await Promise.all(
     paths.map(async (p) => {
-      if (ignored?.some((ignore) => p.startsWith(ignore))) {
+      if (ignored?.some((i) => p.startsWith(i))) {
+        return 0;
+      }
+
+      if (ignored?.some((i) => micromatch.isMatch(p, i))) {
         return 0;
       }
 
