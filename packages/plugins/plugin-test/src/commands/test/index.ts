@@ -34,7 +34,7 @@ export default class Test extends BaseCommand {
     description: `more information will be logged to stdout than normal.`,
   });
 
-  ignoreTestCache = Option.Boolean(`--ignore-cache`, false, {
+  ignoreTestCache = Option.Boolean(`-r,--ignore-cache`, false, {
     description: `every package will be tested, regardless of whether is has changed or not.`,
   });
 
