@@ -1508,6 +1508,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["@ojkelly/yarn-plugin-test", "workspace:packages/plugins/plugin-test"],
             ["@ojkelly/yarn-build-shared", "workspace:packages/plugins/shared"],
+            ["@ojkelly/yarn-plugin-build", "workspace:packages/plugins/plugin-build"],
             ["@types/is-ci", "npm:2.0.0"],
             ["@types/jest", "npm:26.0.24"],
             ["@types/js-yaml", "npm:4.0.2"],

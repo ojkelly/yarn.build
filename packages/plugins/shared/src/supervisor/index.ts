@@ -859,7 +859,7 @@ class RunSupervisor {
         "white"
       );
 
-      output += `-[Success: ${successString}\tFailed: ${failedString}\tTotal:  ${totalString}\tRuntime: ${formatTimestampDifference(
+      output += `-[  Success: ${successString}\tFailed: ${failedString}\tTotal:  ${totalString}\tRuntime: ${formatTimestampDifference(
         this.runReport.runStart,
         timestamp
       )}\t]-\n`;

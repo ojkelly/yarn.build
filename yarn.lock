@@ -1115,6 +1115,7 @@ __metadata:
   resolution: "@ojkelly/yarn-plugin-test@workspace:packages/plugins/plugin-test"
   dependencies:
     "@ojkelly/yarn-build-shared": "workspace:*"
+    "@ojkelly/yarn-plugin-build": "workspace:*"
     "@types/is-ci": ^2.0.0
     "@types/jest": ^26.0.19
     "@types/js-yaml": ^4.0.2
