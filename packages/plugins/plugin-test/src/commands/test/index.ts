@@ -46,6 +46,14 @@ export default class Test extends BaseCommand {
     description: `exit immediately upon build failing`,
   });
 
+  onlyGitChanges = Option.Boolean("--changes", false, {
+    description: `only build packages that were changed in the last commit`,
+  });
+
+  onlyGitChangesSinceCommit = Option.String("--since", {
+    description: `only build packages that were changed since the given commit`,
+  });
+
   public runTarget: string[] = Option.Rest();
 
   static usage: Usage = Command.Usage({
