@@ -527,6 +527,11 @@ class RunSupervisor {
       return true;
     }
 
+    //  skip if this workspace doesn't have the command we want to run
+    if (typeof workspace.manifest.scripts.get(this.runCommand) !== `string`) {
+      return false;
+    }
+
     let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 

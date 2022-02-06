@@ -233,7 +233,6 @@ export default class Build extends BaseCommand {
         });
 
         await supervisor.setup();
-
         for (const targetWorkspace of buildTargetCandidates) {
           await addTargets({ targetWorkspace, project, supervisor });
         }
