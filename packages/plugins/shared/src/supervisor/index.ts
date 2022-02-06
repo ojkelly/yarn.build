@@ -610,15 +610,17 @@ class RunSupervisor {
 
     this.runReport.runStart = Date.now();
 
-    // Print our RunReporter output
-    if (!this.dryRun && !isCI) {
-      Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
-      this.raf(this.waitUntilDone);
-    }
-
     if (this.dryRun) {
       return true;
     }
+
+    // Print our RunReporter output
+    if (!isCI) {
+      Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
+    }
+
+    // print progress
+    this.raf(this.waitUntilDone);
 
     this.currentRunTarget =
       this.runTargets.length > 1
@@ -778,12 +780,25 @@ class RunSupervisor {
     if (this.runReport.done) {
       return;
     }
-    const output = this.generateProgressString(timestamp);
 
-    Hansi.cursorUp(
-      Hansi.linesRequired(this.runReport.previousOutput, process.stdout.columns)
-    );
-    Hansi.clearScreenDown();
+    let waitTime = 90;
+    let output = "";
+
+    if (isCI) {
+      waitTime = 2000;
+
+      output = this.generateProgressStringIsCI(timestamp);
+    } else {
+      output = this.generateProgressString(timestamp);
+
+      Hansi.cursorUp(
+        Hansi.linesRequired(
+          this.runReport.previousOutput,
+          process.stdout.columns
+        )
+      );
+      Hansi.clearScreenDown();
+    }
 
     if (typeof output != `undefined` && typeof output === `string`) {
       process.stdout.write(output);
@@ -791,7 +806,7 @@ class RunSupervisor {
 
     this.runReport.previousOutput = output;
 
-    delay(90).then(() => {
+    delay(waitTime).then(() => {
       this.raf(this.waitUntilDone);
     });
   };
@@ -822,6 +837,35 @@ class RunSupervisor {
         ? formatUtils.pretty(this.configuration, ` --dry-run`, FormatType.NAME)
         : ""
     }`;
+  }
+
+  generateProgressStringIsCI(timestamp: number): string {
+    let output = "";
+
+    if (this.runReport.runStart) {
+      const successString = formatUtils.pretty(
+        this.configuration,
+        `${this.runReport.successCount}`,
+        "green"
+      );
+      const failedString = formatUtils.pretty(
+        this.configuration,
+        `${this.runReport.failCount}`,
+        "red"
+      );
+      const totalString = formatUtils.pretty(
+        this.configuration,
+        `${this.runGraph.runSize}`,
+        "white"
+      );
+
+      output += `-[  Success: ${successString}\tFailed: ${failedString}\tTotal:  ${totalString}\tRuntime: ${formatTimestampDifference(
+        this.runReport.runStart,
+        timestamp
+      )}\t]-\n`;
+    }
+
+    return output;
   }
 
   generateProgressString(timestamp: number): string {

@@ -19,6 +19,8 @@ import RunSupervisor, {
   RunSupervisorReporterEvents,
 } from "@ojkelly/yarn-build-shared/src/supervisor";
 
+import { GetChangedWorkspaces } from "@ojkelly/yarn-build-shared/src/changes";
+
 import { addTargets } from "@ojkelly/yarn-build-shared/src/supervisor/workspace";
 import { terminateProcess } from "@ojkelly/yarn-build-shared/src/supervisor/terminate";
 
@@ -31,7 +33,7 @@ export default class Build extends BaseCommand {
   });
 
   all = Option.Boolean(`-A,--all`, false, {
-    description: `Build all workspaces of a project`,
+    description: `run for all workspaces of a project`,
   });
 
   buildCommand = Option.String(`-c,--build-command`, `build`, {
@@ -60,6 +62,14 @@ export default class Build extends BaseCommand {
 
   shouldBailInstantly = Option.Boolean("--bail", false, {
     description: `exit immediately upon build failing`,
+  });
+
+  onlyGitChanges = Option.Boolean("--changes", false, {
+    description: `only build packages that were changed in the last commit`,
+  });
+
+  onlyGitChangesSinceCommit = Option.String("--since", {
+    description: `only build packages that were changed since the given commit`,
   });
 
   public buildTargets = Option.Rest({ name: "workspaceNames" });
@@ -95,12 +105,21 @@ export default class Build extends BaseCommand {
 
     const rootWorkspace = this.all ? project.topLevelWorkspace : cwdWorkspace;
 
-    const rootCandidates = [
+    let rootCandidates = [
       rootWorkspace,
       ...(this.buildTargets.length > 0
         ? rootWorkspace.getRecursiveWorkspaceChildren()
         : []),
     ];
+
+    if (this.onlyGitChanges || this.onlyGitChangesSinceCommit) {
+      const changedWorkspaces = await GetChangedWorkspaces(
+        project.topLevelWorkspace,
+        this.onlyGitChangesSinceCommit ?? "1"
+      );
+
+      rootCandidates = changedWorkspaces;
+    }
 
     const buildTargetPredicate = (workspace: Workspace) =>
       this.buildTargets.some(

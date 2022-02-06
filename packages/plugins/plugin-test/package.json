@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@ojkelly/yarn-build-shared": "workspace:*",
+    "@ojkelly/yarn-plugin-build": "workspace:*",
     "@types/slice-ansi": "^4.0.0",
     "@yarnpkg/fslib": "*",
     "@yarnpkg/libzip": "*",
