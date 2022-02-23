@@ -26,12 +26,30 @@ import {
   GetPartialPluginConfiguration,
 } from "@ojkelly/yarn-build-shared/src/config";
 
+enum MESSAGE_CODE {
+  Info = "YB1000",
+  RemoveUnusedPackages = "YB1001",
+  RemoveEmptyDirectories = "YB1002",
+  RemoveExcluded = "YB1003",
+  AddedEntryPoint = "YB1004",
+}
+
+enum MESSAGE_GROUP {
+  Start = " ┌ ",
+  Progress = " │ ",
+  End = " └ ",
+}
+
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
   static paths = [[`bundle`]];
 
   json = Option.Boolean(`--json`, false, {
     description: `flag is set the output will follow a JSON-stream output also known as NDJSON (https://github.com/ndjson/ndjson-spec)`,
+  });
+
+  quiet = Option.Boolean(`-q,--quiet`, false, {
+    description: `suppress progess messages`,
   });
 
   outputDirectory?: string = Option.String(`-o,--output-directory`, {
@@ -83,6 +101,12 @@ export default class Bundler extends BaseCommand {
     `,
   });
 
+  progress(code: MESSAGE_CODE, group: MESSAGE_GROUP, msg: string): void {
+    // if (this.quiet !== true) {
+    console.info(`➤ ${code}:${group}${msg}`);
+    // }
+  }
+
   async removeUnusedPackages(
     tmpDir: PortablePath,
     tmpPackageCwd: PortablePath,
@@ -119,6 +143,11 @@ export default class Bundler extends BaseCommand {
           if (matchingWorkspace === null) continue;
 
           requiredWorkspaces.add(matchingWorkspace);
+          this.progress(
+            MESSAGE_CODE.RemoveUnusedPackages,
+            MESSAGE_GROUP.Progress,
+            `required: ${matchingWorkspace.relativeCwd}`
+          );
         }
       }
     }
@@ -128,6 +157,11 @@ export default class Bundler extends BaseCommand {
       if (workspace.cwd !== tmpDir) {
         // dont remove the root package
         await xfs.removePromise(workspace.cwd);
+        this.progress(
+          MESSAGE_CODE.RemoveUnusedPackages,
+          MESSAGE_GROUP.Progress,
+          `unused: ${workspace.relativeCwd}`
+        );
       }
     }
   }
@@ -149,9 +183,15 @@ export default class Bundler extends BaseCommand {
         cwd: ppath.join(cwd, file),
       });
     }
+
     files = await xfs.readdirPromise(cwd);
     if (files.length === 0) {
       await xfs.removePromise(cwd);
+      this.progress(
+        MESSAGE_CODE.RemoveEmptyDirectories,
+        MESSAGE_GROUP.Progress,
+        `empty: ${cwd}`
+      );
 
       return true;
     }
@@ -213,6 +253,18 @@ export default class Bundler extends BaseCommand {
   }
 
   async execute(): Promise<0 | 1> {
+    this.progress(
+      MESSAGE_CODE.Info,
+      MESSAGE_GROUP.Start,
+      `Prepare ${this.context.cwd} for bundling`
+    );
+
+    this.progress(
+      MESSAGE_CODE.Info,
+      MESSAGE_GROUP.Progress,
+      `Preparing temporary directory`
+    );
+
     // Get a tmpDir to work in
     return await xfs.mktempPromise(async (tmpDir) => {
       // Save the originalCWD so we can store the archive somewhere
@@ -224,10 +276,6 @@ export default class Bundler extends BaseCommand {
         const resolvedOutputDir = resolveNativePath(this.outputDirectory);
 
         if (!xfs.existsSync(resolvedOutputDir)) {
-          // console.error("ERROR: --output-directory does not exist");
-
-          // return 1;
-
           await xfs.mkdirPromise(resolvedOutputDir);
         }
 
@@ -283,6 +331,11 @@ export default class Bundler extends BaseCommand {
       // copy everything to the tmpDir
       const baseFs = new NodeFS();
 
+      this.progress(
+        MESSAGE_CODE.Info,
+        MESSAGE_GROUP.Progress,
+        `Copying repo to temporary directory`
+      );
       await xfs.copyPromise(tmpDir, sourceConfiguration.projectCwd, {
         baseFs,
       });
@@ -310,6 +363,12 @@ export default class Bundler extends BaseCommand {
       const cache = await Cache.find(configuration);
       const yarnDirectory = `${tmpDir}/.yarn`;
       const cacheDirectory = cache.cwd;
+
+      this.progress(
+        MESSAGE_CODE.Info,
+        MESSAGE_GROUP.Progress,
+        `Removing unused and excluded workspaces, folders and files`
+      );
 
       await this.removeUnusedPackages(tmpDir, tmpPackageCwd, configuration);
 
@@ -365,6 +424,7 @@ export default class Bundler extends BaseCommand {
           shouldRemoveEmptyDirectories: false,
         });
       }
+
       // Remove stuff we dont need globally
       await this.removeExcluded({
         tmpDir,
@@ -400,6 +460,7 @@ export default class Bundler extends BaseCommand {
         );
       }
 
+      this.progress(MESSAGE_CODE.Info, MESSAGE_GROUP.End, `Completed`);
       const report = await StreamReport.start(
         {
           configuration,

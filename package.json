@@ -17,10 +17,10 @@
     "clear:build-cache": "rimraf .yarn/local-build-cache.json",
     "style:check": "yarn prettier --check packages/**/*.ts",
     "style:fix": "yarn prettier --check packages/**/*.ts --write",
-    "build:plugin": "yarn workspace @ojkelly/yarn-plugin-build update:local",
-    "integration:build": "yarn build:plugin && yarn integration:mkdirp && yarn integration:copy",
+    "build:plugin": "yarn workspace @ojkelly/yarn-plugin-all update:local",
     "integration:mkdirp": "shx mkdir -p e2e/lambda-project/.yarn/plugins/@ojkelly",
-    "integration:copy": "shx cp packages/plugins/plugin-build/bundles/@yarnpkg/plugin-build.js e2e/lambda-project/.yarn/plugins/@ojkelly/plugin-build.cjs"
+    "integration:build": "yarn build:plugin && yarn integration:mkdirp && yarn integration:copy:build",
+    "integration:copy:build": "shx cp packages/plugins/plugin-all/bundles/@yarnpkg/plugin-all.js e2e/lambda-project/.yarn/plugins/@ojkelly/plugin-all.cjs"
   },
   "devDependencies": {
     "@types/execa": "^2.0.0",
