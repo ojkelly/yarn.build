@@ -27,6 +27,7 @@ async function GetChangedWorkspaces(options: {
 
       if (stdout) {
         const files = stdout.split("\n");
+
         const matched = [...options.root.workspacesCwds]
           .map((workspacePath) => {
             if (
