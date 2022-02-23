@@ -72,6 +72,11 @@ export default class Build extends BaseCommand {
     description: `only build packages that were changed since the given commit`,
   });
 
+  onlyGitChangesSinceBranch = Option.String("--since-branch", {
+    description: `only build packages that have changes compared to the give branch. Uses 'git diff --name-only branch...'`,
+    arity: 1,
+  });
+
   public buildTargets = Option.Rest({ name: "workspaceNames" });
 
   static usage: Usage = Command.Usage({
@@ -112,13 +117,16 @@ export default class Build extends BaseCommand {
         : []),
     ];
 
-    if (this.onlyGitChanges || this.onlyGitChangesSinceCommit) {
-      const changedWorkspaces = await GetChangedWorkspaces(
-        project.topLevelWorkspace,
-        this.onlyGitChangesSinceCommit ?? "1"
-      );
-
-      rootCandidates = changedWorkspaces;
+    if (typeof this.onlyGitChangesSinceBranch === `string`) {
+      rootCandidates = await GetChangedWorkspaces({
+        root: project.topLevelWorkspace,
+        sinceBranch: this.onlyGitChangesSinceBranch,
+      });
+    } else if (this.onlyGitChanges || this.onlyGitChangesSinceCommit) {
+      rootCandidates = await GetChangedWorkspaces({
+        root: project.topLevelWorkspace,
+        commit: this.onlyGitChangesSinceCommit ?? "1",
+      });
     }
 
     const buildTargetPredicate = (workspace: Workspace) =>
