@@ -749,10 +749,12 @@ class RunSupervisor {
         "white"
       );
 
-      output += `-[  Success: ${successString}\tFailed: ${failedString}\tTotal:  ${totalString}\tRuntime: ${formatTimestampDifference(
+      output += `[${
+        this.runCommand
+      }]  Success: ${successString}\tFailed: ${failedString}\tTotal:  ${totalString}\tRuntime: ${formatTimestampDifference(
         this.runReport.runStart,
         timestamp
-      )}\t]-\n`;
+      )}\n`;
     }
 
     return output;
@@ -967,7 +969,7 @@ class RunSupervisor {
             const lines = err.split("\n");
 
             lines.forEach((line) => {
-              if (line.length !== 0) {
+              if (typeof line !== `undefined` && line.length !== 0) {
                 process.stderr.write(line + "\n");
               }
             });
@@ -1176,17 +1178,15 @@ class RunSupervisor {
                 rerun: false,
                 command: this.runCommand,
               });
-
+console.log("before")
               // print out the final report and exit
               const finalLine = this.generateFinalReport();
 
               if (typeof finalLine === `string`) {
                 process.stdout.write(finalLine);
               }
-
-              process.exit(1);
-
-              return false;
+console.log("after")
+              process.exit(exitCode);
             }
 
             this.runReporter.emit(
