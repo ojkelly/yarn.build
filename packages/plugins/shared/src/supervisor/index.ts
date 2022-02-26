@@ -1184,8 +1184,7 @@ class RunSupervisor {
                 process.stdout.write(finalLine);
               }
 
-              // bubble up the exit code
-              process.exit(exitCode);
+              process.exit(1);
 
               return false;
             }
