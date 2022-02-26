@@ -13,4 +13,3 @@ import inHac from "@internal/phrase-in-hac";
 export default `${lorem} ${ipsum} ${dolor} ${sit} ${amet}, ${consectetur}` +
   ` ${adipiscing} ${elit}. Nunc id faucibus metus, ac maximus lectus. ` +
   `${nullam} ${inHac}`;
-kjn;

@@ -69,7 +69,6 @@ type RunReport = {
   mutex: Mutex;
   runStart?: number;
   totalJobs: number;
-  bail?: boolean;
   previousOutput: string;
   successCount: number;
   failCount: number;
@@ -131,7 +130,7 @@ class RunSupervisor {
 
   verbose = false;
 
-  bail = false;
+  continueOnError = false;
 
   concurrency: number;
 
@@ -151,7 +150,6 @@ class RunSupervisor {
     successCount: 0,
     failCount: 0,
     ignoredCount: 0,
-    bail: false,
     workspaces: {},
     done: false,
   };
@@ -175,7 +173,7 @@ class RunSupervisor {
     ignoreRunCache,
     verbose,
     concurrency,
-    shouldBailInstantly,
+    continueOnError,
   }: {
     project: Project;
     report: StreamReport;
@@ -187,7 +185,7 @@ class RunSupervisor {
     ignoreRunCache: boolean;
     verbose: boolean;
     concurrency?: number | undefined;
-    shouldBailInstantly?: boolean;
+    continueOnError: boolean;
   }) {
     const resolvedConcurrency = concurrency ?? Math.max(1, cpus().length);
 
@@ -201,7 +199,7 @@ class RunSupervisor {
     this.ignoreRunCache = ignoreRunCache;
     this.verbose = verbose;
     this.concurrency = resolvedConcurrency;
-    this.bail = shouldBailInstantly ?? this.bail;
+    this.continueOnError = continueOnError;
     this.limit = PLimit(resolvedConcurrency);
     this.queue = new PQueue({
       concurrency: resolvedConcurrency,
@@ -331,7 +329,9 @@ class RunSupervisor {
       RunSupervisorReporterEvents.info,
       (relativeCwd: PortablePath, message: string) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
-          this.runReport.workspaces[relativeCwd].stdout.push(message);
+          if (typeof message != `undefined`) {
+            this.runReport.workspaces[relativeCwd].stdout.push(message);
+          }
           release();
         });
       }
@@ -341,7 +341,9 @@ class RunSupervisor {
       RunSupervisorReporterEvents.error,
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
-          this.runReport.workspaces[relativeCwd].stderr.push(error);
+          if (typeof error != `undefined`) {
+            this.runReport.workspaces[relativeCwd].stderr.push(error);
+          }
           release();
         });
       }
@@ -387,7 +389,9 @@ class RunSupervisor {
       RunSupervisorReporterEvents.fail,
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
-          this.runReport.workspaces[relativeCwd].stderr.push(error);
+          if (typeof error != `undefined`) {
+            this.runReport.workspaces[relativeCwd].stderr.push(error);
+          }
           this.runReport.workspaces[relativeCwd].done = true;
           this.runReport.workspaces[relativeCwd].fail = true;
           this.runReport.failCount++;
@@ -900,6 +904,7 @@ class RunSupervisor {
     }
 
     let printOutput = false;
+    let output = "";
 
     // Check if there were errors, and print them out
     if (this.runReport.failCount !== 0) {
@@ -917,8 +922,7 @@ class RunSupervisor {
     if (printOutput) {
       const packagesWithErrors: string[] = [];
 
-      process.stdout.write(this.formatHeader(this.header) + "\n");
-      let hasOutput = false;
+      output += `${this.formatHeader(this.header) + "\n"}`;
 
       // print out any build errors
       for (const relativePath in this.runReport.workspaces) {
@@ -928,41 +932,41 @@ class RunSupervisor {
           packagesWithErrors.push(relativePath);
         }
 
+        if (this.runReport.failCount !== 0 && workspace.fail === false) {
+          continue;
+        }
+
         if (workspace.stdout.length !== 0 || workspace.stderr.length !== 0) {
-          hasOutput = true;
           const lineHeader = this.formatHeader(
             `Output: ${formatUtils.pretty(
               this.configuration,
               relativePath,
-              FormatType.NAME // TODO should be PATH, but the types complain - might be yarn bug
+              FormatType.PATH
             )}`,
             2
           );
 
-          process.stdout.write(lineHeader + "\n");
+          output += `${lineHeader + "\n"}`;
         }
 
         if (workspace.stdout.length !== 0) {
-          hasOutput = true;
           workspace.stdout.forEach((m) => {
             const lines = m.split("\n");
 
             lines.forEach((line) => {
               if (typeof line != `undefined` && line.length !== 0) {
-                process.stdout.write(line + "\n");
+                output += `${line + "\n"}`;
               }
             });
           });
         }
 
         if (workspace.stderr.length !== 0) {
-          hasOutput = true;
-
           // stderr doesnt seem to be useful for showing to the user in cli
           // we'll still write it out to the run log
           const lineHeader = `[stderr]`;
 
-          process.stderr.write(lineHeader + "\n");
+          output += `${lineHeader + "\n"}`;
 
           workspace.stderr.forEach((e) => {
             const err = e instanceof Error ? e.toString() : `${e}`;
@@ -970,37 +974,30 @@ class RunSupervisor {
 
             lines.forEach((line) => {
               if (typeof line !== `undefined` && line.length !== 0) {
-                process.stderr.write(line + "\n");
+                output += `${line + "\n"}`;
               }
             });
           });
         }
       }
 
-      if (hasOutput) {
-        process.stdout.write(this.grey(DIVIDER) + "\n");
-      }
-      if (packagesWithErrors.length > 0) {
+      if (packagesWithErrors.length >= 2) {
+        output += `${this.grey(DIVIDER) + "\n"}`;
         const errorHeader = this.grey(
           `ERROR for script ${this.header}\nThe following packages returned an error.\n`
         );
 
-        process.stderr.write(errorHeader);
+        output += `${errorHeader}`;
 
         packagesWithErrors.forEach((relativePath) => {
           const lineTail = `- ${formatUtils.pretty(
             this.configuration,
             relativePath,
-            FormatType.NAME
+            FormatType.PATH
           )}`;
 
-          process.stderr.write(lineTail + "\n");
+          output += `${lineTail + "\n"}`;
         });
-        process.stderr.write(
-          this.grey(
-            `Search \`Output: path\` to find the start of the output.\n`
-          )
-        );
       }
     }
 
@@ -1021,7 +1018,7 @@ class RunSupervisor {
         }`
       ) + "\n";
 
-    let output = this.formatHeader("Summary") + "\n";
+    output += this.formatHeader("Summary") + "\n";
 
     if (this.runReport.runStart) {
       const { successCount, failCount, ignoredCount, skipCount } =
@@ -1101,7 +1098,7 @@ class RunSupervisor {
 
   // Returns a PQueue item
   createRunItem = (workspace: Workspace): RunCallback => {
-    return async () =>
+    return async (cancelDependentJobs: () => void) =>
       await this.limit(async (): Promise<boolean> => {
         const prefix = workspace.relativeCwd;
 
@@ -1140,7 +1137,7 @@ class RunSupervisor {
         }
 
         try {
-          if (this.runReport.bail) {
+          if (this.runReport.failCount !== 0) {
             // We have bailed skip all!
             this.runReporter.emit(
               RunSupervisorReporterEvents.skipped,
@@ -1154,8 +1151,11 @@ class RunSupervisor {
               command: this.runCommand,
             });
 
-            return false;
+            if (this.continueOnError === false) {
+              return false;
+            }
           }
+
           const exitCode = await this.cli(
             this.runCommand,
             workspace.cwd,
@@ -1164,7 +1164,7 @@ class RunSupervisor {
           );
 
           if (exitCode !== 0) {
-            if (this.bail) {
+            if (exitCode > 100) {
               // This has been force killed
               this.runReporter.emit(
                 RunSupervisorReporterEvents.skipped,
@@ -1178,36 +1178,31 @@ class RunSupervisor {
                 rerun: false,
                 command: this.runCommand,
               });
-console.log("before")
-              // print out the final report and exit
-              const finalLine = this.generateFinalReport();
 
-              if (typeof finalLine === `string`) {
-                process.stdout.write(finalLine);
+              return false;
+            } else {
+              this.runReporter.emit(
+                RunSupervisorReporterEvents.fail,
+                workspace.relativeCwd
+              );
+
+              this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+                lastModified: currentRunLog?.lastModified,
+                status: RunStatus.failed,
+                haveCheckedForRerun: true,
+                rerun: false,
+                command: this.runCommand,
+              });
+
+              if (this.continueOnError === false) {
+                void terminateAllChildProcesses();
               }
-console.log("after")
-              process.exit(exitCode);
+
+              return false;
             }
-
-            this.runReporter.emit(
-              RunSupervisorReporterEvents.fail,
-              workspace.relativeCwd
-            );
-
-            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-              lastModified: currentRunLog?.lastModified,
-              status: RunStatus.failed,
-              haveCheckedForRerun: true,
-              rerun: false,
-              command: this.runCommand,
-            });
-            if (this.bail && !this.runReport.bail) {
-              this.runReport.bail = true;
-              void terminateAllChildProcesses();
-            }
-
-            return false;
           }
+
+          // run was a success
 
           this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
             lastModified: currentRunLog?.lastModified,
@@ -1236,10 +1231,17 @@ console.log("after")
             command: this.runCommand,
           });
 
+          if (this.continueOnError === false) {
+            cancelDependentJobs();
+            terminateAllChildProcesses();
+
+            return false;
+          }
+
           return false;
         }
 
-        return true;
+        return false;
       });
   };
 }
