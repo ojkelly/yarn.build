@@ -184,12 +184,14 @@ type RunQueueItem = {
 class Node {
   id: string;
 
-  dependencies: Node[];
+  dependencies: Node[] = [];
 
   graph: Graph;
 
   // metadata
   workspace?: Workspace;
+
+  cancelled = false;
 
   runCallback?: RunLogCallback;
 
@@ -217,13 +219,28 @@ class Node {
     }
 
     this.runCallback = (runLog: RunLog) => {
-      return callback().then((success) => {
+      if (this.cancelled) {
+        return;
+      }
+
+      return callback(Node.cancelDependentJobs(this)).then((success) => {
         runLog[this.id] = { done: true, success };
       });
     };
     this.graph.runSize++;
 
     return this;
+  }
+
+  static cancelDependentJobs(node: Node): () => void {
+    return () => {
+      if (typeof node.dependencies === `undefined`) {
+        return;
+      }
+      for (const n of node.dependencies) {
+        n.cancelled = true;
+      }
+    };
   }
 }
 
@@ -240,7 +257,7 @@ class CyclicDependencyError extends Error {
 type RunLog = { [id: string]: { success: boolean; done: boolean } };
 
 type RunSuccess = boolean;
-type RunCallback = () => Promise<RunSuccess>;
+type RunCallback = (cancelDependentJobs: () => void) => Promise<RunSuccess>;
 type RunLogCallback = (runLog: RunLog) => void;
 
 type NodeGraph = {

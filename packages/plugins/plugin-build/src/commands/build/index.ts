@@ -60,8 +60,8 @@ export default class Build extends BaseCommand {
     description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
   });
 
-  shouldBailInstantly = Option.Boolean("--bail", false, {
-    description: `exit immediately upon build failing`,
+  continueOnError = Option.Boolean("--continue-on-error", false, {
+    description: `if a build fails, continue with the rest`,
   });
 
   onlyGitChanges = Option.Boolean("--changes", false, {
@@ -149,11 +149,7 @@ export default class Build extends BaseCommand {
 
     const pluginConfiguration = await GetPluginConfiguration(configuration);
 
-    this.shouldBailInstantly =
-      this.shouldBailInstantly ?? pluginConfiguration.bail;
-
-    this.shouldBailInstantly =
-      this.shouldBailInstantly ?? pluginConfiguration.bail;
+    this.continueOnError = this.continueOnError ?? !!pluginConfiguration.bail;
 
     // Safe to run because the input string is validated by clipanion using the schema property
     // TODO: Why doesn't the Command validation cast this for us?
@@ -233,7 +229,7 @@ export default class Build extends BaseCommand {
           ignoreRunCache: this.ignoreBuildCache,
           verbose: this.verbose,
           concurrency: maxConcurrency,
-          shouldBailInstantly: this.shouldBailInstantly,
+          continueOnError: this.continueOnError,
         });
 
         supervisor.runReporter.on(RunSupervisorReporterEvents.forceQuit, () => {

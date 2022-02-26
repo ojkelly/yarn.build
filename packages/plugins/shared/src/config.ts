@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: YarnBuildConfiguration = {
     output: ["build", "node_modules"],
   },
   exclude: [],
-  bail: false,
+  bail: true,
   ignoreFile: DEFAULT_IGNORE_FILE,
   maxConcurrency: 8,
 };
