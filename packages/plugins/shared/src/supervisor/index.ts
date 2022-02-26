@@ -131,7 +131,7 @@ class RunSupervisor {
 
   verbose = false;
 
-  shouldBailInstantly = false;
+  bail = false;
 
   concurrency: number;
 
@@ -155,6 +155,8 @@ class RunSupervisor {
     workspaces: {},
     done: false,
   };
+
+  header = "";
 
   nextUnitOfWork: Promise<void>[] = [];
 
@@ -199,9 +201,8 @@ class RunSupervisor {
     this.ignoreRunCache = ignoreRunCache;
     this.verbose = verbose;
     this.concurrency = resolvedConcurrency;
-    this.shouldBailInstantly = shouldBailInstantly ?? this.shouldBailInstantly;
+    this.bail = shouldBailInstantly ?? this.bail;
     this.limit = PLimit(resolvedConcurrency);
-
     this.queue = new PQueue({
       concurrency: resolvedConcurrency,
       carryoverConcurrencyCount: true,
@@ -637,132 +638,16 @@ class RunSupervisor {
       process.stderr.write("\n");
     }
 
-    const header = this.generateHeaderString();
+    this.header = this.generateHeaderString();
 
     // run
     await this.runGraph.run(this.entrypoints);
 
-    const release = await this.runReport.mutex.acquire();
+    const releaseMutex = await this.runReport.mutex.acquire();
 
     this.runReport.done = true;
 
-    release();
-
-    if (!isCI) {
-      // Cleanup the processing lines
-      Hansi.cursorUp(
-        Hansi.linesRequired(
-          this.runReport.previousOutput,
-          process.stdout.columns
-        )
-      );
-      Hansi.clearScreenDown();
-    }
-
-    let printOutput = false;
-
-    // Check if there were errors, and print them out
-    if (this.runReport.failCount !== 0) {
-      printOutput = true;
-    }
-
-    if (this.verbose) {
-      printOutput = true;
-    }
-
-    if (isCI) {
-      printOutput = true;
-    }
-
-    if (printOutput) {
-      const packagesWithErrors: string[] = [];
-
-      process.stdout.write(this.formatHeader(header) + "\n");
-      let hasOutput = false;
-
-      // print out any build errors
-      for (const relativePath in this.runReport.workspaces) {
-        const workspace = this.runReport.workspaces[relativePath];
-
-        if (workspace.fail) {
-          packagesWithErrors.push(relativePath);
-        }
-
-        if (workspace.stdout.length !== 0 || workspace.stderr.length !== 0) {
-          hasOutput = true;
-          const lineHeader = this.formatHeader(
-            `Output: ${formatUtils.pretty(
-              this.configuration,
-              relativePath,
-              FormatType.NAME // TODO should be PATH, but the types complain - might be yarn bug
-            )}`,
-            2
-          );
-
-          process.stdout.write(lineHeader + "\n");
-        }
-
-        if (workspace.stdout.length !== 0) {
-          hasOutput = true;
-          workspace.stdout.forEach((m) => {
-            const lines = m.split("\n");
-
-            lines.forEach((line) => {
-              if (typeof line != `undefined` && line.length !== 0) {
-                process.stdout.write(line + "\n");
-              }
-            });
-          });
-        }
-
-        if (workspace.stderr.length !== 0) {
-          hasOutput = true;
-
-          // stderr doesnt seem to be useful for showing to the user in cli
-          // we'll still write it out to the run log
-          const lineHeader = `[stderr]`;
-
-          process.stderr.write(lineHeader + "\n");
-
-          workspace.stderr.forEach((e) => {
-            const err = e instanceof Error ? e.toString() : `${e}`;
-            const lines = err.split("\n");
-
-            lines.forEach((line) => {
-              if (line.length !== 0) {
-                process.stderr.write(line + "\n");
-              }
-            });
-          });
-        }
-      }
-
-      if (hasOutput) {
-        process.stdout.write(this.grey(DIVIDER) + "\n");
-      }
-      if (packagesWithErrors.length > 0) {
-        const errorHeader = this.grey(
-          `ERROR for script ${header}\nThe following packages returned an error.\n`
-        );
-
-        process.stderr.write(errorHeader);
-
-        packagesWithErrors.forEach((relativePath) => {
-          const lineTail = `- ${formatUtils.pretty(
-            this.configuration,
-            relativePath,
-            FormatType.NAME
-          )}`;
-
-          process.stderr.write(lineTail + "\n");
-        });
-        process.stderr.write(
-          this.grey(
-            `Search \`Output: path\` to find the start of the output.\n`
-          )
-        );
-      }
-    }
+    releaseMutex();
 
     const finalLine = this.generateFinalReport();
 
@@ -1001,6 +886,122 @@ class RunSupervisor {
   };
 
   generateFinalReport = (): string => {
+    if (!isCI) {
+      // Cleanup the processing lines
+      Hansi.cursorUp(
+        Hansi.linesRequired(
+          this.runReport.previousOutput,
+          process.stdout.columns
+        )
+      );
+      Hansi.clearScreenDown();
+    }
+
+    let printOutput = false;
+
+    // Check if there were errors, and print them out
+    if (this.runReport.failCount !== 0) {
+      printOutput = true;
+    }
+
+    if (this.verbose) {
+      printOutput = true;
+    }
+
+    if (isCI) {
+      printOutput = true;
+    }
+
+    if (printOutput) {
+      const packagesWithErrors: string[] = [];
+
+      process.stdout.write(this.formatHeader(this.header) + "\n");
+      let hasOutput = false;
+
+      // print out any build errors
+      for (const relativePath in this.runReport.workspaces) {
+        const workspace = this.runReport.workspaces[relativePath];
+
+        if (workspace.fail) {
+          packagesWithErrors.push(relativePath);
+        }
+
+        if (workspace.stdout.length !== 0 || workspace.stderr.length !== 0) {
+          hasOutput = true;
+          const lineHeader = this.formatHeader(
+            `Output: ${formatUtils.pretty(
+              this.configuration,
+              relativePath,
+              FormatType.NAME // TODO should be PATH, but the types complain - might be yarn bug
+            )}`,
+            2
+          );
+
+          process.stdout.write(lineHeader + "\n");
+        }
+
+        if (workspace.stdout.length !== 0) {
+          hasOutput = true;
+          workspace.stdout.forEach((m) => {
+            const lines = m.split("\n");
+
+            lines.forEach((line) => {
+              if (typeof line != `undefined` && line.length !== 0) {
+                process.stdout.write(line + "\n");
+              }
+            });
+          });
+        }
+
+        if (workspace.stderr.length !== 0) {
+          hasOutput = true;
+
+          // stderr doesnt seem to be useful for showing to the user in cli
+          // we'll still write it out to the run log
+          const lineHeader = `[stderr]`;
+
+          process.stderr.write(lineHeader + "\n");
+
+          workspace.stderr.forEach((e) => {
+            const err = e instanceof Error ? e.toString() : `${e}`;
+            const lines = err.split("\n");
+
+            lines.forEach((line) => {
+              if (line.length !== 0) {
+                process.stderr.write(line + "\n");
+              }
+            });
+          });
+        }
+      }
+
+      if (hasOutput) {
+        process.stdout.write(this.grey(DIVIDER) + "\n");
+      }
+      if (packagesWithErrors.length > 0) {
+        const errorHeader = this.grey(
+          `ERROR for script ${this.header}\nThe following packages returned an error.\n`
+        );
+
+        process.stderr.write(errorHeader);
+
+        packagesWithErrors.forEach((relativePath) => {
+          const lineTail = `- ${formatUtils.pretty(
+            this.configuration,
+            relativePath,
+            FormatType.NAME
+          )}`;
+
+          process.stderr.write(lineTail + "\n");
+        });
+        process.stderr.write(
+          this.grey(
+            `Search \`Output: path\` to find the start of the output.\n`
+          )
+        );
+      }
+    }
+
     const heading =
       this.formatHeader(
         `${formatUtils.pretty(
@@ -1161,11 +1162,7 @@ class RunSupervisor {
           );
 
           if (exitCode !== 0) {
-            if (
-              this.shouldBailInstantly &&
-              this.runReport.bail &&
-              exitCode > 100
-            ) {
+            if (this.bail) {
               // This has been force killed
               this.runReporter.emit(
                 RunSupervisorReporterEvents.skipped,
@@ -1180,8 +1177,19 @@ class RunSupervisor {
                 command: this.runCommand,
               });
 
+              // print out the final report and exit
+              const finalLine = this.generateFinalReport();
+
+              if (typeof finalLine === `string`) {
+                process.stdout.write(finalLine);
+              }
+
+              // bubble up the exit code
+              process.exit(exitCode);
+
               return false;
             }
+
             this.runReporter.emit(
               RunSupervisorReporterEvents.fail,
               workspace.relativeCwd
@@ -1194,7 +1202,7 @@ class RunSupervisor {
               rerun: false,
               command: this.runCommand,
             });
-            if (this.shouldBailInstantly && !this.runReport.bail) {
+            if (this.bail && !this.runReport.bail) {
               this.runReport.bail = true;
               void terminateAllChildProcesses();
             }
