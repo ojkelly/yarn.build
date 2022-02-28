@@ -61,7 +61,7 @@ export const getAllWorkspacesNonRemovables = ({
   workspaces,
   rootDir,
 }: {
-  workspaces: Workspace[];
+  workspaces: Set<Workspace>;
   rootDir: string;
 }): string[] => {
   return Array.from(workspaces)

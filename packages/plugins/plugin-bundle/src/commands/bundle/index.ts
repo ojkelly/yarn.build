@@ -58,7 +58,7 @@ export default class Bundler extends BaseCommand {
   });
 
   noCompress = Option.Boolean(`--no-compress`, false, {
-    description: `set this with --output-directory to skip zipping your bundle, when this is set your output directory must be outside your projecty root`,
+    description: `set this with --output-directory to skip zipping your bundle, when this is set your output directory must be outside your project root`,
   });
 
   archiveName: Filename = Option.String(
@@ -117,10 +117,18 @@ export default class Bundler extends BaseCommand {
       tmpPackageCwd
     );
 
-    if (!workspace)
+    if (!workspace) {
       throw new WorkspaceRequiredError(project.cwd, tmpPackageCwd);
+    }
 
-    const requiredWorkspaces = new Set<Workspace>([workspace]);
+    const root = await Project.find(configuration, tmpDir);
+
+    if (!root.workspace) {
+      throw new WorkspaceRequiredError(root.project.cwd, tmpDir);
+    }
+
+    const requiredWorkspaces = new Set<Workspace>([workspace, root.workspace]);
+
     const pluginConfiguration = await GetPartialPluginConfiguration(
       configuration
     );
@@ -133,10 +141,11 @@ export default class Bundler extends BaseCommand {
       (pluginConfiguration?.ignoreFile as Filename) ?? this.ignoreFile;
 
     for (const workspace of requiredWorkspaces) {
-      for (const dependencyType of Manifest.hardDependencies) {
+      for (const dependencyType of Manifest.allDependencies) {
         for (const descriptor of workspace.manifest
           .getForScope(dependencyType)
           .values()) {
+          // is this a local workspace, or a remote dependency?
           const matchingWorkspace =
             project.tryWorkspaceByDescriptor(descriptor);
 
@@ -377,12 +386,23 @@ export default class Bundler extends BaseCommand {
         tmpPackageCwd
       );
 
-      if (!workspace)
+      if (!workspace) {
         throw new WorkspaceRequiredError(project.cwd, tmpPackageCwd);
+      }
 
-      const requiredWorkspaces = new Set<Workspace>([workspace]);
+      const root = await Project.find(configuration, tmpDir);
+
+      if (!root.workspace) {
+        throw new WorkspaceRequiredError(root.project.cwd, tmpDir);
+      }
+
+      const requiredWorkspaces = new Set<Workspace>([
+        workspace,
+        root.workspace,
+      ]);
+
       const nonRemovableFiles = getAllWorkspacesNonRemovables({
-        workspaces: project.workspaces,
+        workspaces: requiredWorkspaces,
         rootDir: tmpDir,
       });
 
@@ -393,20 +413,21 @@ export default class Bundler extends BaseCommand {
       });
 
       for (const workspace of requiredWorkspaces) {
-        for (const dependencyType of Manifest.hardDependencies) {
+        for (const dependencyType of Manifest.allDependencies) {
           for (const descriptor of workspace.manifest
             .getForScope(dependencyType)
             .values()) {
+            // is this a local workspace, or a remote dependency?
             const matchingWorkspace =
               project.tryWorkspaceByDescriptor(descriptor);
 
             if (matchingWorkspace === null) continue;
-
             requiredWorkspaces.add(matchingWorkspace);
           }
         }
       }
-      // Remove from every workspace
+
+      // Remove from every unused workspace
       for (const workspace of requiredWorkspaces) {
         const workspaceExclude = await getExcludedFiles({
           cwd: workspace.cwd,
