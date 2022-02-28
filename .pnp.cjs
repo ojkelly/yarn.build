@@ -1483,6 +1483,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["await-semaphore", "npm:0.1.3"],
             ["clipanion", "virtual:11e49090eef2ab4a7d256d57407eff59125c10a45a2c4a95d4b4eed662e01c6bb0b545ee238f4cce0100c8d2885c1a88c24bcf184f4baba2c58b80f525a4f6ab#npm:3.0.1"],
             ["date-fns", "npm:2.23.0"],
+            ["esprima", "npm:4.0.1"],
             ["is-ci", "npm:2.0.0"],
             ["jest", "npm:26.6.3"],
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],

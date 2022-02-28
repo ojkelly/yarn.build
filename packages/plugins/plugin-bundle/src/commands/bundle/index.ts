@@ -52,6 +52,11 @@ export default class Bundler extends BaseCommand {
     description: `suppress progess messages`,
   });
 
+  temporaryDirectory = Option.String(`--temporary-directory`, {
+    description:
+      "superseeds --output-directory and --no-compress, when set the temporary directory used for bundling is written to a file you pass here ",
+  });
+
   outputDirectory?: string = Option.String(`-o,--output-directory`, {
     description:
       "sets the output directory, this should be outside your source input directory.",
@@ -155,7 +160,7 @@ export default class Bundler extends BaseCommand {
           this.progress(
             MESSAGE_CODE.RemoveUnusedPackages,
             MESSAGE_GROUP.Progress,
-            `required: ${matchingWorkspace.relativeCwd}`
+            `required:\t${matchingWorkspace.relativeCwd}`
           );
         }
       }
@@ -169,15 +174,17 @@ export default class Bundler extends BaseCommand {
         this.progress(
           MESSAGE_CODE.RemoveUnusedPackages,
           MESSAGE_GROUP.Progress,
-          `unused: ${workspace.relativeCwd}`
+          `unused:\t${workspace.relativeCwd}`
         );
       }
     }
   }
 
   async removeEmptyDirectories({
+    tmpDir,
     cwd,
   }: {
+    tmpDir: PortablePath;
     cwd: PortablePath;
   }): Promise<boolean> {
     const isDir = xfs.statSync(cwd).isDirectory();
@@ -189,6 +196,7 @@ export default class Bundler extends BaseCommand {
 
     for (const file of files) {
       await this.removeEmptyDirectories({
+        tmpDir,
         cwd: ppath.join(cwd, file),
       });
     }
@@ -199,7 +207,7 @@ export default class Bundler extends BaseCommand {
       this.progress(
         MESSAGE_CODE.RemoveEmptyDirectories,
         MESSAGE_GROUP.Progress,
-        `empty: ${cwd}`
+        `empty:\t${cwd.replace(tmpDir + "/", "")}`
       );
 
       return true;
@@ -257,7 +265,7 @@ export default class Bundler extends BaseCommand {
       })
     );
     if (shouldRemoveEmptyDirectories) {
-      await this.removeEmptyDirectories({ cwd: tmpDir });
+      await this.removeEmptyDirectories({ tmpDir, cwd: tmpDir });
     }
   }
 
@@ -274,8 +282,7 @@ export default class Bundler extends BaseCommand {
       `Preparing temporary directory`
     );
 
-    // Get a tmpDir to work in
-    return await xfs.mktempPromise(async (tmpDir) => {
+    const bundle = async (tmpDir: PortablePath) => {
       // Save the originalCWD so we can store the archive somewhere
       const originalCwd = `${this.context.cwd}` as PortablePath;
 
@@ -496,6 +503,10 @@ export default class Bundler extends BaseCommand {
             report,
           });
 
+          if (typeof this.temporaryDirectory !== `undefined`) {
+            return;
+          }
+
           // If flags set don't zip and copy to a tmp directory
           if (noCompressIsSafe && typeof outputPath !== `undefined`) {
             report.reportInfo(null, "Moving build to output directory");
@@ -531,7 +542,14 @@ export default class Bundler extends BaseCommand {
       );
 
       return report.exitCode();
-    });
+    };
+
+    if (typeof this.temporaryDirectory !== `undefined`) {
+      return await bundle(this.temporaryDirectory as PortablePath);
+    } else {
+      // Get a tmpDir to work in
+      return await xfs.mktempPromise(bundle);
+    }
   }
 }
 
