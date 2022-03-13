@@ -61,6 +61,14 @@ or workspace layout to avoid it.
 As this is fundemental to ensuring sound builds, yarn build will never cache the
 input folder if it's changed.
 
+## Git / CI integration
+
+Use the flag `--changes`, to ignore the build cache, and build everything with changes staged or in the last commit.
+
+Use `--since-branch main` to ignore the build cache, and build everything with changes based on what git says is different between the current branch and `main` (or another branch of your choosing).
+
+Use `--since ${COMMIT_HASH}` to ignore the build cache, and build everything with changes between the current commit and the provided one.
+
 #### `query`
 
 Run `yarn build query` from within a package to see the dependency graph of what
