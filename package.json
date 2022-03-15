@@ -50,8 +50,8 @@
   },
   "dependencies": {
     "@kablamo/kerosene": "^0.0.20",
-    "typescript": "^4.3.2",
-    "is-ci": "^3.0.0"
+    "is-ci": "^3.0.0",
+    "typescript": "^4.3.2"
   },
   "resolutions": {
     "typescript": "^4.6.2",
