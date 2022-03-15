@@ -49,8 +49,8 @@ const addTargets = async ({
 
           await supervisor.addRunTarget(matchingWorkspace);
         }
+        await supervisor.addRunTarget(workspace);
       }
-      await supervisor.addRunTarget(workspace);
     }
 
     await supervisor.addRunTarget(targetWorkspace);

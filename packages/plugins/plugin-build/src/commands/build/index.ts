@@ -64,6 +64,14 @@ export default class Build extends BaseCommand {
     description: `if a build fails, continue with the rest`,
   });
 
+  exclude = Option.Array(`-m,--exclude`, {
+    description: `exclude specifc packages or glob paths from being built, including their dependencies.`,
+  });
+
+  excludeCurrent = Option.Boolean("--exclude-current", false, {
+    description: `build this workspaces dependencies, but not this workspace. Useful for running as part of a \`dev\` command.`,
+  });
+
   onlyGitChanges = Option.Boolean("--changes", false, {
     description: `only build packages that were changed in the last commit`,
   });
@@ -129,18 +137,35 @@ export default class Build extends BaseCommand {
       });
     }
 
-    const buildTargetPredicate = (workspace: Workspace) =>
-      this.buildTargets.some(
+    if (!Array.isArray(this.exclude)) {
+      this.exclude = [];
+    }
+
+    if (!!this.excludeCurrent) {
+      this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
+    }
+
+    const excludeWorkspacePredicate = (targetWorkspace: Workspace) =>
+      this.exclude?.some(
         (t) =>
           micromatch.isMatch(
-            structUtils.stringifyIdent(workspace.locator),
+            structUtils.stringifyIdent(targetWorkspace.locator),
             t
           ) ||
           micromatch.isMatch(
-            workspace.cwd,
+            targetWorkspace.cwd,
             `${configuration.projectCwd}${path.posix.sep}${t}`
           )
-      );
+      ) ?? false;
+
+    const buildTargetPredicate = (workspace: Workspace) =>
+      this.buildTargets.some((t) => {
+        micromatch.isMatch(structUtils.stringifyIdent(workspace.locator), t) ||
+          micromatch.isMatch(
+            workspace.cwd,
+            `${configuration.projectCwd}${path.posix.sep}${t}`
+          );
+      });
 
     const buildTargetCandidates: Array<Workspace> =
       this.buildTargets.length > 0
@@ -230,6 +255,7 @@ export default class Build extends BaseCommand {
           verbose: this.verbose,
           concurrency: maxConcurrency,
           continueOnError: this.continueOnError,
+          excludeWorkspacePredicate,
         });
 
         supervisor.runReporter.on(RunSupervisorReporterEvents.forceQuit, () => {
@@ -237,8 +263,13 @@ export default class Build extends BaseCommand {
         });
 
         await supervisor.setup();
+
         for (const targetWorkspace of buildTargetCandidates) {
-          await addTargets({ targetWorkspace, project, supervisor });
+          await addTargets({
+            targetWorkspace,
+            project,
+            supervisor,
+          });
         }
 
         // build all the things

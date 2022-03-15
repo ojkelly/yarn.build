@@ -15,6 +15,7 @@ const isYarnBuildConfiguration = t.isObject({
   }),
   exclude: t.isArray(t.isString()),
   bail: t.isBoolean(),
+  hideYarnBuildBadge: t.isBoolean(),
   ignoreFile: t.isString(),
   maxConcurrency: t.isOptional(
     t.applyCascade(t.isNumber(), [t.isInteger(), t.isInInclusiveRange(1, 128)])
@@ -30,6 +31,7 @@ const DEFAULT_CONFIG: YarnBuildConfiguration = {
   },
   exclude: [],
   bail: true,
+  hideYarnBuildBadge: false,
   ignoreFile: DEFAULT_IGNORE_FILE,
   maxConcurrency: 8,
 };

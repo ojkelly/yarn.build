@@ -17,10 +17,7 @@
     "declaration": true,
     "downlevelIteration": true,
     "importHelpers": true,
-    "skipLibCheck": true,
-    "types": [
-      "jest"
-    ]
+    "skipLibCheck": true
   },
   "exclude": [
     "packages/*/lib",
