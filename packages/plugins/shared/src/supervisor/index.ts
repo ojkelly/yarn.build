@@ -5,6 +5,7 @@ import {
   StreamReport,
   Workspace,
   FormatType,
+  Locator,
   formatUtils,
 } from "@yarnpkg/core";
 import isCI from "is-ci";
@@ -80,6 +81,7 @@ type RunReport = {
     [relativeCwd: string]: {
       start?: number;
       name: string;
+      locator: Locator;
       runScript?: string;
       done: boolean;
       fail: boolean;
@@ -140,6 +142,8 @@ class RunSupervisor {
 
   entrypoints: Node[] = [];
 
+  excluded: Set<Workspace> = new Set<Workspace>();
+
   runReporter: EventEmitter = new EventEmitter();
 
   runReport: RunReport = {
@@ -160,6 +164,8 @@ class RunSupervisor {
 
   errorLogFile: fs.WriteStream | undefined;
 
+  excludeWorkspacePredicate: (targetWorkspace: Workspace) => boolean;
+
   private hasSetup = false;
 
   constructor({
@@ -174,6 +180,7 @@ class RunSupervisor {
     verbose,
     concurrency,
     continueOnError,
+    excludeWorkspacePredicate,
   }: {
     project: Project;
     report: StreamReport;
@@ -186,6 +193,7 @@ class RunSupervisor {
     verbose: boolean;
     concurrency?: number | undefined;
     continueOnError: boolean;
+    excludeWorkspacePredicate: (targetWorkspace: Workspace) => boolean;
   }) {
     const resolvedConcurrency = concurrency ?? Math.max(1, cpus().length);
 
@@ -208,6 +216,7 @@ class RunSupervisor {
       throwOnTimeout: true,
       autoStart: true,
     });
+    this.excludeWorkspacePredicate = excludeWorkspacePredicate;
     if (this.verbose) {
       this.errorLogFile = xfs.createWriteStream(this.getRunErrorPath(), {
         flags: "a",
@@ -296,7 +305,7 @@ class RunSupervisor {
   setupRunReporter = (): void => {
     this.runReporter.on(
       RunSupervisorReporterEvents.pending,
-      (relativeCwd: PortablePath, name: string) => {
+      (relativeCwd: PortablePath, locator: Locator, name: string) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd] = {
             name,
@@ -304,6 +313,7 @@ class RunSupervisor {
             stderr: [],
             done: false,
             fail: false,
+            locator,
           };
           release();
         });
@@ -312,13 +322,19 @@ class RunSupervisor {
 
     this.runReporter.on(
       RunSupervisorReporterEvents.start,
-      (relativeCwd: PortablePath, name: string, runScript: string) => {
+      (
+        relativeCwd: PortablePath,
+        locator: Locator,
+        name: string,
+        runScript: string
+      ) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd] = {
             ...this.runReport.workspaces[relativeCwd],
             start: Date.now(),
             runScript: runScript,
             name,
+            locator,
           };
           release();
         });
@@ -402,6 +418,16 @@ class RunSupervisor {
   };
 
   async addRunTarget(workspace: Workspace): Promise<void> {
+    if (this.excluded.has(workspace)) {
+      return;
+    }
+
+    if (this.excludeWorkspacePredicate(workspace)) {
+      this.excluded.add(workspace);
+
+      return;
+    }
+
     this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
     const shouldRun = await this.plan(workspace);
 
@@ -429,9 +455,14 @@ class RunSupervisor {
   };
 
   plan = async (workspace: Workspace): Promise<boolean> => {
-    const parent = this.runGraph
-      .addNode(workspace.relativeCwd)
-      .addWorkSpace(workspace);
+    const parent = this.runGraph.getNode(workspace.relativeCwd);
+
+    if (!parent) {
+      throw new Error(
+        "Internal error: lost reference to parent workspace. Please open an issue."
+      );
+    }
+    parent.addWorkSpace(workspace);
 
     let rerunParent = false;
 
@@ -443,7 +474,12 @@ class RunSupervisor {
         .values()) {
         const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
 
-        if (depWorkspace === null) continue;
+        if (
+          depWorkspace === null ||
+          this.excludeWorkspacePredicate(depWorkspace)
+        ) {
+          continue;
+        }
 
         const dep = this.runGraph
           .addNode(depWorkspace.relativeCwd)
@@ -472,12 +508,14 @@ class RunSupervisor {
     }
     this.runReporter.emit(
       RunSupervisorReporterEvents.pending,
-      workspace.relativeCwd
+      workspace.relativeCwd,
+      workspace.locator
     );
     if (rerunParent || hasChanges) {
       this.runReporter.emit(
         RunSupervisorReporterEvents.pending,
         workspace.relativeCwd,
+        workspace.locator,
         `${
           workspace.manifest.name?.scope
             ? `@${workspace.manifest.name?.scope}/`
@@ -708,13 +746,18 @@ class RunSupervisor {
   grey = (s: string): string =>
     formatUtils.pretty(this.configuration, s, `grey`);
 
-  formatHeader(name: string, depth = 0): string {
+  formatHeader(name: string, depth = 0, withBrand = false): string {
     const label = `${this.grey("-".repeat(depth) + "[")} ${name} ${this.grey(
       "]"
     )}`;
     const length = stripAnsi(label).length;
+    const brand = withBrand ? "[ yarn.build ]" : "";
 
-    return label + this.grey("-".repeat(DIVIDER_LENGTH - length));
+    return (
+      label +
+      this.grey("-".repeat(DIVIDER_LENGTH - length - brand.length)) +
+      this.grey(brand)
+    );
   }
 
   generateHeaderString(): string {
@@ -749,7 +792,9 @@ class RunSupervisor {
       );
       const totalString = formatUtils.pretty(
         this.configuration,
-        `${this.runGraph.runSize}`,
+        `${
+          this.runGraph.runSize - this.excluded.size - this.runReport.skipCount
+        }`,
         "white"
       );
 
@@ -884,7 +929,9 @@ class RunSupervisor {
           `${successString}:${failedString}/${totalString} ${formatTimestampDifference(
             this.runReport.runStart,
             timestamp
-          )}`
+          )}`,
+          0,
+          true
         ) + `\n`;
     }
 
@@ -1015,7 +1062,9 @@ class RunSupervisor {
                 "red"
               )
             : ""
-        }`
+        }`,
+        0,
+        true
       ) + "\n";
 
     output += this.formatHeader("Summary") + "\n";
@@ -1043,6 +1092,11 @@ class RunSupervisor {
         `Skipped: ${skipCount}`,
         "white"
       );
+      const excludedString = formatUtils.pretty(
+        this.configuration,
+        `Excluded: ${this.excluded.size}`,
+        "white"
+      );
       const upToDateString = formatUtils.pretty(
         this.configuration,
         `Up to date: ${upToDate}`,
@@ -1055,10 +1109,49 @@ class RunSupervisor {
         "white"
       );
 
-      output +=
-        successString + "\n" + failedString + "\n" + skippedString + "\n";
+      output += successString + "\n";
 
       output += upToDateString + "\n";
+
+      output += failedString + "\n";
+      if (this.verbose && failCount > 0) {
+        Object.keys(this.runReport.workspaces).forEach((k) => {
+          const w = this.runReport.workspaces[k];
+
+          if (w.fail) {
+            output += ` - ${formatUtils.pretty(
+              this.configuration,
+              k,
+              "grey"
+            )}${formatUtils.pretty(this.configuration, w.locator, "IDENT")}\n`;
+          }
+        });
+      }
+      output += skippedString + "\n";
+      if (this.verbose && skipCount > 0) {
+        Object.keys(this.runReport.workspaces).forEach((k) => {
+          const w = this.runReport.workspaces[k];
+
+          if (w.skipped) {
+            output += ` - ${formatUtils.pretty(
+              this.configuration,
+              k,
+              "grey"
+            )}${formatUtils.pretty(this.configuration, w.locator, "IDENT")}\n`;
+          }
+        });
+      }
+
+      output += excludedString + "\n";
+      if (this.verbose && this.excluded.size > 0) {
+        for (const w of this.excluded) {
+          output += ` - ${formatUtils.pretty(
+            this.configuration,
+            w.relativeCwd,
+            "grey"
+          )}${formatUtils.pretty(this.configuration, w.locator, "IDENT")}\n`;
+        }
+      }
 
       output += totalString + "\n" + this.grey("---") + "\n";
     }
@@ -1093,6 +1186,8 @@ class RunSupervisor {
     }
     output += heading;
 
+    output += "\n";
+
     return output;
   };
 
@@ -1111,6 +1206,7 @@ class RunSupervisor {
         this.runReporter.emit(
           RunSupervisorReporterEvents.start,
           workspace.relativeCwd,
+          workspace.locator,
           `${
             workspace.manifest.name?.scope
               ? `@${workspace.manifest.name?.scope}/`

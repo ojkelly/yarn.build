@@ -1,4 +1,4 @@
-import { Graph } from "./graph";
+import { Graph, CyclicDependencyError } from "./graph";
 
 describe("Simple dependency graph", () => {
   it("resolves the graph correctly", async () => {
@@ -44,8 +44,10 @@ describe("Simple dependency graph", () => {
     try {
       await graph.resolve(A);
     } catch (err) {
-      expect(err.message).toMatch("D has a cyclic dependency on B");
-      expect(err.code).toMatch("YN0003");
+      if (err instanceof CyclicDependencyError) {
+        expect(err.message).toMatch("D has a cyclic dependency on B");
+        expect(err.code).toMatch("YN0003");
+      }
     }
   });
 

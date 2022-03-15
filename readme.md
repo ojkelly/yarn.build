@@ -61,6 +61,32 @@ or workspace layout to avoid it.
 As this is fundemental to ensuring sound builds, yarn build will never cache the
 input folder if it's changed.
 
+## Exclude (NEW)
+
+Pass `--exclude` or `--exclude-current` to selectively exclude packages from
+being built.
+
+Pass `-v` for verbose to get a print out of which packages were skipped or excluded.
+
+```bash
+yarn build --exclude packages/example/lorem-ipsum
+yarn build --exclude packages/example/*
+
+# Globs for package names work too, but you need to quote them so your shell doesn't try to substitute it
+yarn build --exclude "@internal*"
+
+
+# For Dev
+# this one is really useful at the start of a dev command or similar where you
+# are watching for changes in the current workspace but need to ensure your
+# dependencies are built
+yarn build --exclude-current
+
+```
+
+NOTE: if you explicitly exclude a workspace that another workspace depends on,
+and that workspace is being built the command may fail.
+
 ## Git / CI integration
 
 Use the flag `--changes`, to ignore the build cache, and build everything with changes staged or in the last commit.
