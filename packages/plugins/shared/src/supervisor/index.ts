@@ -573,7 +573,13 @@ class RunSupervisor {
     return this.pluginConfiguration;
   }
 
+  hasRun: string[] = [];
+
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
+    if (workspace.relativeCwd && this.hasRun.includes(workspace.relativeCwd)) {
+      return false;
+    }
+    this.hasRun.push(workspace.relativeCwd);
     if (this.ignoreRunCache === true) {
       return true;
     }
