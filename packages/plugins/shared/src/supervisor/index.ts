@@ -481,9 +481,11 @@ class RunSupervisor {
           continue;
         }
 
-        const parentHasDependency = !!parent.dependencies.find((item) => item?.workspace?.manifest.name?.name === descriptor.name);
+        const parentHasDependency = !!parent.dependencies.find(
+          (item) => item?.workspace?.manifest.name?.name === descriptor.name
+        );
 
-        if  (parentHasDependency) {
+        if (parentHasDependency) {
           continue;
         }
 
