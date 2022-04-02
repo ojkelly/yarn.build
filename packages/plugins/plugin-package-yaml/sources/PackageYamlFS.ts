@@ -21,7 +21,7 @@ import {
 } from "@yarnpkg/fslib";
 
 import fs, { BigIntStats, Stats } from "fs";
-import { load } from "js-yaml";
+import { safeLoad, FAILSAFE_SCHEMA } from "js-yaml";
 import YAWN from "yawn-yaml/cjs";
 
 import { LruCache } from "./lru";
@@ -166,7 +166,10 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       } else {
         rawManifest = data;
       }
-      const pkgYml = load(rawManifest);
+      const pkgYml = safeLoad(rawManifest, {
+        schema: FAILSAFE_SCHEMA,
+        json: true,
+      });
 
       // convert it back to json for compatibility
       return JSON.stringify(pkgYml);

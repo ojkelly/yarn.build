@@ -1468,7 +1468,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@ojkelly/yarn-plugin-package-yaml", "workspace:packages/plugins/plugin-package-yaml"],\
             ["@types/is-ci", "npm:2.0.0"],\
             ["@types/jest", "npm:26.0.24"],\
-            ["@types/js-yaml", "npm:4.0.2"],\
+            ["@types/js-yaml", "npm:3.12.7"],\
             ["@types/slice-ansi", "npm:4.0.0"],\
             ["@types/yawn-yaml", "npm:1.4.0"],\
             ["@types/yup", "npm:0.26.12"],\
@@ -1489,7 +1489,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["is-ci", "npm:2.0.0"],\
             ["jest", "npm:26.6.3"],\
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],\
-            ["js-yaml", "npm:4.1.0"],\
+            ["js-yaml", "npm:3.14.1"],\
             ["p-limit", "npm:2.3.0"],\
             ["p-queue", "npm:6.6.2"],\
             ["replace", "npm:1.2.1"],\
@@ -1855,6 +1855,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]\
       ]],\
       ["@types/js-yaml", [\
+        ["npm:3.12.7", {\
+          "packageLocation": "./.yarn/cache/@types-js-yaml-npm-3.12.7-51988f8d87-be81077274.zip/node_modules/@types/js-yaml/",\
+          "packageDependencies": [\
+            ["@types/js-yaml", "npm:3.12.7"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
         ["npm:4.0.2", {\
           "packageLocation": "./.yarn/cache/@types-js-yaml-npm-4.0.2-091c0f6c40-bdc4b45e11.zip/node_modules/@types/js-yaml/",\
           "packageDependencies": [\
