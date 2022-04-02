@@ -10,7 +10,7 @@ class Graph {
   ran: Set<string> = new Set();
 
   // Create a new node with the ID, or retrieve the existing one
-  addNode(id: string): Node {
+  addNode(id: string, callback?: RunCallback): Node {
     // If the Node already exists, return it
     if (this.nodes[id]) {
       return this.nodes[id];
@@ -22,6 +22,12 @@ class Graph {
     this.nodes[id] = newNode;
 
     this.size++;
+
+    this.resolve(newNode);
+
+    if (!!callback) {
+      newNode.addRunCallback(callback);
+    }
 
     return newNode;
   }
@@ -36,16 +42,16 @@ class Graph {
     this.ran = new Set();
   }
 
-  async resolve(node: Node): Promise<void> {
+  resolve(node: Node): void {
     // resolved and unresolved are local to this function
     // as they are only relevant to this resolution
     const resolved: Set<string> = new Set();
     const unresolved: Set<string> = new Set();
 
-    await this.resolveNode(node, resolved, unresolved);
+    this.resolveNode(node, resolved, unresolved);
   }
 
-  private async resolveNode(
+  private resolveNode(
     node: Node,
     resolved: Set<string>,
     unresolved: Set<string>
@@ -55,12 +61,10 @@ class Graph {
     for (const dep of node.dependencies) {
       if (!resolved.has(dep.id)) {
         if (unresolved.has(dep.id)) {
-          throw new CyclicDependencyError(
-            `${node.id} has a cyclic dependency on ${dep.id}`
-          );
+          throw new CyclicDependencyError(node.id, dep.id);
         }
 
-        await this.resolveNode(dep, resolved, unresolved);
+        this.resolveNode(dep, resolved, unresolved);
       }
     }
 
@@ -247,10 +251,16 @@ class Node {
 class CyclicDependencyError extends Error {
   code: string;
 
-  constructor(message: string) {
-    super(message);
+  node: string;
+
+  dep: string;
+
+  constructor(_node: string, _dep: string) {
+    super("");
     this.name = "CyclicDependencyError";
     this.code = "YN0003";
+    this.node = _node;
+    this.dep = _dep;
   }
 }
 

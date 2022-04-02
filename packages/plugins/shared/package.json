@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "dist",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest",
+    "dev": "jest --watch"
   },
   "devDependencies": {
+    "@jest/types": "^27.5.1",
     "@types/is-ci": "^2.0.0",
     "@types/jest": "^26.0.19",
     "@types/js-yaml": "^4.0.2",
@@ -23,6 +26,7 @@
     "replace": "^1.2.1",
     "shx": "^0.3.3",
     "ts-jest": "^26.4.4",
+    "ts-node": "^10.7.0",
     "tslib": "^2.3.0",
     "typanion": "^3.3.2",
     "typescript": "^4.1.3"

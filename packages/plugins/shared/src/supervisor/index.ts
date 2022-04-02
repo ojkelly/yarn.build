@@ -417,25 +417,6 @@ class RunSupervisor {
     );
   };
 
-  async addRunTarget(workspace: Workspace): Promise<void> {
-    if (this.excluded.has(workspace)) {
-      return;
-    }
-
-    if (this.excludeWorkspacePredicate(workspace)) {
-      this.excluded.add(workspace);
-
-      return;
-    }
-
-    this.entrypoints.push(this.runGraph.addNode(workspace.relativeCwd));
-    const shouldRun = await this.plan(workspace);
-
-    if (shouldRun) {
-      this.runTargets.push(workspace);
-    }
-  }
-
   getDependenciesCount = async (workspace: Workspace): Promise<number> => {
     let value = 0;
 
@@ -453,6 +434,30 @@ class RunSupervisor {
 
     return value;
   };
+
+  async addRunTarget(workspace: Workspace): Promise<void> {
+    if (this.excluded.has(workspace)) {
+      return;
+    }
+
+    if (this.excludeWorkspacePredicate(workspace)) {
+      this.excluded.add(workspace);
+
+      return;
+    }
+
+    const n = await this.runGraph.addNode(workspace.relativeCwd);
+
+    // this resolve call checks for cyclic dependencies
+    this.runGraph.resolve(n);
+
+    this.entrypoints.push(n);
+    const shouldRun = await this.plan(workspace);
+
+    if (shouldRun) {
+      this.runTargets.push(workspace);
+    }
+  }
 
   plan = async (workspace: Workspace): Promise<boolean> => {
     const parent = this.runGraph.getNode(workspace.relativeCwd);
@@ -481,9 +486,12 @@ class RunSupervisor {
           continue;
         }
 
-        const dep = this.runGraph
-          .addNode(depWorkspace.relativeCwd)
-          .addWorkSpace(depWorkspace);
+        const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
+
+        // this resolve call checks for cyclic dependencies
+        this.runGraph.resolve(dep);
+
+        dep.addWorkSpace(depWorkspace);
 
         parent.addDependency(dep);
 

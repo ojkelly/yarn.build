@@ -243,6 +243,7 @@ export default class Build extends BaseCommand {
 
           return 2;
         };
+
         const supervisor = new RunSupervisor({
           project,
           configuration,

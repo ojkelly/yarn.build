@@ -45,8 +45,8 @@ describe("Simple dependency graph", () => {
       await graph.resolve(A);
     } catch (err) {
       if (err instanceof CyclicDependencyError) {
-        expect(err.message).toMatch("D has a cyclic dependency on B");
-        expect(err.code).toMatch("YN0003");
+        expect(err.node).toMatch("D");
+        expect(err.dep).toMatch("B");
       }
     }
   });
