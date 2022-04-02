@@ -935,6 +935,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:26.0.24"],\
             ["@types/node", "npm:16.4.2"],\
             ["jest", "npm:26.6.3"],\
+            ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],\
             ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:26.5.6"],\
             ["ts-node", "virtual:76b4067bcc43516ec2d5f09dbc310935d6fbae92786e6806fb84e2da9353f3990aaccce210542ce883bef2aee3ca0b394e43330bb8e686bf1141bcd867cb0ea1#npm:10.1.0"],\
             ["typescript", "patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=bda367"]\
