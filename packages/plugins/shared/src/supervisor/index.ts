@@ -867,7 +867,11 @@ class RunSupervisor {
         FormatType.NAME
       );
 
-      let outputString = `${indexString} ${pathString}${referenceString} ${runScriptString} ${timeString}\n`;
+      let outputString = `${indexString} ${referenceString}${formatUtils.pretty(
+        this.configuration,
+        "@",
+        "grey"
+      )}${pathString} ${runScriptString} ${timeString}\n`;
 
       // If output width is more than the available width then we will use multiple lines.
       let outputSegment1 = ``;

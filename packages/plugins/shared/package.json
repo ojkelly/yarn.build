@@ -13,6 +13,7 @@
     "@types/jest": "^26.0.19",
     "@types/js-yaml": "^4.0.2",
     "@types/micromatch": "^4.0.1",
+    "@types/node": "^17.0.23",
     "@types/yup": "^0.26.12",
     "@yarnpkg/builder": "*",
     "@yarnpkg/cli": "*",

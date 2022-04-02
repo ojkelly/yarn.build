@@ -987,7 +987,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@internal/phrase-nullam-risus", "workspace:packages/examples/phrases/nullam-risus"],\
             ["@internal/adipiscing", "workspace:packages/examples/words/adipiscing"],\
             ["@internal/dolor", "workspace:packages/examples/words/dolor"],\
-            ["@internal/lorem-ipsum", "workspace:packages/examples/lorem-ipsum"],\
             ["@types/jest", "npm:26.0.24"],\
             ["jest", "npm:26.6.3"],\
             ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:26.5.6"],\
@@ -1313,6 +1312,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:26.0.24"],\
             ["@types/js-yaml", "npm:4.0.2"],\
             ["@types/micromatch", "npm:4.0.2"],\
+            ["@types/node", "npm:17.0.23"],\
             ["@types/slice-ansi", "npm:4.0.0"],\
             ["@types/yup", "npm:0.26.37"],\
             ["@yarnpkg/builder", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:3.1.0"],\
@@ -1972,6 +1972,13 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-node-npm-16.4.2-9f96b643d7-d9b02aeb2b.zip/node_modules/@types/node/",\
           "packageDependencies": [\
             ["@types/node", "npm:16.4.2"]\
+          ],\
+          "linkType": "HARD"\
+        }],\
+        ["npm:17.0.23", {\
+          "packageLocation": "./.yarn/cache/@types-node-npm-17.0.23-167849e796-a351755473.zip/node_modules/@types/node/",\
+          "packageDependencies": [\
+            ["@types/node", "npm:17.0.23"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -10885,7 +10892,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@tsconfig/node12", "npm:1.0.9"],\
             ["@tsconfig/node14", "npm:1.0.1"],\
             ["@tsconfig/node16", "npm:1.0.2"],\
-            ["@types/node", null],\
+            ["@types/node", "npm:17.0.23"],\
             ["@types/swc__core", null],\
             ["@types/swc__wasm", null],\
             ["@types/typescript", null],\
