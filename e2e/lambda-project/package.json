@@ -1,6 +1,6 @@
 {
   "name": "lambda-project",
-  "packageManager": "yarn@3.1.0",
+  "packageManager": "yarn@3.2.0",
   "workspaces": [
     "packages/*"
   ],
