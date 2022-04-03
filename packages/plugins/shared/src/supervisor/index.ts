@@ -760,12 +760,13 @@ class RunSupervisor {
     )}`;
     const length = stripAnsi(label).length;
     const brand = withBrand ? "[ yarn.build ]" : "";
+    let repeat = DIVIDER_LENGTH - length;
 
-    return (
-      label +
-      this.grey("-".repeat(DIVIDER_LENGTH - length - brand.length)) +
-      this.grey(brand)
-    );
+    if (withBrand) {
+      repeat -= brand.length;
+    }
+
+    return label + this.grey("-".repeat(repeat)) + this.grey(brand);
   }
 
   generateHeaderString(): string {
