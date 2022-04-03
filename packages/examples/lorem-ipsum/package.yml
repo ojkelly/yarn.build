@@ -4,7 +4,7 @@ main: dist/index.js
 
 # license, none for the example
 license: UNLICENSED
-private: true
+
 
 # scripts comment
 scripts:
