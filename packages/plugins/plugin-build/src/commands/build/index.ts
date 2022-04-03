@@ -64,7 +64,7 @@ export default class Build extends BaseCommand {
     description: `if a build fails, continue with the rest`,
   });
 
-  exclude = Option.Array(`-m,--exclude`, {
+  exclude = Option.Array(`--exclude`, {
     description: `exclude specifc packages or glob paths from being built, including their dependencies.`,
   });
 

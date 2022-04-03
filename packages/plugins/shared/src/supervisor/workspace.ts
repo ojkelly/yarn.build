@@ -66,13 +66,13 @@ const addTargets = async ({
 
 You have a cyclic dependency.`;
 
-      const topArrow = err.node.length < err.dep.length + 4 ? "⤵" : "";
+      const topArrow = err.node.length < err.dep.length + 4 ? "↰" : "";
       const btmArrow = err.node.length > err.dep.length + 4 ? "⤴" : "";
 
       msg += `
 
 ${formatUtils.pretty(supervisor.configuration, err.node, "white")} ${topArrow}
- ⤷ ${formatUtils.pretty(supervisor.configuration, err.dep, "red")} ${btmArrow}
+ ↳ ${formatUtils.pretty(supervisor.configuration, err.dep, "red")} ${btmArrow}
 
 `;
 
