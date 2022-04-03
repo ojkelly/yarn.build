@@ -6,9 +6,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react",
     "lib": [
-      "dom",
       "esnext",
       "esnext.asynciterable"
     ],
