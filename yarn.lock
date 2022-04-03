@@ -560,6 +560,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@internal/lorem-ipsum-docker@workspace:packages/examples/lorem-ipsum-docker":
+  version: 0.0.0-use.local
+  resolution: "@internal/lorem-ipsum-docker@workspace:packages/examples/lorem-ipsum-docker"
+  dependencies:
+    "@internal/phrase-lorem-ipsum": "workspace:*"
+    "@types/jest": ^26.0.24
+    "@types/node": ^16.4.1
+    jest: ^26
+    jest-pnp-resolver: ^1.2.1
+    ts-jest: ^26.4.4
+    ts-node: ^10.1.0
+    typescript: ^4.3.5
+  languageName: unknown
+  linkType: soft
+
 "@internal/lorem-ipsum@workspace:packages/examples/lorem-ipsum":
   version: 0.0.0-use.local
   resolution: "@internal/lorem-ipsum@workspace:packages/examples/lorem-ipsum"
