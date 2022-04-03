@@ -1,4 +1,4 @@
-name: "@internal/lorem-ipsum"
+name: "@internal/lorem-ipsum-docker"
 version: 1.0.0
 main: dist/index.js
 
