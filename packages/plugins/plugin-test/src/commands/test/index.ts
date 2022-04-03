@@ -18,4 +18,8 @@ export default class Test extends Build {
   buildCommand = Option.String(`-c,--command`, `test`, {
     description: `the command to be run in each package (if available), defaults to "test"`,
   });
+
+  onlyCurrent = Option.Boolean("--only-current", true, {
+    description: `only test the current workspace`,
+  });
 }

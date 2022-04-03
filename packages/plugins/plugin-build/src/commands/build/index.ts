@@ -85,6 +85,10 @@ export default class Build extends BaseCommand {
     arity: 1,
   });
 
+  onlyCurrent = Option.Boolean("--only-current", false, {
+    description: `only build the current workspace`,
+  });
+
   public buildTargets = Option.Rest({ name: "workspaceNames" });
 
   static usage: Usage = Command.Usage({
@@ -145,18 +149,31 @@ export default class Build extends BaseCommand {
       this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
     }
 
-    const excludeWorkspacePredicate = (targetWorkspace: Workspace) =>
-      this.exclude?.some(
-        (t) =>
-          micromatch.isMatch(
-            structUtils.stringifyIdent(targetWorkspace.locator),
-            t
-          ) ||
-          micromatch.isMatch(
-            targetWorkspace.cwd,
-            `${configuration.projectCwd}${path.posix.sep}${t}`
-          )
-      ) ?? false;
+    if (this.onlyCurrent) {
+      // when building 1 workspace, we only need 1 worker
+      this.maxConcurrency = "1";
+    }
+
+    const excludeWorkspacePredicate = (targetWorkspace: Workspace) => {
+      // #168 limit to only the current workspace
+      if (this.onlyCurrent) {
+        return targetWorkspace != cwdWorkspace;
+      }
+
+      return (
+        this.exclude?.some(
+          (t) =>
+            micromatch.isMatch(
+              structUtils.stringifyIdent(targetWorkspace.locator),
+              t
+            ) ||
+            micromatch.isMatch(
+              targetWorkspace.cwd,
+              `${configuration.projectCwd}${path.posix.sep}${t}`
+            )
+        ) ?? false
+      );
+    };
 
     const buildTargetPredicate = (workspace: Workspace) =>
       this.buildTargets.some((t) => {

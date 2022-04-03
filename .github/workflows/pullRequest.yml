@@ -19,9 +19,9 @@ jobs:
         run: |
           yarn style:check
 
-      - name: Build plugins
+      - name: Build plugin-all
         run: |
-          yarn build -c update-local
+          yarn build:plugin
       - name: Build Example
         run: |
           yarn build --ignore-cache packages/examples/lorem-ipsum
