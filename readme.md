@@ -127,6 +127,8 @@ Choose an output directory outside your project and pass `--no-compress`.
 yarn bundle --no-compress --output-directory /srv/app
 ```
 
+See this [Dockerfile](packages/examples/lorem-ipsum-docker/Dockerfile) and [build script](packages/examples/lorem-ipsum-docker/docker-bundle-build.sh) for an example of how you can bundle into a container image.
+
 #### `.bundleignore` NEW!
 
 You can set files to be ignored when bundling for even smaller bundles.

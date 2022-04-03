@@ -1,0 +1,16 @@
+# this remove files and folders from the bundle we make with
+# `yarn bundle` that is sent off to docker
+# Paths are relative from the root directory of the project
+# but this ignore is only applied to this package
+
+.buildkite
+.devcontainer
+.github
+.idea
+.vscode
+docs
+
+*.go
+
+vendor/**
+.git/**
