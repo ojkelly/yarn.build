@@ -25,6 +25,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         "reference": "workspace:packages/examples/lorem-ipsum"\
       },\
       {\
+        "name": "@internal/lorem-ipsum-docker",\
+        "reference": "workspace:packages/examples/lorem-ipsum-docker"\
+      },\
+      {\
         "name": "@internal/phrase-in-hac",\
         "reference": "workspace:packages/examples/phrases/in-hac"\
       },\
@@ -104,6 +108,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
       ["@internal/ipsum", ["workspace:packages/examples/words/ipsum"]],\
       ["@internal/lorem", ["workspace:packages/examples/words/lorem"]],\
       ["@internal/lorem-ipsum", ["workspace:packages/examples/lorem-ipsum"]],\
+      ["@internal/lorem-ipsum-docker", ["workspace:packages/examples/lorem-ipsum-docker"]],\
       ["@internal/phrase-in-hac", ["workspace:packages/examples/phrases/in-hac"]],\
       ["@internal/phrase-lorem-ipsum", ["workspace:packages/examples/phrases/lorem-ipsum"]],\
       ["@internal/phrase-nullam-risus", ["workspace:packages/examples/phrases/nullam-risus"]],\
@@ -931,6 +936,23 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./packages/examples/lorem-ipsum/",\
           "packageDependencies": [\
             ["@internal/lorem-ipsum", "workspace:packages/examples/lorem-ipsum"],\
+            ["@internal/phrase-lorem-ipsum", "workspace:packages/examples/phrases/lorem-ipsum"],\
+            ["@types/jest", "npm:26.0.24"],\
+            ["@types/node", "npm:16.4.2"],\
+            ["jest", "npm:26.6.3"],\
+            ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],\
+            ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:26.5.6"],\
+            ["ts-node", "virtual:76b4067bcc43516ec2d5f09dbc310935d6fbae92786e6806fb84e2da9353f3990aaccce210542ce883bef2aee3ca0b394e43330bb8e686bf1141bcd867cb0ea1#npm:10.1.0"],\
+            ["typescript", "patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=bda367"]\
+          ],\
+          "linkType": "SOFT"\
+        }]\
+      ]],\
+      ["@internal/lorem-ipsum-docker", [\
+        ["workspace:packages/examples/lorem-ipsum-docker", {\
+          "packageLocation": "./packages/examples/lorem-ipsum-docker/",\
+          "packageDependencies": [\
+            ["@internal/lorem-ipsum-docker", "workspace:packages/examples/lorem-ipsum-docker"],\
             ["@internal/phrase-lorem-ipsum", "workspace:packages/examples/phrases/lorem-ipsum"],\
             ["@types/jest", "npm:26.0.24"],\
             ["@types/node", "npm:16.4.2"],\
