@@ -182,14 +182,27 @@ export default class Build extends BaseCommand {
       );
     };
 
-    const buildTargetPredicate = (workspace: Workspace) =>
-      this.buildTargets.some((t) => {
-        micromatch.isMatch(structUtils.stringifyIdent(workspace.locator), t) ||
+    const buildTargetPredicate = (targetWorkspace: Workspace) => {
+      // #168 limit to only the current workspace
+      if (!isRoot && this.onlyCurrent) {
+        return targetWorkspace == cwdWorkspace;
+      }
+
+      return this.buildTargets.some((t) => {
+        // match on @scope/name
+        return (
           micromatch.isMatch(
-            workspace.cwd,
+            structUtils.stringifyIdent(targetWorkspace.locator),
+            t
+          ) ||
+          // match on path
+          micromatch.isMatch(
+            targetWorkspace.cwd,
             `${configuration.projectCwd}${path.posix.sep}${t}`
-          );
+          )
+        );
       });
+    };
 
     const buildTargetCandidates: Array<Workspace> =
       this.buildTargets.length > 0
