@@ -11,7 +11,7 @@ async function GetChangedWorkspaces(options: {
     let cmd = "";
 
     if (options.commit) {
-      cmd = `git diff --name-only HEAD~${options.commit}`;
+      cmd = `git diff --name-only ..${options.commit}`;
     }
     if (options.sinceBranch && options.sinceBranch.length > 0) {
       cmd = `git diff --name-only ${options.sinceBranch}...`;
