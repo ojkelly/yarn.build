@@ -122,6 +122,13 @@ export default class Build extends BaseCommand {
 
     const rootWorkspace = this.all ? project.topLevelWorkspace : cwdWorkspace;
 
+    // #203 limit onlyCurrent when isRoot is true
+    let isRoot = false;
+
+    if (rootWorkspace == project.topLevelWorkspace) {
+      isRoot = true;
+    }
+
     let rootCandidates = [
       rootWorkspace,
       ...(this.buildTargets.length > 0
@@ -149,14 +156,14 @@ export default class Build extends BaseCommand {
       this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
     }
 
-    if (this.onlyCurrent) {
+    if (!isRoot && this.onlyCurrent) {
       // when building 1 workspace, we only need 1 worker
       this.maxConcurrency = "1";
     }
 
     const excludeWorkspacePredicate = (targetWorkspace: Workspace) => {
       // #168 limit to only the current workspace
-      if (this.onlyCurrent) {
+      if (!isRoot && this.onlyCurrent) {
         return targetWorkspace != cwdWorkspace;
       }
 
