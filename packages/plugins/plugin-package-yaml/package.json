@@ -43,6 +43,7 @@
     "p-queue": "^6.3.0",
     "slice-ansi": "^4.0.0",
     "strip-ansi": "^6.0.0",
+    "yaml": "2.0.0",
     "yawn-yaml": "^1.5.0"
   },
   "scripts": {
