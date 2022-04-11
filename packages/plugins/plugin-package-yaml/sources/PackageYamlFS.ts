@@ -5,6 +5,8 @@ import {
   CreateWriteStreamOptions,
 } from "@yarnpkg/fslib";
 import { FakeFS, WriteFileOptions, ProxiedFS } from "@yarnpkg/fslib";
+import { ChangeFileOptions } from "@yarnpkg/fslib/lib/FakeFS";
+
 import { WatchOptions, WatchCallback, Watcher } from "@yarnpkg/fslib";
 import { FSPath, NativePath, PortablePath, npath, ppath } from "@yarnpkg/fslib";
 import { RmdirOptions } from "@yarnpkg/fslib";
@@ -22,7 +24,8 @@ import {
 
 import fs, { BigIntStats, Stats } from "fs";
 import { safeLoad, FAILSAFE_SCHEMA } from "js-yaml";
-import YAWN from "yawn-yaml/cjs";
+
+import { parseDocument, stringify } from "yaml";
 
 import { LruCache } from "./lru";
 
@@ -57,8 +60,6 @@ const ManifestFiles = ["package.json", "package.yaml", "package.yml"] as const;
 
 type ManifestFilename = typeof ManifestFiles[number];
 
-// TODO: Read methods
-// TODO: Write methods
 export class PortablePackageYamlFS extends BasePortableFakeFS {
   private readonly realFs: typeof fs;
 
@@ -172,7 +173,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       });
 
       // convert it back to json for compatibility
-      return JSON.stringify(pkgYml);
+      return `${JSON.stringify(pkgYml, null, 2)}\n`;
     } catch {
       // err's ignored, we'll hand off to the normal file reader
     }
@@ -199,32 +200,65 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         ? content.toString()
         : content;
 
-      const manifestObject = JSON.parse(mJsonStr);
-
-      const nativeManifestPath = npath.fromPortablePath(p as PortablePath);
-
       try {
+        const manifestObject = JSON.parse(mJsonStr);
+
+        const nativeManifestPath = npath.fromPortablePath(p as PortablePath);
+
         const rawManifest = this.realFs.readFileSync(
           nativeManifestPath,
           `utf-8`
         );
 
-        // load yaml off disk
-        const manifestYawn = new YAWN(rawManifest);
+        const rpkg = parseDocument(rawManifest, { schema: "json" });
 
-        // merge json, to preserve comments
-        manifestYawn.json = manifestObject;
+        const recursiveSet = (
+          source: any,
+          ppath: Array<string | number>
+        ): void => {
+          for (const property in source) {
+            const value = source[property];
+            const path = [...ppath, property];
+
+            if (Array.isArray(value)) {
+              recursiveSet(value, path);
+            } else {
+              switch (typeof value) {
+                case "object":
+                  recursiveSet(value, path);
+
+                  break;
+
+                case "string":
+
+                case "bigint":
+
+                case "boolean":
+
+                case "number":
+                  rpkg.setIn(path, value);
+              }
+            }
+          }
+        };
+
+        recursiveSet(manifestObject, []);
+
+        const pkgStr = `${stringify(rpkg, {
+          nullStr: "",
+          simpleKeys: true,
+        })}\n`;
 
         if (opts) {
           this.realFs.writeFileSync(
             npath.fromPortablePath(nativeManifestPath),
-            manifestYawn.yaml,
+            pkgStr,
             opts as fs.WriteFileOptions
           );
         } else {
           this.realFs.writeFileSync(
             npath.fromPortablePath(nativeManifestPath),
-            manifestYawn.yaml
+            pkgStr
           );
         }
 
@@ -727,6 +761,49 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     );
   }
 
+  async changeFilePromise(
+    p: FSPath<PortablePath>,
+    content: Buffer
+  ): Promise<void>;
+
+  async changeFilePromise(
+    p: FSPath<PortablePath>,
+    content: string,
+    opts?: ChangeFileOptions
+  ): Promise<void>;
+
+  async changeFilePromise(
+    p: FSPath<PortablePath>,
+    content: Buffer | string,
+    opts: ChangeFileOptions = {}
+  ) {
+    if (Buffer.isBuffer(content)) {
+      return this.writeFilePromise(p, content, opts);
+    } else {
+      return this.writeFilePromise(p, content, opts);
+    }
+  }
+
+  changeFileSync(p: PortablePath, content: Buffer): void;
+
+  changeFileSync(
+    p: PortablePath,
+    content: string,
+    opts?: ChangeFileOptions
+  ): void;
+
+  changeFileSync(
+    p: PortablePath,
+    content: Buffer | string,
+    opts: ChangeFileOptions = {}
+  ) {
+    if (Buffer.isBuffer(content)) {
+      return this.writeFileSync(p, content, opts);
+    } else {
+      return this.writeFileSync(p, content, opts);
+    }
+  }
+
   async appendFilePromise(
     p: FSPath<PortablePath>,
     content: string | Buffer | ArrayBuffer | DataView,
@@ -846,6 +923,14 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         content as string | NodeJS.ArrayBufferView
       );
     }
+  }
+
+  async writeJsonPromise(p: PortablePath, data: any) {
+    return await this.writeFilePromise(p, `${JSON.stringify(data, null, 2)}\n`);
+  }
+
+  writeJsonSync(p: PortablePath, data: any) {
+    return this.writeFileSync(p, `${JSON.stringify(data, null, 2)}\n`);
   }
 
   async unlinkPromise(p: PortablePath) {

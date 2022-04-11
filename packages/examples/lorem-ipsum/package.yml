@@ -5,7 +5,6 @@ main: dist/index.js
 # license, none for the example
 license: UNLICENSED
 
-
 # scripts comment
 scripts:
   build: tsc
@@ -17,6 +16,7 @@ dependencies:
   jest: "^26"
   ts-jest: "^26.4.4"
   typescript: ^4.3.5
+  react: ^18.0.0
 
 devDependencies:
   "@types/node": ^16.4.1
@@ -29,5 +29,7 @@ jest:
 
 # plugin stuff
 yarn.build:
+  # test comment
   input: .
   output: dist
+
