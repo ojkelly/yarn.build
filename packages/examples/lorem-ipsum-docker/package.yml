@@ -31,3 +31,4 @@ jest:
 yarn.build:
   input: .
   output: dist
+
