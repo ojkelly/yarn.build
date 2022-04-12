@@ -1,43 +1,43 @@
 # yarn.build plugin-all
 [[redirects]]
  from = "/latest"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-all.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-all.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/latest/build"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-build.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-build.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/release/*/build"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-build.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-build.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/latest/bundle"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-bundle.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-bundle.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/release/*/bundle"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-bundle.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-bundle.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/latest/test"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-test.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-test.cjs"
  status = 200
  force = true
 
 [[redirects]]
  from = "/release/*/test"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-test.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-test.cjs"
  status = 200
  force = true
 
@@ -51,7 +51,7 @@
 
  [[redirects]]
  from = "/release/*/yaml"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.8/plugin-package-yaml.cjs"
+ to = "https://github.com/ojkelly/yarn.build/releases/download/v3.4.9/plugin-package-yaml.cjs"
  status = 200
  force = true
 
