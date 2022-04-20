@@ -51,6 +51,7 @@ type RunLogEntry = {
   rerun?: boolean;
   haveCheckedForRerun?: boolean;
   command: string;
+  exitCode?: string;
 };
 
 enum RunSupervisorReporterEvents {
@@ -140,7 +141,7 @@ class RunSupervisor {
 
   queue: PQueue;
 
-  entrypoints: Node[] = [];
+  entrypoints: Set<Node> = new Set<Node>();
 
   excluded: Set<Workspace> = new Set<Workspace>();
 
@@ -375,6 +376,17 @@ class RunSupervisor {
           };
 
           this.runReport.successCount++;
+
+          const wrk = this.runReport.workspaces[relativeCwd];
+
+          if (isCI) {
+            process.stdout.write(
+              `[success] ${wrk.name.padEnd(60, " ")}${formatTimestampDifference(
+                0,
+                wrk.runtimeSeconds ?? 0
+              ).padStart(10)}\n`
+            );
+          }
           release();
         });
       }
@@ -412,6 +424,20 @@ class RunSupervisor {
           this.runReport.workspaces[relativeCwd].fail = true;
           this.runReport.failCount++;
           release();
+
+          const wrk = this.runReport.workspaces[relativeCwd];
+          const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
+
+          if (isCI) {
+            process.stdout.write(
+              `=> [fail${
+                l?.exitCode ? `: ${l?.exitCode}` : ""
+              }] ${wrk.name.padEnd(60, " ")}${formatTimestampDifference(
+                0,
+                wrk.runtimeSeconds ?? 0
+              ).padStart(10)}\n`
+            );
+          }
         });
       }
     );
@@ -435,6 +461,12 @@ class RunSupervisor {
     return value;
   };
 
+  removeFromExcluded(workspace: Workspace): void {
+    if (this.excluded.has(workspace)) {
+      this.excluded.delete(workspace);
+    }
+  }
+
   async addRunTarget(workspace: Workspace): Promise<void> {
     if (this.excluded.has(workspace)) {
       return;
@@ -446,28 +478,19 @@ class RunSupervisor {
       return;
     }
 
-    const n = await this.runGraph.addNode(workspace.relativeCwd);
+    const node = this.runGraph.addNode(workspace.relativeCwd);
 
-    // this resolve call checks for cyclic dependencies
-    this.runGraph.resolve(n);
-
-    this.entrypoints.push(n);
-    const shouldRun = await this.plan(workspace);
-
-    if (shouldRun) {
-      this.runTargets.push(workspace);
-    }
+    await this.plan(node, workspace);
   }
 
-  plan = async (workspace: Workspace): Promise<boolean> => {
-    const parent = this.runGraph.getNode(workspace.relativeCwd);
-
-    if (!parent) {
+  plan = async (node: Node, workspace: Workspace): Promise<void> => {
+    if (!node) {
       throw new Error(
         "Internal error: lost reference to parent workspace. Please open an issue."
       );
     }
-    parent.addWorkSpace(workspace);
+
+    this.runGraph.checkCyclical(node);
 
     let rerunParent = false;
 
@@ -488,14 +511,14 @@ class RunSupervisor {
 
         const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
 
+        this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
+
+        node.addDependency(dep);
+
         // this resolve call checks for cyclic dependencies
-        this.runGraph.resolve(dep);
+        this.runGraph.checkCyclical(dep);
 
-        dep.addWorkSpace(depWorkspace);
-
-        parent.addDependency(dep);
-
-        const depsOfDepsNeedRerun = await this.plan(depWorkspace);
+        const depsOfDepsNeedRerun = await this.plan(dep, depWorkspace);
 
         let depNeedsRun = false;
 
@@ -505,7 +528,7 @@ class RunSupervisor {
 
         if (depNeedsRun || depsOfDepsNeedRerun) {
           rerunParent = true;
-          dep.addRunCallback(this.createRunItem(depWorkspace));
+          this.removeFromExcluded(depWorkspace);
         }
       }
     }
@@ -519,6 +542,7 @@ class RunSupervisor {
       workspace.relativeCwd,
       workspace.locator
     );
+
     if (rerunParent || hasChanges) {
       this.runReporter.emit(
         RunSupervisorReporterEvents.pending,
@@ -530,9 +554,13 @@ class RunSupervisor {
             : ""
         }${workspace.manifest.name?.name}`
       );
-      parent.addRunCallback(this.createRunItem(workspace));
 
-      return true;
+      this.runGraph.addRunCallback(node, this.createRunItem(workspace));
+      this.removeFromExcluded(workspace);
+      this.entrypoints.add(node);
+      this.runTargets.push(workspace);
+
+      return;
     } else {
       // Use the previous log entry if we don't need to rerun.
       // This ensures we always have all our run targets in the log.
@@ -551,7 +579,7 @@ class RunSupervisor {
       }
     }
 
-    return false;
+    return;
   };
 
   private getWorkspaceConfig(workspace: Workspace): YarnBuildConfiguration {
@@ -657,7 +685,69 @@ class RunSupervisor {
     return needsRun;
   }
 
+  performDryRun = async (): Promise<string> => {
+    const originalConcurrency = this.concurrency;
+
+    // set concurrency to 1 to get an accurate printout
+    this.concurrency = 1;
+
+    let output = "";
+
+    const tree: { [depth: number]: string[] } = { 1: [] };
+
+    this.runGraph.dryRunCallback = (node: Node, iteration: number) => {
+      if (!tree[iteration]) {
+        tree[iteration] = [node.id];
+      } else {
+        tree[iteration].push(node.id);
+      }
+    };
+
+    await this.runGraph.run(Array.from(this.entrypoints), true);
+
+    const printer = (
+      depth: number,
+      msg: string,
+      lastLevel: boolean,
+      final: boolean
+    ): string => {
+      const joiner = final && lastLevel ? "└─" : lastLevel ? "└─┬" : "├─";
+      const indent = depth == 0 ? "" : "  ".repeat(depth);
+
+      return `${indent}${joiner} ${msg}`;
+    };
+
+    const treekeys = Object.keys(tree);
+
+    treekeys.forEach((depthStr, i) => {
+      const depth = parseInt(depthStr);
+      const level = tree[depth];
+
+      const finalLevel = i == treekeys.length - 1;
+
+      level.forEach((id, i) => {
+        const wrk = this.runGraph.getNode(id);
+
+        output += printer(depth, id, i == level.length - 1, finalLevel);
+
+        if (wrk instanceof Node) {
+          if (wrk.skip) {
+            output += `(skip)`;
+          }
+        }
+
+        output += "\n";
+      });
+    });
+
+    this.concurrency = originalConcurrency;
+
+    return output;
+  };
+
   run = async (): Promise<boolean> => {
+    let output = "";
+
     if (this.hasSetup === false) {
       throw new Error(
         "RunSupervisor is not setup, you need to call await supervisor.setup()"
@@ -666,13 +756,42 @@ class RunSupervisor {
 
     this.runReport.runStart = Date.now();
 
-    if (this.dryRun) {
-      return true;
+    if (isCI || this.dryRun) {
+      output += `${this.formatHeader("Run Order") + "\n"}`;
+      output += await this.performDryRun();
+
+      if (!isCI) {
+        output += `${
+          this.formatHeader(
+            `Dry Run / Command: ${this.runCommand} / Total: ${this.runGraph.runSize}`,
+            0,
+            true
+          ) + "\n"
+        }`;
+      }
+      process.stdout.write(output);
+      output = "";
+
+      if (this.dryRun) {
+        return true;
+      }
     }
 
     // Print our RunReporter output
     if (!isCI) {
       Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
+    }
+
+    if (isCI) {
+      process.stdout.write(
+        `\n${
+          this.formatHeader(
+            `Run / Command: ${this.runCommand} / Concurrency: ${this.concurrency}`,
+            0,
+            false
+          ) + "\n"
+        }`
+      );
     }
 
     // print progress
@@ -691,7 +810,7 @@ class RunSupervisor {
     this.header = this.generateHeaderString();
 
     // run
-    await this.runGraph.run(this.entrypoints);
+    await this.runGraph.run(Array.from(this.entrypoints));
 
     const releaseMutex = await this.runReport.mutex.acquire();
 
@@ -702,7 +821,7 @@ class RunSupervisor {
     const finalLine = this.generateFinalReport();
 
     if (typeof finalLine === `string`) {
-      process.stdout.write(finalLine);
+      process.stdout.write(`\n${finalLine}\n`);
     }
 
     // commit the run log
@@ -721,13 +840,11 @@ class RunSupervisor {
       return;
     }
 
-    let waitTime = 90;
+    const waitTime = 90;
     let output = "";
 
     if (isCI) {
-      waitTime = 2000;
-
-      output = this.generateProgressStringIsCI(timestamp);
+      this.updateProgressCI(timestamp);
     } else {
       output = this.generateProgressString(timestamp);
 
@@ -785,37 +902,22 @@ class RunSupervisor {
     }`;
   }
 
-  generateProgressStringIsCI(timestamp: number): string {
-    let output = "";
+  updateRuntime(timestamp: number): void {
+    for (const relativePath in this.runReport.workspaces) {
+      const thread = this.runReport.workspaces[relativePath];
 
-    if (this.runReport.runStart) {
-      const successString = formatUtils.pretty(
-        this.configuration,
-        `${this.runReport.successCount}`,
-        "green"
-      );
-      const failedString = formatUtils.pretty(
-        this.configuration,
-        `${this.runReport.failCount}`,
-        "red"
-      );
-      const totalString = formatUtils.pretty(
-        this.configuration,
-        `${
-          this.runGraph.runSize - this.excluded.size - this.runReport.skipCount
-        }`,
-        "white"
-      );
-
-      output += `[${
-        this.runCommand
-      }]  Success: ${successString}\tFailed: ${failedString}\tTotal:  ${totalString}\tRuntime: ${formatTimestampDifference(
-        this.runReport.runStart,
-        timestamp
-      )}\n`;
+      if (!thread || !thread.start || thread.done) {
+        continue;
+      }
+      if (!!this.runReport.runStart) {
+        this.runReport.workspaces[relativePath].runtimeSeconds =
+          timestamp - this.runReport.runStart;
+      }
     }
+  }
 
-    return output;
+  updateProgressCI(timestamp: number): void {
+    this.updateRuntime(timestamp);
   }
 
   generateProgressString(timestamp: number): string {
@@ -827,6 +929,8 @@ class RunSupervisor {
 
     output += this.formatHeader(this.generateHeaderString()) + "\n";
 
+    this.updateRuntime(timestamp);
+
     let i = 1;
 
     for (const relativePath in this.runReport.workspaces) {
@@ -834,11 +938,6 @@ class RunSupervisor {
 
       if (!thread || !thread.start || thread.done) {
         continue;
-      }
-
-      if (!!this.runReport.runStart) {
-        this.runReport.workspaces[relativePath].runtimeSeconds =
-          timestamp - this.runReport.runStart;
       }
 
       const pathString = formatUtils.pretty(
@@ -1006,7 +1105,7 @@ class RunSupervisor {
             2
           );
 
-          output += `${lineHeader + "\n"}`;
+          output += `\n${lineHeader + "\n"}`;
         }
 
         if (workspace.stdout.length !== 0) {
@@ -1026,7 +1125,7 @@ class RunSupervisor {
           // we'll still write it out to the run log
           const lineHeader = `[stderr]`;
 
-          output += `${lineHeader + "\n"}`;
+          output += `\n${lineHeader + "\n"}`;
 
           workspace.stderr.forEach((e) => {
             const err = e instanceof Error ? e.toString() : `${e}`;
@@ -1080,7 +1179,7 @@ class RunSupervisor {
         true
       ) + "\n";
 
-    output += this.formatHeader("Summary") + "\n";
+    output += "\n" + this.formatHeader("Summary") + "\n";
 
     if (this.runReport.runStart) {
       const { successCount, failCount, ignoredCount, skipCount } =
@@ -1233,7 +1332,7 @@ class RunSupervisor {
             this.runReporter.emit(
               RunSupervisorReporterEvents.info,
               workspace.relativeCwd,
-              `Missing \`${this.runCommand}\` script in manifest.`
+              `[skip] No \`${this.runCommand}\` script in manifest.`
             );
           }
 
@@ -1273,46 +1372,28 @@ class RunSupervisor {
           );
 
           if (exitCode !== 0) {
-            if (exitCode > 100) {
-              // This has been force killed
-              this.runReporter.emit(
-                RunSupervisorReporterEvents.skipped,
-                workspace.relativeCwd
-              );
+            this.runReporter.emit(
+              RunSupervisorReporterEvents.fail,
+              workspace.relativeCwd
+            );
 
-              this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-                lastModified: currentRunLog?.lastModified,
-                status: RunStatus.skipped,
-                haveCheckedForRerun: true,
-                rerun: false,
-                command: this.runCommand,
-              });
+            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+              lastModified: currentRunLog?.lastModified,
+              status: RunStatus.failed,
+              haveCheckedForRerun: true,
+              rerun: false,
+              command: this.runCommand,
+              exitCode: `${exitCode}`,
+            });
 
-              return false;
-            } else {
-              this.runReporter.emit(
-                RunSupervisorReporterEvents.fail,
-                workspace.relativeCwd
-              );
-
-              this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-                lastModified: currentRunLog?.lastModified,
-                status: RunStatus.failed,
-                haveCheckedForRerun: true,
-                rerun: false,
-                command: this.runCommand,
-              });
-
-              if (this.continueOnError === false) {
-                void terminateAllChildProcesses();
-              }
-
-              return false;
+            if (this.continueOnError === false) {
+              void terminateAllChildProcesses();
             }
+
+            return false;
           }
 
           // run was a success
-
           this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
             lastModified: currentRunLog?.lastModified,
             status: RunStatus.succeeded,

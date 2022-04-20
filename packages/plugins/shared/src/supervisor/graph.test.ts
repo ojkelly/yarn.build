@@ -17,7 +17,7 @@ describe("Simple dependency graph", () => {
     C.addDependency(D);
     C.addDependency(E);
 
-    await graph.resolve(A);
+    await graph.checkCyclical(A);
   });
 
   it("can detect cyclic dependencies", async () => {
@@ -42,7 +42,7 @@ describe("Simple dependency graph", () => {
     expect.assertions(2);
 
     try {
-      graph.resolve(A);
+      graph.checkCyclical(A);
     } catch (err) {
       if (err instanceof CyclicDependencyError) {
         expect(err.node).toMatch("D");
