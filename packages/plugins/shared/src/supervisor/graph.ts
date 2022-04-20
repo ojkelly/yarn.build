@@ -1,5 +1,3 @@
-import { Workspace } from "@yarnpkg/core";
-
 class Graph {
   nodes: NodeGraph = {};
 
@@ -9,27 +7,40 @@ class Graph {
 
   ran: Set<string> = new Set();
 
+  dryRunCallback: (node: Node, iteration: number) => void = () => {
+    return;
+  };
+
   // Create a new node with the ID, or retrieve the existing one
-  addNode(id: string, callback?: RunCallback): Node {
+  addNode(id: string): Node {
     // If the Node already exists, return it
     if (this.nodes[id]) {
       return this.nodes[id];
     }
 
     // Otherwise make a new Node, store it, then return it
-    const newNode = new Node(id, this);
+    const newNode = new Node(id);
 
     this.nodes[id] = newNode;
 
-    this.size++;
+    this.size = Object.keys(this.nodes).length;
 
-    this.resolve(newNode);
-
-    if (!!callback) {
-      newNode.addRunCallback(callback);
-    }
+    this.checkCyclical(newNode);
 
     return newNode;
+  }
+
+  addRunCallback(node: Node, callback: RunCallback): void {
+    let n = node;
+
+    if (!this.nodes[node.id]) {
+      n = this.addNode(node.id);
+    }
+
+    if (!n.runCallback) {
+      n.addRunCallback(callback);
+      this.runSize++;
+    }
   }
 
   getNode(id: string): Node | void {
@@ -42,7 +53,7 @@ class Graph {
     this.ran = new Set();
   }
 
-  resolve(node: Node): void {
+  checkCyclical(node: Node): void {
     // resolved and unresolved are local to this function
     // as they are only relevant to this resolution
     const resolved: Set<string> = new Set();
@@ -58,7 +69,9 @@ class Graph {
   ) {
     unresolved.add(node.id);
 
-    for (const dep of node.dependencies) {
+    Object.keys(node.dependencies).forEach((k) => {
+      const dep = node.dependencies[k];
+
       if (!resolved.has(dep.id)) {
         if (unresolved.has(dep.id)) {
           throw new CyclicDependencyError(node.id, dep.id);
@@ -66,13 +79,13 @@ class Graph {
 
         this.resolveNode(dep, resolved, unresolved);
       }
-    }
+    });
 
     resolved.add(node.id);
     unresolved.delete(node.id);
   }
 
-  async run(nodes: Node[]): Promise<RunLog> {
+  async run(nodes: Node[], dryRun = false): Promise<RunLog> {
     const queue: Set<RunQueueItem> = new Set<RunQueueItem>();
     const progress: Set<Node> = new Set<Node>();
 
@@ -83,11 +96,50 @@ class Graph {
       this.resolveQueue(n, queue, runLog);
     }
 
+    if (dryRun) {
+      await this.dryRunLoop(queue, runLog, progress, 0);
+
+      return runLog;
+    }
+
     await new Promise<void>((resolve) => {
       this.workLoop(queue, runLog, progress, resolve);
     });
 
     return runLog;
+  }
+
+  private async dryRunLoop(
+    queue: Set<RunQueueItem>,
+    runLog: RunLog,
+    progress: Set<Node>,
+    iteration = 0
+  ): Promise<void> {
+    progress.forEach((n, i) => {
+      this.dryRunCallback(n, iteration - 1); // this is always for the previous iteration
+      runLog[n.id] = { success: true, done: true };
+
+      progress.delete(i);
+    });
+
+    if (queue.size !== 0) {
+      // Run everything that can be run now
+      queue.forEach((q) => {
+        if (q.canStart(runLog)) {
+          if (q?.node?.runCallback) {
+            progress.add(q.node);
+            queue.delete(q);
+          }
+        }
+      });
+    }
+
+    // Check if anything still needs to run
+    if (progress.size != 0) {
+      return await this.dryRunLoop(queue, runLog, progress, iteration + 1);
+    }
+
+    return;
   }
 
   private workLoop(
@@ -139,7 +191,9 @@ class Graph {
   ): string[] {
     const parentDependencies: string[] = [];
 
-    for (const dep of node.dependencies) {
+    Object.keys(node.dependencies).forEach((k) => {
+      const dep = node.dependencies[k];
+
       parentDependencies.push(dep.id);
       if (!runLog[dep.id] && dep.runCallback) {
         runLog[dep.id] = { ...Graph.RunLogInit };
@@ -152,7 +206,7 @@ class Graph {
 
         queue.add(queueItem);
       }
-    }
+    });
 
     // parent item
     if (!runLog[node.id] && node.runCallback) {
@@ -188,31 +242,23 @@ type RunQueueItem = {
 class Node {
   id: string;
 
-  dependencies: Node[] = [];
-
-  graph: Graph;
-
-  // metadata
-  workspace?: Workspace;
+  dependencies: NodeGraph;
 
   cancelled = false;
 
+  skip = false;
+
   runCallback?: RunLogCallback;
 
-  constructor(id: string, graph: Graph) {
+  constructor(id: string) {
     this.id = id;
-    this.dependencies = [];
-    this.graph = graph;
+    this.dependencies = {};
   }
 
   addDependency(node: Node): Node {
-    this.dependencies.push(node);
-
-    return this;
-  }
-
-  addWorkSpace(workspace: Workspace): Node {
-    this.workspace = workspace;
+    if (!this.dependencies[node.id]) {
+      this.dependencies[node.id] = node;
+    }
 
     return this;
   }
@@ -231,7 +277,6 @@ class Node {
         runLog[this.id] = { done: true, success };
       });
     };
-    this.graph.runSize++;
 
     return this;
   }
@@ -241,9 +286,12 @@ class Node {
       if (typeof node.dependencies === `undefined`) {
         return;
       }
-      for (const n of node.dependencies) {
-        n.cancelled = true;
-      }
+
+      Object.keys(node.dependencies).forEach((k) => {
+        const v = node.dependencies[k];
+
+        v.cancelled = true;
+      });
     };
   }
 }
