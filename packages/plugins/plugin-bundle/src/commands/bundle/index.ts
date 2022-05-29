@@ -107,9 +107,9 @@ export default class Bundler extends BaseCommand {
   });
 
   progress(code: MESSAGE_CODE, group: MESSAGE_GROUP, msg: string): void {
-    // if (this.quiet !== true) {
-    console.info(`➤ ${code}:${group}${msg}`);
-    // }
+    if (this.quiet !== true) {
+      console.info(`➤ ${code}:${group}${msg}`);
+    }
   }
 
   async removeUnusedPackages(
@@ -522,11 +522,10 @@ export default class Bundler extends BaseCommand {
               libzip,
             });
 
-            const prefixPath = "bundle" as PortablePath;
-
             report.reportInfo(null, "Copying files to archive");
 
-            await zipFs.copyPromise(prefixPath, tmpDir, {
+            // copy into the root of the zip file
+            await zipFs.copyPromise("/" as PortablePath, tmpDir, {
               baseFs,
             });
 

@@ -1,6 +1,7 @@
 dist
 
 .pnp.cjs
+.pnp.*
 .yarn/*
 !.yarn/cache
 !.yarn/patches
