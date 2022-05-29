@@ -4,6 +4,7 @@ import * as os from "os";
 import * as crypto from "crypto";
 import * as path from "path";
 import * as execa from "execa";
+import StreamZip from "node-stream-zip";
 
 test("bundling lambda-project to a zip", async () => {
   const workDir = getTempDirName();
@@ -31,6 +32,28 @@ test("bundling lambda-project to a zip", async () => {
 
   expect(fs.existsSync(zipPath)).toEqual(true);
   expect(fs.statSync(zipPath).isFile()).toEqual(true);
+
+  // validate zip output
+
+  const zip = new StreamZip.async({
+    file: path.join(bundleOutput, "bundle.zip"),
+    skipEntryNameValidation: true,
+  });
+
+  const entries = await zip.entries();
+
+  for (const entry of Object.values(entries)) {
+    // validate entrypoint js
+    if (
+      entry.isFile &&
+      entry.name.endsWith("entrypoint.js") &&
+      entry.name != "entrypoint.js"
+    ) {
+      throw new Error("missing entrypoint.js or it's not in the root folder");
+    }
+  }
+
+  await zip.close();
 });
 
 test("run lambda-project after bundling without compression", async () => {

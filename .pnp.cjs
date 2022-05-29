@@ -146,6 +146,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["is-ci", "npm:3.0.0"],\
             ["jest", "npm:26.6.3"],\
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],\
+            ["node-stream-zip", "npm:1.15.0"],\
             ["prettier", "npm:2.3.2"],\
             ["rimraf", "npm:3.0.2"],\
             ["shx", "npm:0.3.3"],\
@@ -8439,6 +8440,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
+      ["node-stream-zip", [\
+        ["npm:1.15.0", {\
+          "packageLocation": "./.yarn/cache/node-stream-zip-npm-1.15.0-47adb9fcfb-0b73ffbb09.zip/node_modules/node-stream-zip/",\
+          "packageDependencies": [\
+            ["node-stream-zip", "npm:1.15.0"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
       ["node.extend", [\
         ["npm:2.0.2", {\
           "packageLocation": "./.yarn/cache/node.extend-npm-2.0.2-91a85f1c30-1fe3a1ca7f.zip/node_modules/node.extend/",\
@@ -11726,6 +11736,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["is-ci", "npm:3.0.0"],\
             ["jest", "npm:26.6.3"],\
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],\
+            ["node-stream-zip", "npm:1.15.0"],\
             ["prettier", "npm:2.3.2"],\
             ["rimraf", "npm:3.0.2"],\
             ["shx", "npm:0.3.3"],\

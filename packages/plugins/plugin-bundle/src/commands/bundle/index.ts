@@ -522,11 +522,10 @@ export default class Bundler extends BaseCommand {
               libzip,
             });
 
-            const prefixPath = "bundle" as PortablePath;
-
             report.reportInfo(null, "Copying files to archive");
 
-            await zipFs.copyPromise(prefixPath, tmpDir, {
+            // copy into the root of the zip file
+            await zipFs.copyPromise("/" as PortablePath, tmpDir, {
               baseFs,
             });
 
