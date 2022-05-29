@@ -9,6 +9,7 @@ import StreamZip from "node-stream-zip";
 test("bundling lambda-project to a zip", async () => {
   const workDir = getTempDirName();
   const bundleOutput = getTempDirName();
+  const defaultArchiveName = "bundle.zip";
 
   // Stage the test project far from the yarn.build project
   fs.copySync(__dirname, workDir, {
@@ -28,32 +29,45 @@ test("bundling lambda-project to a zip", async () => {
   );
 
   // THEN
-  const zipPath = path.join(bundleOutput, "bundle.zip");
+  const zipPath = path.join(bundleOutput, defaultArchiveName);
 
   expect(fs.existsSync(zipPath)).toEqual(true);
   expect(fs.statSync(zipPath).isFile()).toEqual(true);
 
-  // validate zip output
+  await validateZip({ bundleOutput, archiveName: defaultArchiveName });
+});
 
-  const zip = new StreamZip.async({
-    file: path.join(bundleOutput, "bundle.zip"),
-    skipEntryNameValidation: true,
+test("bundling lambda-project to a zip with custom name", async () => {
+  const workDir = getTempDirName();
+  const bundleOutput = getTempDirName();
+  const archiveName = "function.zip";
+
+  // Stage the test project far from the yarn.build project
+  fs.copySync(__dirname, workDir, {
+    recursive: true,
+    errorOnExist: true,
   });
 
-  const entries = await zip.entries();
+  // WHEN
+  yarnCmd(workDir, "workspace", "lambda", "build");
+  yarnCmd(
+    workDir,
+    "workspace",
+    "lambda",
+    "bundle",
+    "--output-directory",
+    bundleOutput,
+    "--archive-name",
+    archiveName
+  );
 
-  for (const entry of Object.values(entries)) {
-    // validate entrypoint js
-    if (
-      entry.isFile &&
-      entry.name.endsWith("entrypoint.js") &&
-      entry.name != "entrypoint.js"
-    ) {
-      throw new Error("missing entrypoint.js or it's not in the root folder");
-    }
-  }
+  // THEN
+  const zipPath = path.join(bundleOutput, archiveName);
 
-  await zip.close();
+  expect(fs.existsSync(zipPath)).toEqual(true);
+  expect(fs.statSync(zipPath).isFile()).toEqual(true);
+
+  await validateZip({ bundleOutput, archiveName });
 });
 
 test("run lambda-project after bundling without compression", async () => {
@@ -122,3 +136,29 @@ function getTempDirName() {
     "integ" + crypto.randomBytes(10).toString("hex")
   );
 }
+
+const validateZip = async (opts: {
+  bundleOutput: string;
+  archiveName: string;
+}) => {
+  const zip = new StreamZip.async({
+    file: path.join(opts.bundleOutput, opts.archiveName),
+    skipEntryNameValidation: true,
+  });
+
+  const entries = await zip.entries();
+
+  for (const entry of Object.values(entries)) {
+    // validate entrypoint js
+    if (
+      entry.isFile &&
+      entry.name.endsWith("entrypoint.js") &&
+      entry.name != "entrypoint.js"
+    ) {
+      await zip.close();
+
+      throw new Error("missing entrypoint.js or it's not in the root folder");
+    }
+  }
+  await zip.close();
+};

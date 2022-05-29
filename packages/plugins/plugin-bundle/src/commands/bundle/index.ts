@@ -107,9 +107,9 @@ export default class Bundler extends BaseCommand {
   });
 
   progress(code: MESSAGE_CODE, group: MESSAGE_GROUP, msg: string): void {
-    // if (this.quiet !== true) {
-    console.info(`➤ ${code}:${group}${msg}`);
-    // }
+    if (this.quiet !== true) {
+      console.info(`➤ ${code}:${group}${msg}`);
+    }
   }
 
   async removeUnusedPackages(
