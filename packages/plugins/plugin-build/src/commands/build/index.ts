@@ -24,8 +24,14 @@ import { GetChangedWorkspaces } from "@ojkelly/yarn-build-shared/src/changes";
 import { addTargets } from "@ojkelly/yarn-build-shared/src/supervisor/workspace";
 import { terminateProcess } from "@ojkelly/yarn-build-shared/src/supervisor/terminate";
 
+import { trace, SpanStatusCode } from "@opentelemetry/api";
+
+import { TraceProvider } from "../../tracing";
+
 export default class Build extends BaseCommand {
   static paths = [[`build`]];
+
+  tracer = trace.getTracer("yarn.build#plugin-build");
 
   json = Option.Boolean(`--json`, false, {
     description: `flag is set the output will follow a JSON-stream output
@@ -108,219 +114,272 @@ export default class Build extends BaseCommand {
   buildLog: { [key: string]: { hash: string | undefined } } = {};
 
   async execute(): Promise<0 | 1> {
-    const configuration = await Configuration.find(
-      this.context.cwd,
-      this.context.plugins
-    );
-    const { project, workspace: cwdWorkspace } = await Project.find(
-      configuration,
-      this.context.cwd
-    );
+    TraceProvider.getInstance();
 
-    if (!cwdWorkspace)
-      throw new WorkspaceRequiredError(project.cwd, this.context.cwd);
+    const span = this.tracer.startSpan("execute");
 
-    const rootWorkspace = this.all ? project.topLevelWorkspace : cwdWorkspace;
-
-    // #203 limit onlyCurrent when isRoot is true
-    let isRoot = false;
-
-    if (rootWorkspace == project.topLevelWorkspace) {
-      isRoot = true;
-    }
-
-    let rootCandidates = [
-      rootWorkspace,
-      ...(this.buildTargets.length > 0
-        ? rootWorkspace.getRecursiveWorkspaceChildren()
-        : []),
-    ];
-
-    if (typeof this.onlyGitChangesSinceBranch === `string`) {
-      rootCandidates = await GetChangedWorkspaces({
-        root: project.topLevelWorkspace,
-        sinceBranch: this.onlyGitChangesSinceBranch,
-      });
-    } else if (this.onlyGitChanges || this.onlyGitChangesSinceCommit) {
-      rootCandidates = await GetChangedWorkspaces({
-        root: project.topLevelWorkspace,
-        commit: this.onlyGitChangesSinceCommit ?? "1",
-      });
-    }
-
-    if (!Array.isArray(this.exclude)) {
-      this.exclude = [];
-    }
-
-    if (!!this.excludeCurrent) {
-      this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
-    }
-
-    if (!isRoot && this.onlyCurrent) {
-      // when building 1 workspace, we only need 1 worker
-      this.maxConcurrency = "1";
-    }
-
-    const excludeWorkspacePredicate = (targetWorkspace: Workspace) => {
-      // #168 limit to only the current workspace
-      if (!isRoot && this.onlyCurrent) {
-        return targetWorkspace != cwdWorkspace;
-      }
-
-      return (
-        this.exclude?.some(
-          (t) =>
-            micromatch.isMatch(
-              structUtils.stringifyIdent(targetWorkspace.locator),
-              t
-            ) ||
-            micromatch.isMatch(
-              targetWorkspace.cwd,
-              `${configuration.projectCwd}${path.posix.sep}${t}`
-            )
-        ) ?? false
+    try {
+      const configuration = await Configuration.find(
+        this.context.cwd,
+        this.context.plugins
       );
-    };
-
-    const buildTargetPredicate = (targetWorkspace: Workspace) => {
-      // #168 limit to only the current workspace
-      if (!isRoot && this.onlyCurrent) {
-        return targetWorkspace == cwdWorkspace;
-      }
-
-      return this.buildTargets.some((t) => {
-        // match on @scope/name
-        return (
-          micromatch.isMatch(
-            structUtils.stringifyIdent(targetWorkspace.locator),
-            t
-          ) ||
-          // match on path
-          micromatch.isMatch(
-            targetWorkspace.cwd,
-            `${configuration.projectCwd}${path.posix.sep}${t}`
-          )
-        );
-      });
-    };
-
-    const buildTargetCandidates: Array<Workspace> =
-      this.buildTargets.length > 0
-        ? rootCandidates.filter(buildTargetPredicate)
-        : rootCandidates;
-
-    const pluginConfiguration = await GetPluginConfiguration(configuration);
-
-    this.continueOnError = this.continueOnError ?? !!pluginConfiguration.bail;
-
-    // Safe to run because the input string is validated by clipanion using the schema property
-    // TODO: Why doesn't the Command validation cast this for us?
-    const maxConcurrency =
-      this.maxConcurrency === undefined
-        ? pluginConfiguration.maxConcurrency
-        : parseInt(this.maxConcurrency);
-
-    const report = await StreamReport.start(
-      {
+      const { project, workspace: cwdWorkspace } = await Project.find(
         configuration,
-        json: this.json,
-        stdout: this.context.stdout,
-        includeLogs: true,
-      },
-      async (report: StreamReport) => {
-        const runScript = async (
-          command: string,
-          cwd: PortablePath,
-          buildReporter: EventEmitter,
-          prefix: string
-        ) => {
-          const stdout = new miscUtils.BufferStream();
+        this.context.cwd
+      );
 
-          stdout.on("data", (chunk) =>
-            buildReporter?.emit(
-              RunSupervisorReporterEvents.info,
-              prefix,
-              chunk && chunk.toString()
-            )
-          );
+      if (!cwdWorkspace)
+        throw new WorkspaceRequiredError(project.cwd, this.context.cwd);
 
-          const stderr = new miscUtils.BufferStream();
+      const rootWorkspace = this.all ? project.topLevelWorkspace : cwdWorkspace;
 
-          stderr.on("data", (chunk) =>
-            buildReporter?.emit(
-              RunSupervisorReporterEvents.error,
-              prefix,
-              chunk && chunk.toString()
-            )
-          );
-          if (this.forceQuit) {
-            stdout.destroy();
-            stderr.destroy();
-            stdout.end();
-            stderr.end();
+      // #203 limit onlyCurrent when isRoot is true
+      let isRoot = false;
 
-            return 2;
-          }
-          try {
-            const exitCode =
-              (await this.cli.run(["run", command], {
-                cwd,
-                stdout,
-                stderr,
-              })) || 0;
-
-            stdout.end();
-            stderr.end();
-
-            return exitCode;
-          } catch (err) {
-            stdout.end();
-            stderr.end();
-          }
-
-          return 2;
-        };
-
-        const supervisor = new RunSupervisor({
-          project,
-          configuration,
-          pluginConfiguration,
-          report,
-          runCommand: this.buildCommand,
-          cli: runScript,
-          dryRun: this.dryRun,
-          ignoreRunCache: this.ignoreBuildCache,
-          verbose: this.verbose,
-          concurrency: maxConcurrency,
-          continueOnError: this.continueOnError,
-          excludeWorkspacePredicate,
-        });
-
-        supervisor.runReporter.on(RunSupervisorReporterEvents.forceQuit, () => {
-          this.forceQuit = true;
-        });
-
-        await supervisor.setup();
-
-        for (const targetWorkspace of buildTargetCandidates) {
-          await addTargets({
-            targetWorkspace,
-            project,
-            supervisor,
-          });
-        }
-
-        // build all the things
-        const ranWithoutErrors = await supervisor.run();
-
-        if (ranWithoutErrors === false) {
-          report.reportError(MessageName.BUILD_FAILED, "Build failed");
-        }
+      if (rootWorkspace == project.topLevelWorkspace) {
+        isRoot = true;
       }
-    );
 
-    terminateProcess.hasBeenTerminated = true;
+      let rootCandidates = [
+        rootWorkspace,
+        ...(this.buildTargets.length > 0
+          ? rootWorkspace.getRecursiveWorkspaceChildren()
+          : []),
+      ];
 
-    return report.exitCode();
+      if (typeof this.onlyGitChangesSinceBranch === `string`) {
+        rootCandidates = await GetChangedWorkspaces({
+          root: project.topLevelWorkspace,
+          sinceBranch: this.onlyGitChangesSinceBranch,
+        });
+      } else if (this.onlyGitChanges || this.onlyGitChangesSinceCommit) {
+        rootCandidates = await GetChangedWorkspaces({
+          root: project.topLevelWorkspace,
+          commit: this.onlyGitChangesSinceCommit ?? "1",
+        });
+      }
+
+      if (!Array.isArray(this.exclude)) {
+        this.exclude = [];
+      }
+
+      if (!!this.excludeCurrent) {
+        this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
+      }
+
+      if (!isRoot && this.onlyCurrent) {
+        // when building 1 workspace, we only need 1 worker
+        this.maxConcurrency = "1";
+      }
+
+      const excludeWorkspacePredicate = (targetWorkspace: Workspace) => {
+        const span = this.tracer.startSpan("excludeWorkspacePredicate");
+
+        try {
+          // #168 limit to only the current workspace
+          if (!isRoot && this.onlyCurrent) {
+            return targetWorkspace != cwdWorkspace;
+          }
+
+          return (
+            this.exclude?.some(
+              (t) =>
+                micromatch.isMatch(
+                  structUtils.stringifyIdent(targetWorkspace.locator),
+                  t
+                ) ||
+                micromatch.isMatch(
+                  targetWorkspace.cwd,
+                  `${configuration.projectCwd}${path.posix.sep}${t}`
+                )
+            ) ?? false
+          );
+        } catch (err: unknown) {
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: (err as Error).message,
+          });
+        } finally {
+          span.end();
+        }
+      };
+
+      const buildTargetPredicate = (targetWorkspace: Workspace) => {
+        const span = this.tracer.startSpan("buildTargetPredicate");
+
+        try {
+          // #168 limit to only the current workspace
+          if (!isRoot && this.onlyCurrent) {
+            return targetWorkspace == cwdWorkspace;
+          }
+
+          return this.buildTargets.some((t) => {
+            // match on @scope/name
+            return (
+              micromatch.isMatch(
+                structUtils.stringifyIdent(targetWorkspace.locator),
+                t
+              ) ||
+              // match on path
+              micromatch.isMatch(
+                targetWorkspace.cwd,
+                `${configuration.projectCwd}${path.posix.sep}${t}`
+              )
+            );
+          });
+        } catch (err: unknown) {
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: (err as Error).message,
+          });
+        } finally {
+          span.end();
+        }
+      };
+
+      const buildTargetCandidates: Array<Workspace> =
+        this.buildTargets.length > 0
+          ? rootCandidates.filter(buildTargetPredicate)
+          : rootCandidates;
+
+      const pluginConfiguration = await GetPluginConfiguration(configuration);
+
+      this.continueOnError = this.continueOnError ?? !!pluginConfiguration.bail;
+
+      // Safe to run because the input string is validated by clipanion using the schema property
+      // TODO: Why doesn't the Command validation cast this for us?
+      const maxConcurrency =
+        this.maxConcurrency === undefined
+          ? pluginConfiguration.maxConcurrency
+          : parseInt(this.maxConcurrency);
+
+      const report = await StreamReport.start(
+        {
+          configuration,
+          json: this.json,
+          stdout: this.context.stdout,
+          includeLogs: true,
+        },
+        async (report: StreamReport) => {
+          const runScript = async (
+            command: string,
+            cwd: PortablePath,
+            buildReporter: EventEmitter,
+            prefix: string
+          ) => {
+            const span = this.tracer.startSpan("run");
+
+            try {
+              const stdout = new miscUtils.BufferStream();
+
+              stdout.on("data", (chunk) =>
+                buildReporter?.emit(
+                  RunSupervisorReporterEvents.info,
+                  prefix,
+                  chunk && chunk.toString()
+                )
+              );
+
+              const stderr = new miscUtils.BufferStream();
+
+              stderr.on("data", (chunk) =>
+                buildReporter?.emit(
+                  RunSupervisorReporterEvents.error,
+                  prefix,
+                  chunk && chunk.toString()
+                )
+              );
+              if (this.forceQuit) {
+                stdout.destroy();
+                stderr.destroy();
+                stdout.end();
+                stderr.end();
+
+                return 2;
+              }
+              try {
+                const exitCode =
+                  (await this.cli.run(["run", command], {
+                    cwd,
+                    stdout,
+                    stderr,
+                  })) || 0;
+
+                stdout.end();
+                stderr.end();
+
+                return exitCode;
+              } catch (err) {
+                stdout.end();
+                stderr.end();
+              }
+
+              return 2;
+            } catch (err: unknown) {
+              span.setStatus({
+                code: SpanStatusCode.ERROR,
+                message: (err as Error).message,
+              });
+            } finally {
+              span.end();
+            }
+          };
+
+          const supervisor = new RunSupervisor({
+            project,
+            configuration,
+            pluginConfiguration,
+            report,
+            runCommand: this.buildCommand,
+            cli: runScript,
+            dryRun: this.dryRun,
+            ignoreRunCache: this.ignoreBuildCache,
+            verbose: this.verbose,
+            concurrency: maxConcurrency,
+            continueOnError: this.continueOnError,
+            excludeWorkspacePredicate,
+          });
+
+          supervisor.runReporter.on(
+            RunSupervisorReporterEvents.forceQuit,
+            () => {
+              this.forceQuit = true;
+            }
+          );
+
+          await supervisor.setup();
+
+          for (const targetWorkspace of buildTargetCandidates) {
+            await addTargets({
+              targetWorkspace,
+              project,
+              supervisor,
+            });
+          }
+
+          // build all the things
+          const ranWithoutErrors = await supervisor.run();
+
+          if (ranWithoutErrors === false) {
+            report.reportError(MessageName.BUILD_FAILED, "Build failed");
+            span.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: "Build failed",
+            });
+          }
+        }
+      );
+
+      terminateProcess.hasBeenTerminated = true;
+
+      return report.exitCode();
+    } catch (err: unknown) {
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: (err as Error).message,
+      });
+    } finally {
+      span.end();
+    }
   }
 }

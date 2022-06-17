@@ -40,6 +40,10 @@ enum MESSAGE_GROUP {
   End = " └ ",
 }
 
+// import { trace } from "@opentelemetry/api";
+
+// const tracer = trace.getTracer("yarn.build#plugin-bundle");
+
 // a compatible js file that reexports the file from pkg.main
 export default class Bundler extends BaseCommand {
   static paths = [[`bundle`]];
