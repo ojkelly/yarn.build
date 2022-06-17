@@ -561,11 +561,9 @@ const path = require("path");
 
 const pnp = require(path.normalize(path.resolve( __dirname, "${pnp}"))).setup();
 
-const index = require(path.normalize(path.resolve( __dirname,"${main}")));
+module.exports = require(path.normalize(path.resolve( __dirname,"${main}")));
 
 Object.defineProperty(exports, "__esModule", { value: true });
-
-exports.default = index;
 `;
 
 /**

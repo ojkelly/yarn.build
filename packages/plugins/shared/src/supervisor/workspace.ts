@@ -101,7 +101,7 @@ is unsound and unpredictable which goes against the stated goals of the tool.
 In most cases this issue occurs by accident when you delcare a dependency on the
 wrong package.
 
-In some cases yuo may actually want the cyclic dependency. As that's not
+In some cases you may actually want the cyclic dependency. As that's not
 possible, find the parts that are shared and move them to their own package
 that both packages can depend on.
 ---

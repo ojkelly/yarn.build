@@ -675,7 +675,7 @@ class RunSupervisor {
         command: this.runCommand,
       });
     } catch (e) {
-      this.runReport.workspaces[workspace.relativeCwd].stderr.push(
+      this.runReport.workspaces[workspace.relativeCwd]?.stderr.push(
         new Error(`${workspace.relativeCwd}: failed to get lastModified (${e})`)
       );
     } finally {
