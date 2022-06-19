@@ -605,7 +605,7 @@ export default class Bundler extends BaseCommand {
 
               const report = await this.tracer.startSpan(
                 { name: `bundle`, ctx },
-                async ({ span, ctx }) => {
+                async ({ ctx }) => {
                   return await StreamReport.start(
                     {
                       configuration,
