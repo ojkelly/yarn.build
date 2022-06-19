@@ -26,6 +26,24 @@ Install for Yarn 2:
 yarn plugin import https://yarn.build/v2
 ```
 
+## NEW! OpenTelemetry Support
+
+yarn.build's `build`, `test` and `bundle` commands now come with optional OpenTelemetry (OTEL) instrumentation.
+
+To use it, you need to run an OTEL Collector with a http receiver:
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http: # this is the one we need, it defaults to port 4318
+```
+
+And set the appropirate envar for example `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` if you are running the collector on the same host as you're running yarn.build.
+
+NOTE: yarn.build doesn't currently support the `grpc` endpoint, becuase bundling the required `.proto` files might need a rework of the yarn plugin bundler, which is out of scope of the intial yarn.build OTEL integration.
+
 ## Commands
 
 ### `build`
@@ -129,7 +147,7 @@ yarn bundle --no-compress --output-directory /srv/app
 
 See this [Dockerfile](packages/examples/lorem-ipsum-docker/Dockerfile) and [build script](packages/examples/lorem-ipsum-docker/docker-bundle-build.sh) for an example of how you can bundle into a container image.
 
-#### `.bundleignore` NEW!
+#### `.bundleignore`
 
 You can set files to be ignored when bundling for even smaller bundles.
 

@@ -17,6 +17,7 @@ import { EventEmitter } from "events";
 import { GetPluginConfiguration } from "@ojkelly/yarn-build-shared/src/config";
 import RunSupervisor, {
   RunSupervisorReporterEvents,
+  RunCommandCli,
 } from "@ojkelly/yarn-build-shared/src/supervisor";
 
 import { GetChangedWorkspaces } from "@ojkelly/yarn-build-shared/src/changes";
@@ -24,14 +25,13 @@ import { GetChangedWorkspaces } from "@ojkelly/yarn-build-shared/src/changes";
 import { addTargets } from "@ojkelly/yarn-build-shared/src/supervisor/workspace";
 import { terminateProcess } from "@ojkelly/yarn-build-shared/src/supervisor/terminate";
 
-import { trace, SpanStatusCode } from "@opentelemetry/api";
+import { SpanStatusCode, Context, trace } from "@opentelemetry/api";
 
-import { TraceProvider } from "../../tracing";
+import { Tracer, Attribute } from "@ojkelly/yarn-build-shared/src/tracing";
+// import { Tracer } from "@opentelemetry/sdk-trace-base";
 
 export default class Build extends BaseCommand {
   static paths = [[`build`]];
-
-  tracer = trace.getTracer("yarn.build#plugin-build");
 
   json = Option.Boolean(`--json`, false, {
     description: `flag is set the output will follow a JSON-stream output
@@ -113,69 +113,90 @@ export default class Build extends BaseCommand {
   // Keep track of what is built, and if it needs to be rebuilt
   buildLog: { [key: string]: { hash: string | undefined } } = {};
 
+  commandType: "build" | "test" = "build";
+
   async execute(): Promise<0 | 1> {
-    TraceProvider.getInstance();
+    const tracer = new Tracer("yarn.build");
 
-    const span = this.tracer.startSpan("execute");
-
-    try {
-      const configuration = await Configuration.find(
-        this.context.cwd,
-        this.context.plugins
-      );
-      const { project, workspace: cwdWorkspace } = await Project.find(
-        configuration,
-        this.context.cwd
-      );
-
-      if (!cwdWorkspace)
-        throw new WorkspaceRequiredError(project.cwd, this.context.cwd);
-
-      const rootWorkspace = this.all ? project.topLevelWorkspace : cwdWorkspace;
-
-      // #203 limit onlyCurrent when isRoot is true
-      let isRoot = false;
-
-      if (rootWorkspace == project.topLevelWorkspace) {
-        isRoot = true;
-      }
-
-      let rootCandidates = [
-        rootWorkspace,
-        ...(this.buildTargets.length > 0
-          ? rootWorkspace.getRecursiveWorkspaceChildren()
-          : []),
-      ];
-
-      if (typeof this.onlyGitChangesSinceBranch === `string`) {
-        rootCandidates = await GetChangedWorkspaces({
-          root: project.topLevelWorkspace,
-          sinceBranch: this.onlyGitChangesSinceBranch,
+    return await tracer.startSpan(
+      { name: `yarn ${this.commandType}` },
+      async ({ span: rootSpan, ctx }) => {
+        rootSpan.setAttributes({
+          [Attribute.YARN_BUILD_FLAGS_OUTPUT_JSON]: this.json,
+          [Attribute.YARN_BUILD_FLAGS_ALL]: this.all,
+          [Attribute.YARN_BUILD_FLAGS_TARGETS]: this.buildTargets,
+          [Attribute.YARN_BUILD_FLAGS_COMMAND]: this.buildCommand,
+          [Attribute.YARN_BUILD_FLAGS_INTERLACED]: this.interlaced,
+          [Attribute.YARN_BUILD_FLAGS_VERBOSE]: this.verbose,
+          [Attribute.YARN_BUILD_FLAGS_DRY_RUN]: this.dryRun,
+          [Attribute.YARN_BUILD_FLAGS_IGNORE_CACHE]: this.ignoreBuildCache,
+          [Attribute.YARN_BUILD_FLAGS_MAX_CONCURRENCY]: this.maxConcurrency,
+          [Attribute.YARN_BUILD_FLAGS_CONTINUE_ON_ERROR]: this.continueOnError,
+          [Attribute.YARN_BUILD_FLAGS_EXCLUDE]: this.exclude,
+          [Attribute.YARN_BUILD_FLAGS_EXCLUDE_CURRENT]: this.excludeCurrent,
+          [Attribute.YARN_BUILD_FLAGS_CHANGES]: this.onlyGitChanges,
+          [Attribute.YARN_BUILD_FLAGS_SINCE]: this.onlyGitChangesSinceCommit,
+          [Attribute.YARN_BUILD_FLAGS_SINCE_BRANCH]:
+            this.onlyGitChangesSinceBranch,
+          [Attribute.YARN_BUILD_FLAGS_ONLY_CURRENT]: this.onlyCurrent,
         });
-      } else if (this.onlyGitChanges || this.onlyGitChangesSinceCommit) {
-        rootCandidates = await GetChangedWorkspaces({
-          root: project.topLevelWorkspace,
-          commit: this.onlyGitChangesSinceCommit ?? "1",
-        });
-      }
 
-      if (!Array.isArray(this.exclude)) {
-        this.exclude = [];
-      }
+        const configuration = await Configuration.find(
+          this.context.cwd,
+          this.context.plugins
+        );
+        const { project, workspace: cwdWorkspace } = await Project.find(
+          configuration,
+          this.context.cwd
+        );
 
-      if (!!this.excludeCurrent) {
-        this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
-      }
+        if (!cwdWorkspace)
+          throw new WorkspaceRequiredError(project.cwd, this.context.cwd);
 
-      if (!isRoot && this.onlyCurrent) {
-        // when building 1 workspace, we only need 1 worker
-        this.maxConcurrency = "1";
-      }
+        const rootWorkspace = this.all
+          ? project.topLevelWorkspace
+          : cwdWorkspace;
 
-      const excludeWorkspacePredicate = (targetWorkspace: Workspace) => {
-        const span = this.tracer.startSpan("excludeWorkspacePredicate");
+        // #203 limit onlyCurrent when isRoot is true
+        let isRoot = false;
 
-        try {
+        if (rootWorkspace == project.topLevelWorkspace) {
+          isRoot = true;
+        }
+
+        let rootCandidates = [
+          rootWorkspace,
+          ...(this.buildTargets.length > 0
+            ? rootWorkspace.getRecursiveWorkspaceChildren()
+            : []),
+        ];
+
+        if (typeof this.onlyGitChangesSinceBranch === `string`) {
+          rootCandidates = await GetChangedWorkspaces({
+            root: project.topLevelWorkspace,
+            sinceBranch: this.onlyGitChangesSinceBranch,
+          });
+        } else if (this.onlyGitChanges || this.onlyGitChangesSinceCommit) {
+          rootCandidates = await GetChangedWorkspaces({
+            root: project.topLevelWorkspace,
+            commit: this.onlyGitChangesSinceCommit ?? "1",
+          });
+        }
+
+        if (!Array.isArray(this.exclude)) {
+          this.exclude = [];
+        }
+
+        if (!!this.excludeCurrent) {
+          this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
+        }
+
+        if (!isRoot && this.onlyCurrent) {
+          // when building 1 workspace, we only need 1 worker
+          this.maxConcurrency = "1";
+        }
+
+        const excludeWorkspacePredicate = (targetWorkspace: Workspace) => {
           // #168 limit to only the current workspace
           if (!isRoot && this.onlyCurrent) {
             return targetWorkspace != cwdWorkspace;
@@ -194,20 +215,9 @@ export default class Build extends BaseCommand {
                 )
             ) ?? false
           );
-        } catch (err: unknown) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: (err as Error).message,
-          });
-        } finally {
-          span.end();
-        }
-      };
+        };
 
-      const buildTargetPredicate = (targetWorkspace: Workspace) => {
-        const span = this.tracer.startSpan("buildTargetPredicate");
-
-        try {
+        const buildTargetPredicate = (targetWorkspace: Workspace) => {
           // #168 limit to only the current workspace
           if (!isRoot && this.onlyCurrent) {
             return targetWorkspace == cwdWorkspace;
@@ -227,49 +237,55 @@ export default class Build extends BaseCommand {
               )
             );
           });
-        } catch (err: unknown) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: (err as Error).message,
-          });
-        } finally {
-          span.end();
-        }
-      };
+        };
 
-      const buildTargetCandidates: Array<Workspace> =
-        this.buildTargets.length > 0
-          ? rootCandidates.filter(buildTargetPredicate)
-          : rootCandidates;
+        const buildTargetCandidates: Array<Workspace> =
+          this.buildTargets.length > 0
+            ? rootCandidates.filter(buildTargetPredicate)
+            : rootCandidates;
 
-      const pluginConfiguration = await GetPluginConfiguration(configuration);
+        const pluginConfiguration = await GetPluginConfiguration(configuration);
 
-      this.continueOnError = this.continueOnError ?? !!pluginConfiguration.bail;
+        this.continueOnError =
+          this.continueOnError ?? !!pluginConfiguration.bail;
 
-      // Safe to run because the input string is validated by clipanion using the schema property
-      // TODO: Why doesn't the Command validation cast this for us?
-      const maxConcurrency =
-        this.maxConcurrency === undefined
-          ? pluginConfiguration.maxConcurrency
-          : parseInt(this.maxConcurrency);
+        // Safe to run because the input string is validated by clipanion using the schema property
+        // TODO: Why doesn't the Command validation cast this for us?
+        const maxConcurrency =
+          this.maxConcurrency === undefined
+            ? pluginConfiguration.maxConcurrency
+            : parseInt(this.maxConcurrency);
 
-      const report = await StreamReport.start(
-        {
-          configuration,
-          json: this.json,
-          stdout: this.context.stdout,
-          includeLogs: true,
-        },
-        async (report: StreamReport) => {
-          const runScript = async (
-            command: string,
-            cwd: PortablePath,
-            buildReporter: EventEmitter,
-            prefix: string
-          ) => {
-            const span = this.tracer.startSpan("run");
+        rootSpan.setAttributes({
+          [Attribute.YARN_BUILD_CONFIG_FOLDERS_INPUT]:
+            pluginConfiguration.folders.input,
+          [Attribute.YARN_BUILD_CONFIG_FOLDERS_OUTPUT]:
+            pluginConfiguration.folders.output,
+          [Attribute.YARN_BUILD_CONFIG_EXCLUDE]: pluginConfiguration.exclude,
+          [Attribute.YARN_BUILD_CONFIG_BAIL]: pluginConfiguration.bail,
+          [Attribute.YARN_BUILD_CONFIG_HIDE_BADGE]:
+            pluginConfiguration.hideYarnBuildBadge,
+          [Attribute.YARN_BUILD_CONFIG_MAX_CONCURRENCY]:
+            pluginConfiguration.maxConcurrency,
+        });
 
-            try {
+        const report = await StreamReport.start(
+          {
+            configuration,
+            json: this.json,
+            stdout: this.context.stdout,
+            includeLogs: true,
+          },
+          async (report: StreamReport) => {
+            // Closure holding our function to run each package command
+            const command: RunCommandCli = async (
+              ctx: Context,
+              command: string,
+              cwd: PortablePath,
+              buildReporter: EventEmitter,
+              prefix: string
+            ): Promise<number> => {
+              const span = trace.getSpan(ctx);
               const stdout = new miscUtils.BufferStream();
 
               stdout.on("data", (chunk) =>
@@ -309,77 +325,74 @@ export default class Build extends BaseCommand {
                 stderr.end();
 
                 return exitCode;
-              } catch (err) {
+              } catch (err: unknown) {
+                span?.setStatus({
+                  code: SpanStatusCode.ERROR,
+                  message: (err as Error).message,
+                });
+                if (typeof err === "string" || err instanceof Error) {
+                  span?.recordException(err);
+                }
                 stdout.end();
                 stderr.end();
               }
 
               return 2;
-            } catch (err: unknown) {
-              span.setStatus({
-                code: SpanStatusCode.ERROR,
-                message: (err as Error).message,
-              });
-            } finally {
-              span.end();
-            }
-          };
+            };
 
-          const supervisor = new RunSupervisor({
-            project,
-            configuration,
-            pluginConfiguration,
-            report,
-            runCommand: this.buildCommand,
-            cli: runScript,
-            dryRun: this.dryRun,
-            ignoreRunCache: this.ignoreBuildCache,
-            verbose: this.verbose,
-            concurrency: maxConcurrency,
-            continueOnError: this.continueOnError,
-            excludeWorkspacePredicate,
-          });
-
-          supervisor.runReporter.on(
-            RunSupervisorReporterEvents.forceQuit,
-            () => {
-              this.forceQuit = true;
-            }
-          );
-
-          await supervisor.setup();
-
-          for (const targetWorkspace of buildTargetCandidates) {
-            await addTargets({
-              targetWorkspace,
+            const supervisor = new RunSupervisor({
               project,
-              supervisor,
+              configuration,
+              pluginConfiguration,
+              report,
+              runCommand: this.buildCommand,
+              cli: command,
+              dryRun: this.dryRun,
+              ignoreRunCache: this.ignoreBuildCache,
+              verbose: this.verbose,
+              concurrency: maxConcurrency,
+              continueOnError: this.continueOnError,
+              excludeWorkspacePredicate,
             });
+
+            supervisor.runReporter.on(
+              RunSupervisorReporterEvents.forceQuit,
+              () => {
+                this.forceQuit = true;
+              }
+            );
+
+            await supervisor.setup();
+
+            for (const targetWorkspace of buildTargetCandidates) {
+              await addTargets({
+                targetWorkspace,
+                project,
+                supervisor,
+              });
+            }
+
+            try {
+              // build all the things
+              const ranWithoutErrors = await supervisor.run(ctx);
+
+              if (ranWithoutErrors === false) {
+                report.reportError(MessageName.BUILD_FAILED, "Build failed");
+                rootSpan.setStatus({
+                  code: SpanStatusCode.ERROR,
+                  message: "Build failed",
+                });
+              }
+            } finally {
+              rootSpan.end();
+            }
           }
+        );
 
-          // build all the things
-          const ranWithoutErrors = await supervisor.run();
+        terminateProcess.hasBeenTerminated = true;
 
-          if (ranWithoutErrors === false) {
-            report.reportError(MessageName.BUILD_FAILED, "Build failed");
-            span.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: "Build failed",
-            });
-          }
-        }
-      );
-
-      terminateProcess.hasBeenTerminated = true;
-
-      return report.exitCode();
-    } catch (err: unknown) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: (err as Error).message,
-      });
-    } finally {
-      span.end();
-    }
+        return report.exitCode();
+      }
+    );
   }
 }

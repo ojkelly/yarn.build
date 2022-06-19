@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "author": "Owen Kelly",
   "license": "MIT",
-  "packageManager": "yarn@3.2.0",
+  "packageManager": "yarn@3.2.1",
   "workspaces": {
     "packages": [
       "packages/plugins/*",

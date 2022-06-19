@@ -1062,6 +1062,14 @@ __metadata:
   resolution: "@ojkelly/yarn-build-shared@workspace:packages/plugins/shared"
   dependencies:
     "@jest/types": ^27.5.1
+    "@opentelemetry/api": ^1.1.0
+    "@opentelemetry/auto-instrumentations-node": ^0.31.0
+    "@opentelemetry/exporter-trace-otlp-http": ^0.29.2
+    "@opentelemetry/exporter-trace-otlp-proto": ^0.29.2
+    "@opentelemetry/resources": ^1.3.1
+    "@opentelemetry/sdk-node": ^0.29.2
+    "@opentelemetry/sdk-trace-base": ^1.3.1
+    "@opentelemetry/semantic-conventions": ^1.3.1
     "@types/is-ci": ^2.0.0
     "@types/jest": ^26.0.19
     "@types/js-yaml": ^4.0.2
@@ -11073,7 +11081,7 @@ resolve@^2.0.0-next.3:
 
 "typescript@patch:typescript@npm%3A^4.6.2#~builtin<compat/typescript>":
   version: 4.6.2
-  resolution: "typescript@patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=bda367"
+  resolution: "typescript@patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=7ad353"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
