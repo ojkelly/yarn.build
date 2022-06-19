@@ -312,7 +312,7 @@ export default class Bundler extends BaseCommand {
 
   async execute(): Promise<0 | 1> {
     return await this.tracer.startSpan(
-      { name: `yarn bundle` },
+      { name: `yarn bundle`, propegateFromEnv: true },
       async ({ span, ctx }) => {
         this.progress({
           code: MESSAGE_CODE.Info,

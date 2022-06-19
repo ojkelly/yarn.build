@@ -119,7 +119,7 @@ export default class Build extends BaseCommand {
     const tracer = new Tracer("yarn.build");
 
     return await tracer.startSpan(
-      { name: `yarn ${this.commandType}` },
+      { name: `yarn ${this.commandType}`, propegateFromEnv: true },
       async ({ span: rootSpan, ctx }) => {
         rootSpan.setAttributes({
           [Attribute.YARN_BUILD_FLAGS_OUTPUT_JSON]: this.json,

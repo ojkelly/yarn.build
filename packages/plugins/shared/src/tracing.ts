@@ -8,6 +8,7 @@ import { SpanStatusCode, SpanOptions } from "@opentelemetry/api";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 // import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 // import { ZoneContextManager } from '@opentelemetry/context-zone';
+import { parseTraceParent } from "@opentelemetry/core/build/src/trace/W3CTraceContextPropagator";
 import {
   Span,
   Context,
@@ -30,9 +31,7 @@ export class TraceProvider {
   private start(): BasicTracerProvider {
     // configure the SDK to export telemetry data to the console
     // enable all auto-instrumentations from the meta package
-    const exporter = new OTLPTraceExporter(); //{
-    // url: "http://localhost:4318/v1/traces",
-    // });
+    const exporter = new OTLPTraceExporter();
 
     const provider = new BasicTracerProvider({
       resource: new Resource({
@@ -41,42 +40,6 @@ export class TraceProvider {
     });
 
     provider.addSpanProcessor(new BatchSpanProcessor(exporter));
-
-    // const config = {
-    //   resource: new Resource({
-    //     [SemanticResourceAttributes.SERVICE_NAME]: "yarn.build#build",
-    //   }),
-    //   traceExporter,
-    //   instrumentations: [], //[getNodeAutoInstrumentations()],
-    // };
-    // const sdk = new opentelemetry.NodeSDK();
-
-    // const sdk = new BasicTracerProvider(config);
-
-    // sdk.register();
-
-    // api.diag.setLogger(new api.DiagConsoleLogger(), api.DiagLogLevel.DEBUG);
-
-    // sdk
-    //   .start()
-    //   .then(() => console.log("Tracing initialized"))
-    //   .catch((error) => console.log("Error initializing tracing", error));
-
-    // gracefully shut down the SDK on process exit
-    // process.on("SIGTERM", () => {
-    //   provider
-    //     .shutdown()
-    //     .then(() => console.log("Tracing terminated"))
-    //     .catch((error) => console.log("Error terminating tracing", error))
-    //     .finally(() => process.exit(0));
-    // });
-    // process.on("uncaughtException", (err) => {
-    //   provider
-    //     .shutdown()
-    //     .then(() => console.log("Tracing terminated"))
-    //     .catch((error) => console.log("Error terminating tracing", error))
-    //     .finally(() => process.exit(1));
-    // });
 
     async function exitHandler(evtOrExitCodeOrError: number | string | Error) {
       try {
@@ -119,22 +82,30 @@ export class Tracer {
     this._tracer = TraceProvider.getInstance().getTracer(name);
   }
 
-  recordException(span: Span, error: any): void {
-    span.recordException(error);
-    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+  recordException(span: Span, err: string | Error): void {
+    if (typeof typeof err === "string" || err instanceof Error) {
+      span.recordException(err);
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: err instanceof Error ? err.message : err,
+      });
+    }
   }
 
+  // Start a span, pass in a context to create nested spans
   async startSpan<
     F extends ({ span, ctx }: { span: Span; ctx: Context }) => ReturnType<F>
   >(
     opts: {
       name: string;
       ctx?: Context;
-      catchExceptions?: boolean;
+      supressExceptions?: boolean; // set to true to prevent exceptions bubbling up the stack
       spanOptions?: SpanOptions;
+      propegateFromEnv?: boolean;
     },
     fn: F
   ): Promise<Awaited<ReturnType<F>> | ReturnType<F>> {
+    // Get the current active context, or use the one passed in
     let ctx: Context;
 
     if (typeof opts.ctx === "undefined") {
@@ -143,48 +114,47 @@ export class Tracer {
       ctx = opts.ctx;
     }
 
+    if (!!opts.propegateFromEnv || opts?.spanOptions?.kind == 4) {
+      const tp = process.env["TRACEPARENT"];
+
+      if (typeof tp == "string") {
+        const parent = parseTraceParent(tp ?? "");
+
+        if (!!parent) {
+          ctx = trace.setSpanContext(context.active(), parent);
+        }
+      }
+    }
+    // create a new span with our context and options
     const span = this._tracer.startSpan(opts.name, opts.spanOptions, ctx);
 
+    // get a new context with this span
     const newCtx = trace.setSpan(ctx, span);
 
-    // let result: ReturnType<F> | Awaited<ReturnType<F>>;
-    // if (fn.constructor.name === "AsyncFunction") {
-    //     if (fn instanceof Promise) {
-    // fn: Promise<ReturnType<F>> = fn({ span, ctx: newCtx });
-
-    //       // return f
-    //       //   .catch((error) => {
-    //       //     this.recordException(span, error);
-    //       //     if (!opts.catchExceptions) {
-    //       //       throw error;
-    //       //     }
-    //       //   })
-    //       //   .then((r) => r)
-    //       //   .finally((r) => {
-    //       //     span.end();
-
-    //       //     return r;
-    //       //   });
-    //     }
-
-    // return async (): Promise<Awaited<ReturnType<F>>> => {
+    // Run the callback function
     try {
       if (fn.constructor.name === "AsyncFunction") {
+        // handle async/promises
         return await fn({ span, ctx: newCtx });
       } else {
+        // handle function
         return fn({ span, ctx: newCtx });
       }
-    } catch (error) {
-      this.recordException(span, error);
-      if (!opts.catchExceptions) {
-        throw error;
+    } catch (err) {
+      if (typeof err === "string" || err instanceof Error) {
+        this.recordException(span, err);
+      }
+      if (!opts.supressExceptions) {
+        throw err;
       }
     } finally {
+      // always end the span, otherwise it's not recorded
       span.end();
     }
 
-    // };
-    throw new Error("Unkown error");
+    // This should never happen, but it could so we need to throw an exception
+    // here, as it's undefined behaviour otherwise
+    throw new Error("Unknown error");
   }
 
   // Wrap an inline chunk of code in a span.
@@ -268,74 +238,6 @@ export class Tracer {
 }
 
 export { Context, Span };
-
-// export const TraceProvider = (function () {
-//   let instance: BasicTracerProvider;
-
-//   function createInstance() {
-//     console.log("starting tracer");
-
-//     // configure the SDK to export telemetry data to the console
-//     // enable all auto-instrumentations from the meta package
-//     const exporter = new OTLPTraceExporter({
-//       url: "http://localhost:4318/v1/traces",
-//     });
-
-//     const provider = new BasicTracerProvider({
-//       resource: new Resource({
-//         [SemanticResourceAttributes.SERVICE_NAME]: "browser",
-//       }),
-//     });
-
-//     provider.addSpanProcessor(new BatchSpanProcessor(exporter));
-
-//     // const config = {
-//     //   resource: new Resource({
-//     //     [SemanticResourceAttributes.SERVICE_NAME]: "yarn.build#build",
-//     //   }),
-//     //   traceExporter,
-//     //   instrumentations: [], //[getNodeAutoInstrumentations()],
-//     // };
-//     // const sdk = new opentelemetry.NodeSDK();
-
-//     // const sdk = new BasicTracerProvider(config);
-
-//     // sdk.register();
-
-//     // api.diag.setLogger(new api.DiagConsoleLogger(), api.DiagLogLevel.DEBUG);
-
-//     // sdk
-//     //   .start()
-//     //   .then(() => console.log("Tracing initialized"))
-//     //   .catch((error) => console.log("Error initializing tracing", error));
-
-//     // gracefully shut down the SDK on process exit
-//     // process.on("SIGTERM", () => {
-//     //   sdk
-//     //     .shutdown()
-//     //     .then(() => console.log("Tracing terminated"))
-//     //     .catch((error) => console.log("Error terminating tracing", error))
-//     //     .finally(() => process.exit(0));
-//     // });
-
-//     const t = trace.getTracer("yarn.build#test");
-//     const span = t.startSpan("test-span");
-
-//     span.end();
-
-//     return provider;
-//   }
-
-//   return {
-//     getInstance: function () {
-//       if (!instance) {
-//         instance = createInstance();
-//       }
-
-//       return instance;
-//     },
-//   };
-// })();
 
 export const Attribute = {
   PACKAGE_NAME: "package.name",
