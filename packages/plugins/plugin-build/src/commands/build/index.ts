@@ -372,19 +372,15 @@ export default class Build extends BaseCommand {
               });
             }
 
-            try {
-              // build all the things
-              const ranWithoutErrors = await supervisor.run(ctx);
+            // build all the things
+            const ranWithoutErrors = await supervisor.run(ctx);
 
-              if (ranWithoutErrors === false) {
-                report.reportError(MessageName.BUILD_FAILED, "Build failed");
-                rootSpan.setStatus({
-                  code: SpanStatusCode.ERROR,
-                  message: "Build failed",
-                });
-              }
-            } finally {
-              rootSpan.end();
+            if (ranWithoutErrors === false) {
+              report.reportError(MessageName.BUILD_FAILED, "Build failed");
+              rootSpan.setStatus({
+                code: SpanStatusCode.ERROR,
+                message: "Build failed",
+              });
             }
           }
         );

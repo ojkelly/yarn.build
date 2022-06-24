@@ -25,9 +25,12 @@ import sliceAnsi from "slice-ansi";
 import { Graph, Node, RunCallback } from "./graph";
 import { Hansi } from "./hansi";
 import { terminateAllChildProcesses } from "./terminate";
-import { Tracer, Context } from "@ojkelly/yarn-build-shared/src/tracing";
 import { SpanStatusCode } from "@opentelemetry/api";
-import { Attribute } from "../tracing";
+import {
+  Tracer,
+  Context,
+  Attribute,
+} from "@ojkelly/yarn-build-shared/src/tracing";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
