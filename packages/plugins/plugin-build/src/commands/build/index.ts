@@ -265,8 +265,7 @@ export default class Build extends BaseCommand {
           [Attribute.YARN_BUILD_CONFIG_BAIL]: pluginConfiguration.bail,
           [Attribute.YARN_BUILD_CONFIG_HIDE_BADGE]:
             pluginConfiguration.hideYarnBuildBadge,
-          [Attribute.YARN_BUILD_CONFIG_MAX_CONCURRENCY]:
-            maxConcurrency,
+          [Attribute.YARN_BUILD_CONFIG_MAX_CONCURRENCY]: maxConcurrency,
         });
 
         const report = await StreamReport.start(
