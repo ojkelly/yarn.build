@@ -25,6 +25,12 @@ import sliceAnsi from "slice-ansi";
 import { Graph, Node, RunCallback } from "./graph";
 import { Hansi } from "./hansi";
 import { terminateAllChildProcesses } from "./terminate";
+import { SpanStatusCode } from "@opentelemetry/api";
+import {
+  Tracer,
+  Context,
+  Attribute,
+} from "@ojkelly/yarn-build-shared/src/tracing";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -96,6 +102,7 @@ type RunReport = {
 };
 
 type RunCommandCli = (
+  ctx: Context,
   command: string,
   cwd: PortablePath,
   runReporter: EventEmitter,
@@ -103,6 +110,8 @@ type RunCommandCli = (
 ) => Promise<number>;
 
 class RunSupervisor {
+  tracer: Tracer = new Tracer("yarn.build");
+
   project: Project;
 
   configuration: Configuration;
@@ -720,152 +729,158 @@ class RunSupervisor {
     return needsRun;
   }
 
-  performDryRun = async (): Promise<string> => {
-    const originalConcurrency = this.concurrency;
+  performDryRun = async (ctx: Context): Promise<string> =>
+    await this.tracer.startSpan(
+      { name: "performDryRun", ctx },
+      async ({ ctx }) => {
+        const originalConcurrency = this.concurrency;
 
-    // set concurrency to 1 to get an accurate printout
-    this.concurrency = 1;
+        // set concurrency to 1 to get an accurate printout
+        this.concurrency = 1;
 
-    let output = "";
+        let output = "";
 
-    const tree: { [depth: number]: string[] } = {};
+        const tree: { [depth: number]: string[] } = { 1: [] };
 
-    this.runGraph.dryRunCallback = (node: Node, iteration: number) => {
-      if (!tree[iteration]) {
-        tree[iteration] = [node.id];
-      } else {
-        tree[iteration].push(node.id);
+        this.runGraph.dryRunCallback = (node: Node, iteration: number) => {
+          if (!tree[iteration]) {
+            tree[iteration] = [node.id];
+          } else {
+            tree[iteration].push(node.id);
+          }
+        };
+
+        await this.runGraph.run(ctx, Array.from(this.entrypoints), true);
+
+        const printer = (
+          depth: number,
+          msg: string,
+          lastLevel: boolean,
+          final: boolean
+        ): string => {
+          const joiner = final && lastLevel ? "└─" : lastLevel ? "└─┬" : "├─";
+          const indent = depth == 0 ? "" : "  ".repeat(depth);
+
+          return `${indent}${joiner} ${msg}`;
+        };
+
+        const treekeys = Object.keys(tree);
+
+        treekeys.forEach((depthStr, i) => {
+          const depth = parseInt(depthStr);
+          const level = tree[depth];
+
+          const finalLevel = i == treekeys.length - 1;
+
+          level.forEach((id, i) => {
+            const wrk = this.runGraph.getNode(id);
+
+            output += printer(depth, id, i == level.length - 1, finalLevel);
+
+            if (wrk instanceof Node) {
+              if (wrk.skip) {
+                output += `(skip)`;
+              }
+            }
+
+            output += "\n";
+          });
+        });
+
+        this.concurrency = originalConcurrency;
+
+        return output;
       }
-    };
+    );
 
-    await this.runGraph.run(Array.from(this.entrypoints), true);
+  run = async (ctx: Context): Promise<boolean> =>
+    await this.tracer.startSpan(
+      { name: "command supervisor run", ctx },
+      async ({ ctx }) => {
+        let output = "";
 
-    const printer = (
-      depth: number,
-      msg: string,
-      lastLevel: boolean,
-      final: boolean
-    ): string => {
-      const joiner = final && lastLevel ? "└─" : lastLevel ? "└─┬" : "├─";
-      const indent = depth == 0 ? "" : "  ".repeat(depth);
+        if (this.hasSetup === false) {
+          throw new Error(
+            "RunSupervisor is not setup, you need to call await supervisor.setup()"
+          );
+        }
 
-      return `${indent}${joiner}[${depth}] ${msg}`;
-    };
+        this.runReport.runStart = Date.now();
 
-    const treekeys = Object.keys(tree);
+        if (isCI || this.dryRun) {
+          output += `${this.formatHeader("Run Order") + "\n"}`;
+          output += await this.performDryRun(ctx);
 
-    treekeys.forEach((depthStr, i) => {
-      const depth = parseInt(depthStr);
-      const level = tree[depth];
+          if (!isCI) {
+            output += `${
+              this.formatHeader(
+                `Dry Run / Command: ${this.runCommand} / Total: ${this.runGraph.runSize}`,
+                0,
+                true
+              ) + "\n"
+            }`;
+          }
+          process.stdout.write(output);
+          output = "";
 
-      const finalLevel = i == treekeys.length - 1;
-
-      level.forEach((id, i) => {
-        const wrk = this.runGraph.getNode(id);
-
-        output += printer(depth, id, i == level.length - 1, finalLevel);
-
-        if (wrk instanceof Node) {
-          if (wrk.skip) {
-            output += `(skip)`;
+          if (this.dryRun) {
+            return true;
           }
         }
 
-        output += "\n";
-      });
-    });
+        // Print our RunReporter output
+        if (!isCI) {
+          Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
+        }
 
-    this.concurrency = originalConcurrency;
+        if (isCI) {
+          process.stdout.write(
+            `\n${
+              this.formatHeader(
+                `Run / Command: ${this.runCommand} / Concurrency: ${this.concurrency}`,
+                0,
+                false
+              ) + "\n"
+            }`
+          );
+        }
 
-    return output;
-  };
+        // print progress
+        this.raf(this.waitUntilDone);
 
-  run = async (): Promise<boolean> => {
-    let output = "";
+        this.currentRunTarget =
+          this.runTargets.length > 1
+            ? "All"
+            : this.runTargets[0]?.relativeCwd ?? "Nothing to run";
 
-    if (this.hasSetup === false) {
-      throw new Error(
-        "RunSupervisor is not setup, you need to call await supervisor.setup()"
-      );
-    }
+        // theres an off by one error in the RunLog
+        if (!isCI) {
+          process.stderr.write("\n");
+        }
 
-    this.runReport.runStart = Date.now();
+        this.header = this.generateHeaderString();
 
-    if (isCI || this.dryRun) {
-      output += `${
-        this.formatHeader(`Run Order for (${this.runCommand})`) + "\n"
-      }`;
-      output += await this.performDryRun();
+        // run
+        await this.runGraph.run(ctx, Array.from(this.entrypoints));
 
-      if (!isCI) {
-        output += `${
-          this.formatHeader(
-            `Dry Run / Command: ${this.runCommand} / Total: ${this.runGraph.runSize}`,
-            0,
-            true
-          ) + "\n"
-        }`;
+        const releaseMutex = await this.runReport.mutex.acquire();
+
+        this.runReport.done = true;
+
+        releaseMutex();
+
+        const finalLine = this.generateFinalReport();
+
+        if (typeof finalLine === `string`) {
+          process.stdout.write(`\n${finalLine}\n`);
+        }
+
+        // commit the run log
+        await this.saveRunLog();
+
+        return this.runReport.failCount === 0;
       }
-      process.stdout.write(output);
-      output = "";
-
-      if (this.dryRun) {
-        return true;
-      }
-    }
-
-    // Print our RunReporter output
-    if (!isCI) {
-      Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
-    }
-
-    if (isCI) {
-      process.stdout.write(
-        `\n${
-          this.formatHeader(
-            `Run / Command: ${this.runCommand} / Concurrency: ${this.concurrency}`,
-            0,
-            false
-          ) + "\n"
-        }`
-      );
-    }
-
-    // print progress
-    this.raf(this.waitUntilDone);
-
-    this.currentRunTarget =
-      this.runTargets.length > 1
-        ? "All"
-        : this.runTargets[0]?.relativeCwd ?? "Nothing to run";
-
-    // theres an off by one error in the RunLog
-    if (!isCI) {
-      process.stderr.write("\n");
-    }
-
-    this.header = this.generateHeaderString();
-
-    // run
-    await this.runGraph.run(Array.from(this.entrypoints));
-
-    const releaseMutex = await this.runReport.mutex.acquire();
-
-    this.runReport.done = true;
-
-    releaseMutex();
-
-    const finalLine = this.generateFinalReport();
-
-    if (typeof finalLine === `string`) {
-      process.stdout.write(`\n${finalLine}\n`);
-    }
-
-    // commit the run log
-    await this.saveRunLog();
-
-    return this.runReport.failCount === 0;
-  };
+    );
 
   // This is a very simple requestAnimationFrame polyfil
   raf = (f: (timestamp: number) => void): void => {
@@ -1342,134 +1357,182 @@ class RunSupervisor {
 
   // Returns a PQueue item
   createRunItem = (workspace: Workspace): RunCallback => {
-    return async (cancelDependentJobs: () => void) =>
-      await this.limit(async (): Promise<boolean> => {
-        const prefix = workspace.relativeCwd;
+    return async (ctx: Context, cancelDependentJobs: () => void) =>
+      await this.limit(
+        async (): Promise<boolean> =>
+          this.tracer.startSpan(
+            { name: "command", ctx },
+            async ({ span, ctx }) => {
+              const prefix = workspace.relativeCwd;
 
-        const command = workspace.manifest.scripts.get(this.runCommand);
+              const attr = {
+                [Attribute.PACKAGE_NAME]: workspace.locator.name,
+                [Attribute.PACKAGE_DIRECTORY]: workspace.relativeCwd,
+                [Attribute.PACKAGE_COMMAND]: this.runCommand,
+              };
 
-        const currentRunLog = this.runLog?.get(
-          `${workspace.relativeCwd}#${this.runCommand}`
-        );
+              if (typeof workspace.locator.scope === "string") {
+                attr[Attribute.PACKAGE_SCOPE] = `@${workspace.locator.scope}`;
+              }
 
-        this.runReporter.emit(
-          RunSupervisorReporterEvents.start,
-          workspace.relativeCwd,
-          workspace.locator,
-          `${
-            workspace.manifest.name?.scope
-              ? `@${workspace.manifest.name?.scope}/`
-              : ""
-          }${workspace.manifest.name?.name}`,
-          command
-        );
+              const command = workspace.manifest.scripts.get(this.runCommand);
 
-        if (!command) {
-          if (this.verbose) {
-            this.runReporter.emit(
-              RunSupervisorReporterEvents.info,
-              workspace.relativeCwd,
-              `[skip] No \`${this.runCommand}\` script in manifest.`
-            );
-          }
+              if (typeof command === "string") {
+                attr[Attribute.YARN_BUILD_PACKAGE_RUN_COMMAND] = command;
+              }
 
-          this.runReporter.emit(
-            RunSupervisorReporterEvents.ignored,
-            workspace.relativeCwd
-          );
+              const currentRunLog = this.runLog?.get(
+                `${workspace.relativeCwd}#${this.runCommand}`
+              );
 
-          return true;
-        }
+              this.runReporter.emit(
+                RunSupervisorReporterEvents.start,
+                workspace.relativeCwd,
+                workspace.locator,
+                `${
+                  workspace.manifest.name?.scope
+                    ? `@${workspace.manifest.name?.scope}/`
+                    : ""
+                }${workspace.manifest.name?.name}`,
+                command
+              );
 
-        try {
-          if (this.runReport.failCount !== 0) {
-            // We have bailed skip all!
-            this.runReporter.emit(
-              RunSupervisorReporterEvents.skipped,
-              workspace.relativeCwd
-            );
-            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-              lastModified: currentRunLog?.lastModified,
-              status: RunStatus.skipped,
-              haveCheckedForRerun: true,
-              rerun: false,
-              command: this.runCommand,
-            });
+              span.setAttributes(attr);
 
-            if (this.continueOnError === false) {
+              if (!command) {
+                if (this.verbose) {
+                  this.runReporter.emit(
+                    RunSupervisorReporterEvents.info,
+                    workspace.relativeCwd,
+                    `[skip] No \`${this.runCommand}\` script in manifest.`
+                  );
+                }
+
+                this.runReporter.emit(
+                  RunSupervisorReporterEvents.ignored,
+                  workspace.relativeCwd
+                );
+
+                return true;
+              }
+
+              try {
+                if (this.runReport.failCount !== 0) {
+                  // We have bailed skip all!
+                  this.runReporter.emit(
+                    RunSupervisorReporterEvents.skipped,
+                    workspace.relativeCwd
+                  );
+                  this.runLog?.set(
+                    `${workspace.relativeCwd}#${this.runCommand}`,
+                    {
+                      lastModified: currentRunLog?.lastModified,
+                      status: RunStatus.skipped,
+                      haveCheckedForRerun: true,
+                      rerun: false,
+                      command: this.runCommand,
+                    }
+                  );
+                  span.addEvent("runReport failcount is not 0, exiting early");
+
+                  if (this.continueOnError === false) {
+                    return false;
+                  }
+                }
+
+                const exitCode = await this.cli(
+                  ctx,
+                  this.runCommand,
+                  workspace.cwd,
+                  this.runReporter,
+                  prefix
+                );
+
+                span.setAttribute(
+                  Attribute.YARN_BUILD_PACKAGE_RUN_COMMAND_EXIT,
+                  exitCode
+                );
+
+                if (exitCode !== 0) {
+                  this.runReporter.emit(
+                    RunSupervisorReporterEvents.fail,
+                    workspace.relativeCwd
+                  );
+
+                  this.runLog?.set(
+                    `${workspace.relativeCwd}#${this.runCommand}`,
+                    {
+                      lastModified: currentRunLog?.lastModified,
+                      status: RunStatus.failed,
+                      haveCheckedForRerun: true,
+                      rerun: false,
+                      command: this.runCommand,
+                      exitCode: `${exitCode}`,
+                    }
+                  );
+
+                  if (this.continueOnError === false) {
+                    void terminateAllChildProcesses();
+                  }
+
+                  return false;
+                }
+
+                // run was a success
+                this.runLog?.set(
+                  `${workspace.relativeCwd}#${this.runCommand}`,
+                  {
+                    lastModified: currentRunLog?.lastModified,
+                    status: RunStatus.succeeded,
+                    haveCheckedForRerun: true,
+                    rerun: false,
+                    command: this.runCommand,
+                  }
+                );
+
+                this.runReporter.emit(
+                  RunSupervisorReporterEvents.success,
+                  workspace.relativeCwd
+                );
+              } catch (err) {
+                this.runReporter.emit(
+                  RunSupervisorReporterEvents.fail,
+                  workspace.relativeCwd,
+                  err
+                );
+
+                this.runLog?.set(
+                  `${workspace.relativeCwd}#${this.runCommand}`,
+                  {
+                    lastModified: currentRunLog?.lastModified,
+                    status: RunStatus.failed,
+                    haveCheckedForRerun: true,
+                    rerun: false,
+                    command: this.runCommand,
+                  }
+                );
+                if (typeof err === "string" || err instanceof Error) {
+                  span.recordException(err);
+                }
+                span.setStatus({
+                  code: SpanStatusCode.ERROR,
+                  message: "Command failed",
+                });
+
+                if (this.continueOnError === false) {
+                  cancelDependentJobs();
+                  terminateAllChildProcesses();
+
+                  return false;
+                }
+
+                return false;
+              }
+
               return false;
             }
-          }
-
-          const exitCode = await this.cli(
-            this.runCommand,
-            workspace.cwd,
-            this.runReporter,
-            prefix
-          );
-
-          if (exitCode !== 0) {
-            this.runReporter.emit(
-              RunSupervisorReporterEvents.fail,
-              workspace.relativeCwd
-            );
-
-            this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-              lastModified: currentRunLog?.lastModified,
-              status: RunStatus.failed,
-              haveCheckedForRerun: true,
-              rerun: false,
-              command: this.runCommand,
-              exitCode: `${exitCode}`,
-            });
-
-            if (this.continueOnError === false) {
-              void terminateAllChildProcesses();
-            }
-
-            return false;
-          }
-
-          // run was a success
-          this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-            lastModified: currentRunLog?.lastModified,
-            status: RunStatus.succeeded,
-            haveCheckedForRerun: true,
-            rerun: false,
-            command: this.runCommand,
-          });
-
-          this.runReporter.emit(
-            RunSupervisorReporterEvents.success,
-            workspace.relativeCwd
-          );
-        } catch (e) {
-          this.runReporter.emit(
-            RunSupervisorReporterEvents.fail,
-            workspace.relativeCwd,
-            e
-          );
-
-          this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-            lastModified: currentRunLog?.lastModified,
-            status: RunStatus.failed,
-            haveCheckedForRerun: true,
-            rerun: false,
-            command: this.runCommand,
-          });
-
-          if (this.continueOnError === false) {
-            cancelDependentJobs();
-            terminateAllChildProcesses();
-
-            return false;
-          }
-
-          return false;
-        }
-
-        return false;
-      });
+          )
+      );
   };
 }
 
@@ -1536,4 +1599,4 @@ function delay(ms: number) {
 
 export default RunSupervisor;
 
-export { RunSupervisor, RunSupervisorReporterEvents };
+export { RunSupervisor, RunSupervisorReporterEvents, RunCommandCli };

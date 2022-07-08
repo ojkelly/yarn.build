@@ -24,4 +24,6 @@ export default class Test extends Build {
   });
 
   ignoreDependencies = true;
+
+  commandType: "build" | "test" = "test";
 }

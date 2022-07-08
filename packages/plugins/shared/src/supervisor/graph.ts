@@ -1,4 +1,8 @@
+import { Tracer, Context } from "@ojkelly/yarn-build-shared/src/tracing";
+
 class Graph {
+  tracer: Tracer = new Tracer("yarn.build");
+
   nodes: NodeGraph = {};
 
   size = 0;
@@ -85,28 +89,33 @@ class Graph {
     unresolved.delete(node.id);
   }
 
-  async run(nodes: Node[], dryRun = false): Promise<RunLog> {
-    const queue: Set<RunQueueItem> = new Set<RunQueueItem>();
-    const progress: Set<Node> = new Set<Node>();
+  async run(ctx: Context, nodes: Node[], dryRun = false): Promise<RunLog> {
+    return await this.tracer.startSpan(
+      { name: "run commands", ctx },
+      async ({ ctx }) => {
+        const queue: Set<RunQueueItem> = new Set<RunQueueItem>();
+        const progress: Set<Node> = new Set<Node>();
 
-    const runLog: RunLog = {};
+        const runLog: RunLog = {};
 
-    for (const n of nodes) {
-      // resolve the graph to allocate nodes to threads
-      this.resolveQueue(n, queue, runLog);
-    }
+        for (const n of nodes) {
+          // resolve the graph to allocate nodes to threads
+          this.resolveQueue(n, queue, runLog);
+        }
 
-    if (dryRun) {
-      await this.dryRunLoop(queue, runLog, progress, 0);
+        if (dryRun) {
+          await this.dryRunLoop(queue, runLog, progress, 0);
 
-      return runLog;
-    }
+          return runLog;
+        }
 
-    await new Promise<void>((resolve) => {
-      this.workLoop(queue, runLog, progress, resolve);
-    });
+        await new Promise<void>((resolve) => {
+          this.workLoop(ctx, queue, runLog, progress, resolve);
+        });
 
-    return runLog;
+        return runLog;
+      }
+    );
   }
 
   private async dryRunLoop(
@@ -143,6 +152,7 @@ class Graph {
   }
 
   private workLoop(
+    ctx: Context,
     queue: Set<RunQueueItem>,
     runLog: RunLog,
     progress: Set<Node>,
@@ -152,7 +162,7 @@ class Graph {
       queue.forEach((q) => {
         if (q.canStart(runLog)) {
           if (q?.node?.runCallback) {
-            q?.node?.runCallback(runLog);
+            q?.node?.runCallback(ctx, runLog);
 
             progress.add(q.node);
           } else {
@@ -181,7 +191,7 @@ class Graph {
       return;
     }
 
-    setTimeout(() => this.workLoop(queue, runLog, progress, resolve), 30);
+    setTimeout(() => this.workLoop(ctx, queue, runLog, progress, resolve), 30);
   }
 
   private resolveQueue(
@@ -268,12 +278,12 @@ class Node {
       return this;
     }
 
-    this.runCallback = (runLog: RunLog) => {
+    this.runCallback = (ctx: Context, runLog: RunLog) => {
       if (this.cancelled) {
         return;
       }
 
-      return callback(Node.cancelDependentJobs(this)).then((success) => {
+      return callback(ctx, Node.cancelDependentJobs(this)).then((success) => {
         runLog[this.id] = { done: true, success };
       });
     };
@@ -315,8 +325,11 @@ class CyclicDependencyError extends Error {
 type RunLog = { [id: string]: { success: boolean; done: boolean } };
 
 type RunSuccess = boolean;
-type RunCallback = (cancelDependentJobs: () => void) => Promise<RunSuccess>;
-type RunLogCallback = (runLog: RunLog) => void;
+type RunCallback = (
+  ctx: Context,
+  cancelDependentJobs: () => void
+) => Promise<RunSuccess>;
+type RunLogCallback = (ctx: Context, runLog: RunLog) => void;
 
 type NodeGraph = {
   [id: string]: Node;

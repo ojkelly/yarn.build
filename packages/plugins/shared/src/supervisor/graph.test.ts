@@ -1,4 +1,5 @@
 import { Graph, CyclicDependencyError } from "./graph";
+import { context } from "@opentelemetry/api";
 
 describe("Simple dependency graph", () => {
   it("resolves the graph correctly", async () => {
@@ -89,7 +90,7 @@ describe("Simple dependency graph", () => {
     C.addDependency(D);
     C.addDependency(E);
 
-    await graph.run([A]);
+    await graph.run(context.active(), [A]);
 
     expect(runOrder).toStrictEqual(["D", "E", "C", "B", "A"]);
   });
@@ -202,7 +203,7 @@ describe("Simple dependency graph", () => {
     W.addDependency(Y);
     W.addDependency(Z);
 
-    await graph.run([A, F, J, N, R]);
+    await graph.run(context.active(), [A, F, J, N, R]);
 
     expect(runOrder.sort()).toStrictEqual([...new Set(nodes.map((n) => n.id))]);
   });
