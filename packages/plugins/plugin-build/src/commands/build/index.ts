@@ -114,9 +114,6 @@ export default class Build extends BaseCommand {
 
   forceQuit = false;
 
-  // Keep track of what is built, and if it needs to be rebuilt
-  buildLog: { [key: string]: { hash: string | undefined } } = {};
-
   commandType: "build" | "test" = "build";
 
   async execute(): Promise<0 | 1> {
