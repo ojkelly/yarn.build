@@ -396,10 +396,11 @@ class RunSupervisor {
 
           if (isCI) {
             process.stdout.write(
-              `[success] ${wrk.name.padEnd(60, " ")}${formatTimestampDifference(
-                0,
-                wrk.runtimeSeconds ?? 0
-              ).padStart(10)}\n`
+              `[success] ${wrk.name}`.padEnd(60) +
+                `${formatTimestampDifference(
+                  0,
+                  wrk.runtimeSeconds ?? 0
+                ).padStart(20)}\n`
             );
           }
           release();
@@ -414,6 +415,19 @@ class RunSupervisor {
           this.runReport.workspaces[relativeCwd].skipped = true;
           this.runReport.skipCount++;
           release();
+
+          const wrk = this.runReport.workspaces[relativeCwd];
+          const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
+
+          if (isCI) {
+            process.stdout.write(
+              `[skipped${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
+                wrk.name
+              } `.padEnd(60) +
+                `--`.padStart(20) +
+                `\n`
+            );
+          }
         });
       }
     );
@@ -425,6 +439,19 @@ class RunSupervisor {
           this.runReport.workspaces[relativeCwd].ignored = true;
           this.runReport.ignoredCount++;
           release();
+
+          const wrk = this.runReport.workspaces[relativeCwd];
+          const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
+
+          if (isCI) {
+            process.stdout.write(
+              `[ignored${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
+                wrk.name
+              } `.padEnd(60) +
+                `--`.padStart(20) +
+                `\n`
+            );
+          }
         });
       }
     );
@@ -445,13 +472,14 @@ class RunSupervisor {
 
           if (isCI) {
             process.stdout.write(
-              `[fail${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${wrk.name.padEnd(
-                60,
-                " "
-              )}${formatTimestampDifference(
-                0,
-                wrk.runtimeSeconds ?? 0
-              ).padStart(10)}\n`
+              `[fail${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
+                wrk.name
+              } `.padEnd(60) +
+                `*${formatTimestampDifference(
+                  0,
+                  wrk.runtimeSeconds ?? 0
+                )}`.padStart(20) +
+                `\n`
             );
           }
         });
@@ -758,10 +786,10 @@ class RunSupervisor {
           lastLevel: boolean,
           final: boolean
         ): string => {
-          const joiner = final && lastLevel ? "└─" : lastLevel ? "└─┬" : "├─";
+          const joiner = lastLevel ? "└─" : final && lastLevel ? "└─┬─" : "├─";
           const indent = depth == 0 ? "" : "  ".repeat(depth);
 
-          return `${indent}${joiner} ${msg}`;
+          return `${indent}${joiner}[${depth}] ${msg}`;
         };
 
         const treekeys = Object.keys(tree);
@@ -963,7 +991,7 @@ class RunSupervisor {
       }
       if (!!this.runReport.runStart) {
         this.runReport.workspaces[relativePath].runtimeSeconds =
-          timestamp - this.runReport.runStart;
+          timestamp - thread.start;
       }
     }
   }
