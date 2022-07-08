@@ -156,6 +156,10 @@ class RunSupervisor {
 
   runReporter: EventEmitter = new EventEmitter();
 
+  ignoreDependencies = false;
+
+  failFast = false;
+
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
@@ -191,6 +195,8 @@ class RunSupervisor {
     concurrency,
     continueOnError,
     excludeWorkspacePredicate,
+    ignoreDependencies,
+    failFast,
   }: {
     project: Project;
     report: StreamReport;
@@ -204,6 +210,8 @@ class RunSupervisor {
     concurrency?: number | undefined;
     continueOnError: boolean;
     excludeWorkspacePredicate: (targetWorkspace: Workspace) => boolean;
+    ignoreDependencies: boolean;
+    failFast: boolean;
   }) {
     // fallback to the max concurrency of cpu threads
     const resolvedConcurrency = concurrency ?? cpus().length;
@@ -233,6 +241,8 @@ class RunSupervisor {
         flags: "a",
       });
     }
+    this.ignoreDependencies = ignoreDependencies;
+    this.failFast = failFast;
   }
 
   async setup(): Promise<void> {
@@ -390,12 +400,13 @@ class RunSupervisor {
           const wrk = this.runReport.workspaces[relativeCwd];
 
           if (isCI) {
-            process.stdout.write(
-              `[success] ${wrk.name.padEnd(60, " ")}${formatTimestampDifference(
-                0,
-                wrk.runtimeSeconds ?? 0
-              ).padStart(10)}\n`
-            );
+            const pkg = `✅ ${relativeCwd}`.padEnd(60);
+            const timing = formatTimestampDifference(
+              0,
+              wrk.runtimeSeconds ?? 0
+            ).padStart(19);
+
+            process.stdout.write(`${pkg}${timing}\n`);
           }
           release();
         });
@@ -409,6 +420,13 @@ class RunSupervisor {
           this.runReport.workspaces[relativeCwd].skipped = true;
           this.runReport.skipCount++;
           release();
+
+          if (isCI) {
+            const pkg = `⏩ ${relativeCwd} `.padEnd(60);
+            const timing = `--`.padStart(19);
+
+            process.stdout.write(`${pkg}${timing}\n`);
+          }
         });
       }
     );
@@ -420,6 +438,18 @@ class RunSupervisor {
           this.runReport.workspaces[relativeCwd].ignored = true;
           this.runReport.ignoredCount++;
           release();
+
+          const wrk = this.runReport.workspaces[relativeCwd];
+          const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
+
+          if (isCI) {
+            const pkg = `[IGNORE${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
+              wrk.name
+            } `.padEnd(60);
+            const timing = `--`.padStart(19);
+
+            process.stdout.write(`${pkg}${timing}\n`);
+          }
         });
       }
     );
@@ -439,14 +469,15 @@ class RunSupervisor {
           const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
 
           if (isCI) {
-            process.stdout.write(
-              `=> [fail${
-                l?.exitCode ? `: ${l?.exitCode}` : ""
-              }] ${wrk.name.padEnd(60, " ")}${formatTimestampDifference(
-                0,
-                wrk.runtimeSeconds ?? 0
-              ).padStart(10)}\n`
-            );
+            const pkg = `❌ ${relativeCwd}`.padEnd(50);
+            const timing = `${
+              l?.exitCode ? `(exit code: ${l?.exitCode})` : "→"
+            } ${formatTimestampDifference(
+              0,
+              wrk.runtimeSeconds ?? 0
+            )}`.padStart(29);
+
+            process.stdout.write(`${pkg}${timing}\n`);
           }
         });
       }
@@ -477,22 +508,37 @@ class RunSupervisor {
     }
   }
 
+  // Add a run target to the run graph
+  // we may call this function multiple times per package when discovering the
+  // full run graph
   async addRunTarget(workspace: Workspace): Promise<void> {
+    // skip if this workspace is excluded
     if (this.excluded.has(workspace)) {
       return;
     }
 
+    // skip if this workspace matches the predicate for excluding packages
     if (this.excludeWorkspacePredicate(workspace)) {
       this.excluded.add(workspace);
 
       return;
     }
 
+    // skip if the package does not contain the intended run command
+    if (
+      typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+    ) {
+      return;
+    }
+
+    // add the workspace to the run graph
     const node = this.runGraph.addNode(workspace.relativeCwd);
 
     await this.plan(node, workspace);
   }
 
+  // this function may be called more than once per package as the run graph
+  // is constructed
   plan = async (node: Node, workspace: Workspace): Promise<void> => {
     if (!node) {
       throw new Error(
@@ -506,42 +552,55 @@ class RunSupervisor {
 
     this.runMutexes[workspace.relativeCwd] = new Mutex();
 
-    for (const dependencyType of Manifest.hardDependencies) {
-      for (const descriptor of workspace.manifest
-        .getForScope(dependencyType)
-        .values()) {
-        const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
+    if (this.ignoreDependencies === false) {
+      for (const dependencyType of Manifest.hardDependencies) {
+        for (const descriptor of workspace.manifest
+          .getForScope(dependencyType)
+          .values()) {
+          const depWorkspace =
+            this.project.tryWorkspaceByDescriptor(descriptor);
 
-        if (
-          depWorkspace === null ||
-          this.excludeWorkspacePredicate(depWorkspace)
-        ) {
-          continue;
-        }
+          // skip external packages
+          if (
+            depWorkspace === null ||
+            this.excludeWorkspacePredicate(depWorkspace)
+          ) {
+            continue;
+          }
 
-        const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
+          // ignore local workspaces without without the specified run command
+          if (
+            typeof depWorkspace.manifest.scripts.get(this.runCommand) ===
+            `undefined`
+          ) {
+            continue;
+          }
 
-        this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
+          const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
 
-        node.addDependency(dep);
+          this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
 
-        // this resolve call checks for cyclic dependencies
-        this.runGraph.checkCyclical(dep);
+          node.addDependency(dep);
 
-        const depsOfDepsNeedRerun = await this.plan(dep, depWorkspace);
+          // this resolve call checks for cyclic dependencies
+          this.runGraph.checkCyclical(dep);
 
-        let depNeedsRun = false;
+          const depsOfDepsNeedRerun = await this.plan(dep, depWorkspace);
 
-        if (depWorkspace !== this.project.topLevelWorkspace) {
-          depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
-        }
+          let depNeedsRun = false;
 
-        if (depNeedsRun || depsOfDepsNeedRerun) {
-          rerunParent = true;
-          this.removeFromExcluded(depWorkspace);
+          if (depWorkspace !== this.project.topLevelWorkspace) {
+            depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
+          }
+
+          if (depNeedsRun || depsOfDepsNeedRerun) {
+            rerunParent = true;
+            this.removeFromExcluded(depWorkspace);
+          }
         }
       }
     }
+
     let hasChanges = false;
 
     if (workspace !== this.project.topLevelWorkspace) {
@@ -724,10 +783,10 @@ class RunSupervisor {
           lastLevel: boolean,
           final: boolean
         ): string => {
-          const joiner = final && lastLevel ? "└─" : lastLevel ? "└─┬" : "├─";
+          const joiner = lastLevel ? "└─" : final && lastLevel ? "└─┬─" : "├─";
           const indent = depth == 0 ? "" : "  ".repeat(depth);
 
-          return `${indent}${joiner} ${msg}`;
+          return `${indent}${joiner}[${depth}] ${msg}`;
         };
 
         const treekeys = Object.keys(tree);
@@ -929,7 +988,7 @@ class RunSupervisor {
       }
       if (!!this.runReport.runStart) {
         this.runReport.workspaces[relativePath].runtimeSeconds =
-          timestamp - this.runReport.runStart;
+          timestamp - thread.start;
       }
     }
   }
@@ -1300,14 +1359,10 @@ class RunSupervisor {
       const wallTime = now - this.runReport.runStart;
       const savedTime = formatTimestampDifference(wallTime, cpuTime);
 
-      if (!isCI) {
-        output += `Cumulative: (cpu): ${formatTimestampDifference(
-          0,
-          totalMs
-        )}\n`;
-        output += `Saved: ${savedTime}\n`;
-      }
+      output += `Cumulative: (cpu): ${formatTimestampDifference(0, totalMs)}\n`;
+      output += `Saved: ${savedTime}\n`;
     }
+
     if (!!this.runReport.runStart) {
       output +=
         `Runtime (wall): ` +
@@ -1321,13 +1376,18 @@ class RunSupervisor {
     return output;
   };
 
-  // Returns a PQueue item
+  // Setup a run item, that will execute the run command when it's time comes
   createRunItem = (workspace: Workspace): RunCallback => {
+    // return a PQueue item
     return async (ctx: Context, cancelDependentJobs: () => void) =>
+      // limit to max concurrency
       await this.limit(
+        // pass an async callback that will execute the run command
         async (): Promise<boolean> =>
+          // wrap our callback in an otel span
           this.tracer.startSpan(
             { name: "command", ctx },
+            // pass one more async callback to the span, this one runs the command
             async ({ span, ctx }) => {
               const prefix = workspace.relativeCwd;
 
@@ -1362,6 +1422,7 @@ class RunSupervisor {
                 }${workspace.manifest.name?.name}`,
                 command
               );
+              span.addEvent("start");
 
               span.setAttributes(attr);
 
@@ -1378,17 +1439,20 @@ class RunSupervisor {
                   RunSupervisorReporterEvents.ignored,
                   workspace.relativeCwd
                 );
+                span.addEvent("ignored");
 
                 return true;
               }
 
               try {
-                if (this.runReport.failCount !== 0) {
+                if (this.runReport.failCount !== 0 && !this.continueOnError) {
                   // We have bailed skip all!
                   this.runReporter.emit(
                     RunSupervisorReporterEvents.skipped,
                     workspace.relativeCwd
                   );
+                  span.addEvent("skipped");
+
                   this.runLog?.set(
                     `${workspace.relativeCwd}#${this.runCommand}`,
                     {
@@ -1437,7 +1501,12 @@ class RunSupervisor {
                     }
                   );
 
-                  if (this.continueOnError === false) {
+                  if (this.failFast === true) {
+                    if (isCI) {
+                      process.stdout.write(
+                        "--fail-fast is set, terminating all processes\n"
+                      );
+                    }
                     void terminateAllChildProcesses();
                   }
 

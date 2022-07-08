@@ -23,5 +23,7 @@ export default class Test extends Build {
     description: `only test the current workspace`,
   });
 
+  ignoreDependencies = true;
+
   commandType: "build" | "test" = "test";
 }

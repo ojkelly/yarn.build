@@ -55,7 +55,7 @@ export default class Build extends BaseCommand {
   });
 
   dryRun = Option.Boolean(`-d,--dry-run`, false, {
-    description: `simulate running a build, but not actually run it`,
+    description: `simulate running a job, but not actually run it`,
   });
 
   ignoreBuildCache = Option.Boolean(`-r,--ignore-cache`, false, {
@@ -63,11 +63,15 @@ export default class Build extends BaseCommand {
   });
 
   maxConcurrency = Option.String(`-m,--max-concurrency`, {
-    description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine.`,
+    description: `is the maximum number of jobs that can run at a time, defaults to the number of logical CPUs on the current machine.`,
   });
 
   continueOnError = Option.Boolean("--continue-on-error", false, {
-    description: `if a build fails, continue with the rest`,
+    description: `if a job fails, continue with the rest`,
+  });
+
+  failFast = Option.Boolean("--fail-fast", false, {
+    description: `if a job fails, terminate other running jobs`,
   });
 
   exclude = Option.Array(`--exclude`, {
@@ -75,24 +79,28 @@ export default class Build extends BaseCommand {
   });
 
   excludeCurrent = Option.Boolean("--exclude-current", false, {
-    description: `build this workspaces dependencies, but not this workspace. Useful for running as part of a \`dev\` command.`,
+    description: `run for this workspaces dependencies, but not this workspace. Useful for running as part of a \`dev\` command.`,
   });
 
   onlyGitChanges = Option.Boolean("--changes", false, {
-    description: `only build packages that were changed in the last commit`,
+    description: `only run for packages that were changed in the last commit`,
   });
 
   onlyGitChangesSinceCommit = Option.String("--since", {
-    description: `only build packages that were changed since the given commit`,
+    description: `only run for packages that were changed since the given commit`,
   });
 
   onlyGitChangesSinceBranch = Option.String("--since-branch", {
-    description: `only build packages that have changes compared to the give branch. Uses 'git diff --name-only branch...'`,
+    description: `only run for packages that have changes compared to the give branch. Uses 'git diff --name-only branch...'`,
     arity: 1,
   });
 
   onlyCurrent = Option.Boolean("--only-current", false, {
-    description: `only build the current workspace`,
+    description: `only run for the current workspace`,
+  });
+
+  ignoreDependencies = Option.Boolean("--ignore-dependencies", false, {
+    description: `when true, don't run for packages this one depends on`,
   });
 
   public buildTargets = Option.Rest({ name: "workspaceNames" });
@@ -109,9 +117,6 @@ export default class Build extends BaseCommand {
   });
 
   forceQuit = false;
-
-  // Keep track of what is built, and if it needs to be rebuilt
-  buildLog: { [key: string]: { hash: string | undefined } } = {};
 
   commandType: "build" | "test" = "build";
 
@@ -250,7 +255,6 @@ export default class Build extends BaseCommand {
           this.continueOnError ?? !!pluginConfiguration.bail;
 
         // Safe to run because the input string is validated by clipanion using the schema property
-        // TODO: Why doesn't the Command validation cast this for us?
         const maxConcurrency =
           this.maxConcurrency === undefined
             ? cpus().length
@@ -266,6 +270,8 @@ export default class Build extends BaseCommand {
           [Attribute.YARN_BUILD_CONFIG_HIDE_BADGE]:
             pluginConfiguration.hideYarnBuildBadge,
           [Attribute.YARN_BUILD_CONFIG_MAX_CONCURRENCY]: maxConcurrency,
+          [Attribute.YARN_BUILD_FLAGS_IGNORE_DEPENDENCIES]:
+            this.ignoreDependencies,
         });
 
         const report = await StreamReport.start(
@@ -352,6 +358,8 @@ export default class Build extends BaseCommand {
               concurrency: maxConcurrency,
               continueOnError: this.continueOnError,
               excludeWorkspacePredicate,
+              ignoreDependencies: this.ignoreDependencies,
+              failFast: this.failFast,
             });
 
             supervisor.runReporter.on(

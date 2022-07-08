@@ -35,6 +35,7 @@ export const Attribute = {
   YARN_BUILD_FLAGS_SINCE: "yarn.build.flags.since",
   YARN_BUILD_FLAGS_SINCE_BRANCH: "yarn.build.flags.since-branch",
   YARN_BUILD_FLAGS_ONLY_CURRENT: "yarn.build.flags.only-current",
+  YARN_BUILD_FLAGS_IGNORE_DEPENDENCIES: "yarn.build.flags.ignore-dependencies",
 
   // yarn bundle
   YARN_BUILD_FLAGS_BUNDLE_QUIET: "yarn.build.flags.bundle.quiet",
