@@ -1,6 +1,6 @@
 name: "@internal/lorem-ipsum"
 version: 1.0.0
-main: dist/index.js
+# main: dist/index.js
 
 # license, none for the example
 license: UNLICENSED
@@ -26,10 +26,3 @@ devDependencies:
 
 jest:
   preset: ts-jest
-
-# plugin stuff
-yarn.build:
-  # test comment
-  input: .
-  output: dist
-

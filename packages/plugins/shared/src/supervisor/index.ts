@@ -180,6 +180,8 @@ class RunSupervisor {
 
   excludeWorkspacePredicate: (targetWorkspace: Workspace) => boolean;
 
+  checkIfRunIsRequiredCache: { [key: PortablePath]: boolean } = {};
+
   private hasSetup = false;
 
   constructor({
@@ -672,11 +674,23 @@ class RunSupervisor {
 
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
     if (this.ignoreRunCache === true) {
+      this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
+
       return true;
+    }
+
+    // if we've already checked this workspace, we don't need to check it again
+    if (
+      typeof this.checkIfRunIsRequiredCache[workspace.relativeCwd] !==
+      `undefined`
+    ) {
+      return this.checkIfRunIsRequiredCache[workspace.relativeCwd];
     }
 
     //  skip if this workspace doesn't have the command we want to run
     if (typeof workspace.manifest.scripts.get(this.runCommand) !== `string`) {
+      this.checkIfRunIsRequiredCache[workspace.relativeCwd] = false;
+
       return false;
     }
 
@@ -685,31 +699,77 @@ class RunSupervisor {
 
     const workspaceConfiguration = this.getWorkspaceConfig(workspace);
 
-    // Determine which folders (if any) may contain run artifacts
-    // we need to ignore.
-    const outputPaths = Array.isArray(workspaceConfiguration.folders.output)
-      ? [...workspaceConfiguration.folders.output]
-      : [workspaceConfiguration.folders.output];
+    const inputPaths = new Set<string>();
 
-    if (typeof workspace?.manifest?.raw?.bin === "string") {
-      outputPaths.push(workspace.manifest.raw.bin);
-    } else if (typeof workspace?.manifest?.raw?.directories?.bin === "string") {
-      outputPaths.push(workspace.manifest.raw.directories.bin);
-    } else if (typeof workspace?.manifest?.raw?.files === "string") {
-      outputPaths.push(workspace.manifest.raw.files);
-    } else if (Array.isArray(workspace?.manifest?.raw?.files)) {
-      outputPaths.push(...workspace.manifest.raw.files);
-    } else if (typeof workspace?.manifest?.raw?.main === "string") {
-      outputPaths.push(workspace.manifest.raw.main);
+    Array.isArray(workspaceConfiguration.folders.input)
+      ? workspaceConfiguration.folders.input.forEach(
+          (p: string) => p && inputPaths.add(p)
+        )
+      : inputPaths.add(workspaceConfiguration.folders.input);
+
+    const outputPaths = new Set<string>();
+
+    Array.isArray(workspaceConfiguration.folders.output)
+      ? workspaceConfiguration.folders.output.forEach(
+          (p) => p && outputPaths.add(p)
+        )
+      : outputPaths.add(workspaceConfiguration.folders.output);
+
+    {
+      // Check for conventional artifact folders in package.json
+      if (typeof workspace?.manifest?.raw?.bin === "string") {
+        outputPaths.add(workspace.manifest.raw.bin);
+      } else if (
+        typeof workspace?.manifest?.raw?.directories?.bin === "string"
+      ) {
+        outputPaths.add(workspace.manifest.raw.directories.bin);
+      } else if (typeof workspace?.manifest?.raw?.files === "string") {
+        outputPaths.add(workspace.manifest.raw.files);
+      } else if (Array.isArray(workspace?.manifest?.raw?.files)) {
+        workspace.manifest.raw.files.forEach((p) => p && outputPaths.add(p));
+      } else if (typeof workspace?.manifest?.raw?.main === "string") {
+        outputPaths.add(workspace.manifest.raw.main);
+      }
     }
 
-    const ignorePaths = outputPaths.map(
+    // check for a tsconfig.json # 170
+    {
+      try {
+        const tsconfigPath = xfs.pathUtils.join(
+          workspace.relativeCwd,
+          "tsconfig.json" as Filename
+        );
+        const tsconfigStat = await xfs.statPromise(tsconfigPath);
+
+        if (tsconfigStat.isFile()) {
+          // parse tsconfig for output, input and exclude
+          const tsconfig = await xfs.readJsonPromise(tsconfigPath);
+
+          if (tsconfig?.compilerOptions?.outDir) {
+            outputPaths.add(tsconfig.compilerOptions.outDir);
+          }
+
+          if (tsconfig?.include) {
+            Array.isArray(tsconfig.include)
+              ? tsconfig.include.forEach((p: string) => p && inputPaths.add(p))
+              : inputPaths.add(tsconfig.include);
+          }
+          if (tsconfig?.exclude) {
+            Array.isArray(tsconfig.include)
+              ? tsconfig.include.forEach((p: string) => p && outputPaths.add(p))
+              : outputPaths.add(tsconfig.include);
+          }
+        }
+      } catch (err) {
+        console.warn(workspace.relativeCwd, "\n", err);
+      }
+    }
+
+    const ignorePaths = [...outputPaths].map(
       (d) => `${dir}${path.posix.sep}${d}` as PortablePath
     );
 
-    const input = workspaceConfiguration.folders.input;
-    const inputPaths = typeof input === "string" ? [input] : input;
-    const srcPaths = inputPaths
+    const srcPaths = [...inputPaths]
       ?.map((d) => `${dir}${path.posix.sep}${d}` as PortablePath)
       .map((d) =>
         d?.endsWith("/.") ? (d.substring(0, d.length - 2) as PortablePath) : d
@@ -750,6 +810,8 @@ class RunSupervisor {
     } finally {
       release();
     }
+
+    this.checkIfRunIsRequiredCache[workspace.relativeCwd] = needsRun;
 
     return needsRun;
   }
