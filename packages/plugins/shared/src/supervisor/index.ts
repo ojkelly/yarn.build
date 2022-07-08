@@ -158,6 +158,8 @@ class RunSupervisor {
 
   ignoreDependencies = false;
 
+  failFast = false;
+
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
@@ -194,6 +196,7 @@ class RunSupervisor {
     continueOnError,
     excludeWorkspacePredicate,
     ignoreDependencies,
+    failFast,
   }: {
     project: Project;
     report: StreamReport;
@@ -208,6 +211,7 @@ class RunSupervisor {
     continueOnError: boolean;
     excludeWorkspacePredicate: (targetWorkspace: Workspace) => boolean;
     ignoreDependencies: boolean;
+    failFast: boolean;
   }) {
     // fallback to the max concurrency of cpu threads
     const resolvedConcurrency = concurrency ?? cpus().length;
@@ -238,6 +242,7 @@ class RunSupervisor {
       });
     }
     this.ignoreDependencies = ignoreDependencies;
+    this.failFast = failFast;
   }
 
   async setup(): Promise<void> {
@@ -1496,12 +1501,14 @@ class RunSupervisor {
                     }
                   );
 
-                  // if (this.continueOnError === false) {
-                  //   if (isCI) {
-                  //     process.stdout.write("terminating all processes\n");
-                  //   }
-                  //   void terminateAllChildProcesses();
-                  // }
+                  if (this.failFast === true) {
+                    if (isCI) {
+                      process.stdout.write(
+                        "--fail-fast is set, terminating all processes\n"
+                      );
+                    }
+                    void terminateAllChildProcesses();
+                  }
 
                   return false;
                 }

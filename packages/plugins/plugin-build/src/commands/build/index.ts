@@ -55,7 +55,7 @@ export default class Build extends BaseCommand {
   });
 
   dryRun = Option.Boolean(`-d,--dry-run`, false, {
-    description: `simulate running a build, but not actually run it`,
+    description: `simulate running a job, but not actually run it`,
   });
 
   ignoreBuildCache = Option.Boolean(`-r,--ignore-cache`, false, {
@@ -63,11 +63,15 @@ export default class Build extends BaseCommand {
   });
 
   maxConcurrency = Option.String(`-m,--max-concurrency`, {
-    description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine.`,
+    description: `is the maximum number of jobs that can run at a time, defaults to the number of logical CPUs on the current machine.`,
   });
 
   continueOnError = Option.Boolean("--continue-on-error", false, {
-    description: `if a run fails, continue with the rest`,
+    description: `if a job fails, continue with the rest`,
+  });
+
+  failFast = Option.Boolean("--fail-fast", false, {
+    description: `if a job fails, terminate other running jobs`,
   });
 
   exclude = Option.Array(`--exclude`, {
@@ -355,6 +359,7 @@ export default class Build extends BaseCommand {
               continueOnError: this.continueOnError,
               excludeWorkspacePredicate,
               ignoreDependencies: this.ignoreDependencies,
+              failFast: this.failFast,
             });
 
             supervisor.runReporter.on(
