@@ -17,9 +17,6 @@ const isYarnBuildConfiguration = t.isObject({
   bail: t.isBoolean(),
   hideYarnBuildBadge: t.isBoolean(),
   ignoreFile: t.isString(),
-  maxConcurrency: t.isOptional(
-    t.applyCascade(t.isNumber(), [t.isInteger(), t.isInInclusiveRange(1, 128)])
-  ),
 });
 
 type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
@@ -33,7 +30,6 @@ const DEFAULT_CONFIG: YarnBuildConfiguration = {
   bail: true,
   hideYarnBuildBadge: false,
   ignoreFile: DEFAULT_IGNORE_FILE,
-  maxConcurrency: 8,
 };
 
 async function getConfiguration(
