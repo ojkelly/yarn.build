@@ -395,13 +395,13 @@ class RunSupervisor {
           const wrk = this.runReport.workspaces[relativeCwd];
 
           if (isCI) {
-            process.stdout.write(
-              `[success] ${wrk.name}`.padEnd(60) +
-                `${formatTimestampDifference(
-                  0,
-                  wrk.runtimeSeconds ?? 0
-                ).padStart(20)}\n`
-            );
+            const pkg = `✅ ${relativeCwd}`.padEnd(60);
+            const timing = formatTimestampDifference(
+              0,
+              wrk.runtimeSeconds ?? 0
+            ).padStart(19);
+
+            process.stdout.write(`${pkg}${timing}\n`);
           }
           release();
         });
@@ -416,17 +416,11 @@ class RunSupervisor {
           this.runReport.skipCount++;
           release();
 
-          const wrk = this.runReport.workspaces[relativeCwd];
-          const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
-
           if (isCI) {
-            process.stdout.write(
-              `[skipped${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
-                wrk.name
-              } `.padEnd(60) +
-                `--`.padStart(20) +
-                `\n`
-            );
+            const pkg = `⏩ ${relativeCwd} `.padEnd(60);
+            const timing = `--`.padStart(19);
+
+            process.stdout.write(`${pkg}${timing}\n`);
           }
         });
       }
@@ -444,13 +438,12 @@ class RunSupervisor {
           const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
 
           if (isCI) {
-            process.stdout.write(
-              `[ignored${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
-                wrk.name
-              } `.padEnd(60) +
-                `--`.padStart(20) +
-                `\n`
-            );
+            const pkg = `[IGNORE${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
+              wrk.name
+            } `.padEnd(60);
+            const timing = `--`.padStart(19);
+
+            process.stdout.write(`${pkg}${timing}\n`);
           }
         });
       }
@@ -471,16 +464,15 @@ class RunSupervisor {
           const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
 
           if (isCI) {
-            process.stdout.write(
-              `[fail${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
-                wrk.name
-              } `.padEnd(60) +
-                `*${formatTimestampDifference(
-                  0,
-                  wrk.runtimeSeconds ?? 0
-                )}`.padStart(20) +
-                `\n`
-            );
+            const pkg = `❌ ${relativeCwd}`.padEnd(50);
+            const timing = `${
+              l?.exitCode ? `(exit code: ${l?.exitCode})` : "→"
+            } ${formatTimestampDifference(
+              0,
+              wrk.runtimeSeconds ?? 0
+            )}`.padStart(29);
+
+            process.stdout.write(`${pkg}${timing}\n`);
           }
         });
       }
@@ -1362,14 +1354,10 @@ class RunSupervisor {
       const wallTime = now - this.runReport.runStart;
       const savedTime = formatTimestampDifference(wallTime, cpuTime);
 
-      if (!isCI) {
-        output += `Cumulative: (cpu): ${formatTimestampDifference(
-          0,
-          totalMs
-        )}\n`;
-        output += `Saved: ${savedTime}\n`;
-      }
+      output += `Cumulative: (cpu): ${formatTimestampDifference(0, totalMs)}\n`;
+      output += `Saved: ${savedTime}\n`;
     }
+
     if (!!this.runReport.runStart) {
       output +=
         `Runtime (wall): ` +
@@ -1383,13 +1371,18 @@ class RunSupervisor {
     return output;
   };
 
-  // Returns a PQueue item
+  // Setup a run item, that will execute the run command when it's time comes
   createRunItem = (workspace: Workspace): RunCallback => {
+    // return a PQueue item
     return async (ctx: Context, cancelDependentJobs: () => void) =>
+      // limit to max concurrency
       await this.limit(
+        // pass an async callback that will execute the run command
         async (): Promise<boolean> =>
+          // wrap our callback in an otel span
           this.tracer.startSpan(
             { name: "command", ctx },
+            // pass one more async callback to the span, this one runs the command
             async ({ span, ctx }) => {
               const prefix = workspace.relativeCwd;
 
@@ -1424,6 +1417,7 @@ class RunSupervisor {
                 }${workspace.manifest.name?.name}`,
                 command
               );
+              span.addEvent("start");
 
               span.setAttributes(attr);
 
@@ -1440,17 +1434,20 @@ class RunSupervisor {
                   RunSupervisorReporterEvents.ignored,
                   workspace.relativeCwd
                 );
+                span.addEvent("ignored");
 
                 return true;
               }
 
               try {
-                if (this.runReport.failCount !== 0) {
+                if (this.runReport.failCount !== 0 && !this.continueOnError) {
                   // We have bailed skip all!
                   this.runReporter.emit(
                     RunSupervisorReporterEvents.skipped,
                     workspace.relativeCwd
                   );
+                  span.addEvent("skipped");
+
                   this.runLog?.set(
                     `${workspace.relativeCwd}#${this.runCommand}`,
                     {
@@ -1499,9 +1496,12 @@ class RunSupervisor {
                     }
                   );
 
-                  if (this.continueOnError === false) {
-                    void terminateAllChildProcesses();
-                  }
+                  // if (this.continueOnError === false) {
+                  //   if (isCI) {
+                  //     process.stdout.write("terminating all processes\n");
+                  //   }
+                  //   void terminateAllChildProcesses();
+                  // }
 
                   return false;
                 }
