@@ -196,7 +196,7 @@ class RunSupervisor {
     continueOnError: boolean;
     excludeWorkspacePredicate: (targetWorkspace: Workspace) => boolean;
   }) {
-    const resolvedConcurrency = concurrency ?? Math.max(1, cpus().length);
+    const resolvedConcurrency = Math.max(concurrency ?? 1, cpus().length);
 
     this.configuration = configuration;
     this.pluginConfiguration = pluginConfiguration;

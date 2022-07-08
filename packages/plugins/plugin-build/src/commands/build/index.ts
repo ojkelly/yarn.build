@@ -12,6 +12,7 @@ import { PortablePath } from "@yarnpkg/fslib";
 import { Command, Option, Usage } from "clipanion";
 import path from "path";
 import micromatch from "micromatch";
+import { cpus } from "os";
 
 import { EventEmitter } from "events";
 import { GetPluginConfiguration } from "@ojkelly/yarn-build-shared/src/config";
@@ -57,7 +58,7 @@ export default class Build extends BaseCommand {
   });
 
   maxConcurrency = Option.String(`-m,--max-concurrency`, {
-    description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine. Will override the global config option.`,
+    description: `is the maximum number of builds that can run at a time, defaults to the number of logical CPUs on the current machine.`,
   });
 
   continueOnError = Option.Boolean("--continue-on-error", false, {
@@ -214,10 +215,9 @@ export default class Build extends BaseCommand {
     this.continueOnError = this.continueOnError ?? !!pluginConfiguration.bail;
 
     // Safe to run because the input string is validated by clipanion using the schema property
-    // TODO: Why doesn't the Command validation cast this for us?
     const maxConcurrency =
       this.maxConcurrency === undefined
-        ? pluginConfiguration.maxConcurrency
+        ? cpus().length
         : parseInt(this.maxConcurrency);
 
     const report = await StreamReport.start(
