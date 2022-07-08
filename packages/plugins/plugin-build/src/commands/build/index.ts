@@ -29,7 +29,6 @@ import { terminateProcess } from "@ojkelly/yarn-build-shared/src/supervisor/term
 import { SpanStatusCode, Context, trace } from "@opentelemetry/api";
 
 import { Tracer, Attribute } from "@ojkelly/yarn-build-shared/src/tracing";
-// import { Tracer } from "@opentelemetry/sdk-trace-base";
 
 export default class Build extends BaseCommand {
   static paths = [[`build`]];
