@@ -254,7 +254,7 @@ export default class Build extends BaseCommand {
         // TODO: Why doesn't the Command validation cast this for us?
         const maxConcurrency =
           this.maxConcurrency === undefined
-            ? pluginConfiguration.maxConcurrency
+            ? cpus().length
             : parseInt(this.maxConcurrency);
 
         rootSpan.setAttributes({
@@ -267,7 +267,7 @@ export default class Build extends BaseCommand {
           [Attribute.YARN_BUILD_CONFIG_HIDE_BADGE]:
             pluginConfiguration.hideYarnBuildBadge,
           [Attribute.YARN_BUILD_CONFIG_MAX_CONCURRENCY]:
-            pluginConfiguration.maxConcurrency,
+            maxConcurrency,
         });
 
         const report = await StreamReport.start(
