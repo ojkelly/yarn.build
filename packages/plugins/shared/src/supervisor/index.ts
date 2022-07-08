@@ -147,6 +147,8 @@ class RunSupervisor {
 
   runReporter: EventEmitter = new EventEmitter();
 
+  ignoreDependencies = false;
+
   runReport: RunReport = {
     mutex: new Mutex(),
     totalJobs: 0,
@@ -182,6 +184,7 @@ class RunSupervisor {
     concurrency,
     continueOnError,
     excludeWorkspacePredicate,
+    ignoreDependencies,
   }: {
     project: Project;
     report: StreamReport;
@@ -195,6 +198,7 @@ class RunSupervisor {
     concurrency?: number | undefined;
     continueOnError: boolean;
     excludeWorkspacePredicate: (targetWorkspace: Workspace) => boolean;
+    ignoreDependencies: boolean;
   }) {
     // fallback to the max concurrency of cpu threads
     const resolvedConcurrency = concurrency ?? cpus().length;
@@ -224,6 +228,7 @@ class RunSupervisor {
         flags: "a",
       });
     }
+    this.ignoreDependencies = ignoreDependencies;
   }
 
   async setup(): Promise<void> {
@@ -431,9 +436,10 @@ class RunSupervisor {
 
           if (isCI) {
             process.stdout.write(
-              `=> [fail${
-                l?.exitCode ? `: ${l?.exitCode}` : ""
-              }] ${wrk.name.padEnd(60, " ")}${formatTimestampDifference(
+              `[fail${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${wrk.name.padEnd(
+                60,
+                " "
+              )}${formatTimestampDifference(
                 0,
                 wrk.runtimeSeconds ?? 0
               ).padStart(10)}\n`
@@ -468,22 +474,37 @@ class RunSupervisor {
     }
   }
 
+  // Add a run target to the run graph
+  // we may call this function multiple times per package when discovering the
+  // full run graph
   async addRunTarget(workspace: Workspace): Promise<void> {
+    // skip if this workspace is excluded
     if (this.excluded.has(workspace)) {
       return;
     }
 
+    // skip if this workspace matches the predicate for excluding packages
     if (this.excludeWorkspacePredicate(workspace)) {
       this.excluded.add(workspace);
 
       return;
     }
 
+    // skip if the package does not contain the intended run command
+    if (
+      typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+    ) {
+      return;
+    }
+
+    // add the workspace to the run graph
     const node = this.runGraph.addNode(workspace.relativeCwd);
 
     await this.plan(node, workspace);
   }
 
+  // this function may be called more than once per package as the run graph
+  // is constructed
   plan = async (node: Node, workspace: Workspace): Promise<void> => {
     if (!node) {
       throw new Error(
@@ -497,42 +518,55 @@ class RunSupervisor {
 
     this.runMutexes[workspace.relativeCwd] = new Mutex();
 
-    for (const dependencyType of Manifest.hardDependencies) {
-      for (const descriptor of workspace.manifest
-        .getForScope(dependencyType)
-        .values()) {
-        const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
+    if (this.ignoreDependencies === false) {
+      for (const dependencyType of Manifest.hardDependencies) {
+        for (const descriptor of workspace.manifest
+          .getForScope(dependencyType)
+          .values()) {
+          const depWorkspace =
+            this.project.tryWorkspaceByDescriptor(descriptor);
 
-        if (
-          depWorkspace === null ||
-          this.excludeWorkspacePredicate(depWorkspace)
-        ) {
-          continue;
-        }
+          // skip external packages
+          if (
+            depWorkspace === null ||
+            this.excludeWorkspacePredicate(depWorkspace)
+          ) {
+            continue;
+          }
 
-        const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
+          // ignore local workspaces without without the specified run command
+          if (
+            typeof depWorkspace.manifest.scripts.get(this.runCommand) ===
+            `undefined`
+          ) {
+            continue;
+          }
 
-        this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
+          const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
 
-        node.addDependency(dep);
+          this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
 
-        // this resolve call checks for cyclic dependencies
-        this.runGraph.checkCyclical(dep);
+          node.addDependency(dep);
 
-        const depsOfDepsNeedRerun = await this.plan(dep, depWorkspace);
+          // this resolve call checks for cyclic dependencies
+          this.runGraph.checkCyclical(dep);
 
-        let depNeedsRun = false;
+          const depsOfDepsNeedRerun = await this.plan(dep, depWorkspace);
 
-        if (depWorkspace !== this.project.topLevelWorkspace) {
-          depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
-        }
+          let depNeedsRun = false;
 
-        if (depNeedsRun || depsOfDepsNeedRerun) {
-          rerunParent = true;
-          this.removeFromExcluded(depWorkspace);
+          if (depWorkspace !== this.project.topLevelWorkspace) {
+            depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
+          }
+
+          if (depNeedsRun || depsOfDepsNeedRerun) {
+            rerunParent = true;
+            this.removeFromExcluded(depWorkspace);
+          }
         }
       }
     }
+
     let hasChanges = false;
 
     if (workspace !== this.project.topLevelWorkspace) {
@@ -694,7 +728,7 @@ class RunSupervisor {
 
     let output = "";
 
-    const tree: { [depth: number]: string[] } = { 1: [] };
+    const tree: { [depth: number]: string[] } = {};
 
     this.runGraph.dryRunCallback = (node: Node, iteration: number) => {
       if (!tree[iteration]) {
@@ -715,7 +749,7 @@ class RunSupervisor {
       const joiner = final && lastLevel ? "└─" : lastLevel ? "└─┬" : "├─";
       const indent = depth == 0 ? "" : "  ".repeat(depth);
 
-      return `${indent}${joiner} ${msg}`;
+      return `${indent}${joiner}[${depth}] ${msg}`;
     };
 
     const treekeys = Object.keys(tree);
@@ -758,7 +792,9 @@ class RunSupervisor {
     this.runReport.runStart = Date.now();
 
     if (isCI || this.dryRun) {
-      output += `${this.formatHeader("Run Order") + "\n"}`;
+      output += `${
+        this.formatHeader(`Run Order for (${this.runCommand})`) + "\n"
+      }`;
       output += await this.performDryRun();
 
       if (!isCI) {

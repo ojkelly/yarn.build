@@ -22,4 +22,6 @@ export default class Test extends Build {
   onlyCurrent = Option.Boolean("--only-current", true, {
     description: `only test the current workspace`,
   });
+
+  ignoreDependencies = true;
 }

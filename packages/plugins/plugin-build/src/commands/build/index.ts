@@ -214,6 +214,8 @@ export default class Build extends BaseCommand {
         ? rootCandidates.filter(buildTargetPredicate)
         : rootCandidates;
 
+    // console.log({ rootCandidates });
+
     const pluginConfiguration = await GetPluginConfiguration(configuration);
 
     this.continueOnError = this.continueOnError ?? !!pluginConfiguration.bail;
@@ -298,6 +300,7 @@ export default class Build extends BaseCommand {
           concurrency: maxConcurrency,
           continueOnError: this.continueOnError,
           excludeWorkspacePredicate,
+          ignoreDependencies: this.ignoreDependencies,
         });
 
         supervisor.runReporter.on(RunSupervisorReporterEvents.forceQuit, () => {
@@ -306,6 +309,7 @@ export default class Build extends BaseCommand {
 
         await supervisor.setup();
 
+        // Add primary run targets
         for (const targetWorkspace of buildTargetCandidates) {
           await addTargets({
             targetWorkspace,
