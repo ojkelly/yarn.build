@@ -62,7 +62,7 @@ export default class Build extends BaseCommand {
   });
 
   continueOnError = Option.Boolean("--continue-on-error", false, {
-    description: `if a build fails, continue with the rest`,
+    description: `if a run fails, continue with the rest`,
   });
 
   exclude = Option.Array(`--exclude`, {
@@ -70,24 +70,28 @@ export default class Build extends BaseCommand {
   });
 
   excludeCurrent = Option.Boolean("--exclude-current", false, {
-    description: `build this workspaces dependencies, but not this workspace. Useful for running as part of a \`dev\` command.`,
+    description: `run for this workspaces dependencies, but not this workspace. Useful for running as part of a \`dev\` command.`,
   });
 
   onlyGitChanges = Option.Boolean("--changes", false, {
-    description: `only build packages that were changed in the last commit`,
+    description: `only run for packages that were changed in the last commit`,
   });
 
   onlyGitChangesSinceCommit = Option.String("--since", {
-    description: `only build packages that were changed since the given commit`,
+    description: `only run for packages that were changed since the given commit`,
   });
 
   onlyGitChangesSinceBranch = Option.String("--since-branch", {
-    description: `only build packages that have changes compared to the give branch. Uses 'git diff --name-only branch...'`,
+    description: `only run for packages that have changes compared to the give branch. Uses 'git diff --name-only branch...'`,
     arity: 1,
   });
 
   onlyCurrent = Option.Boolean("--only-current", false, {
-    description: `only build the current workspace`,
+    description: `only run for the current workspace`,
+  });
+
+  ignoreDependencies = Option.Boolean("--ignore-dependencies", false, {
+    description: `when true, don't run for packages this one depends on`,
   });
 
   public buildTargets = Option.Rest({ name: "workspaceNames" });
