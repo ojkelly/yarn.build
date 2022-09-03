@@ -829,17 +829,9 @@ class RunSupervisor {
             const paths = (await glob(op, { dot: true })) as Filename[];
 
             const files = await Promise.all(
-              paths.map(async (p) => {
-                const opstat = await xfs.statPromise(
-                  xfs.pathUtils.join(workspace.relativeCwd, p)
-                );
-
-                if (!opstat.isDirectory()) {
-                  return true;
-                }
-
-                return false;
-              })
+              paths.map((p) => xfs.existsPromise(
+                  xfs.pathUtils.join(workspace.relativeCwd, p))
+              )
             );
 
             return files.some((v) => v === true);
