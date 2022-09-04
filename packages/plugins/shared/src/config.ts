@@ -31,7 +31,7 @@ type YarnBuildManifestConfiguration = t.InferType<typeof isYarnBuildManifestConf
 const DEFAULT_CONFIG: YarnBuildConfiguration = {
   folders: {
     input: ".",
-    output: ["build", "node_modules"],
+    output: "build",
   },
   exclude: [],
   bail: true,

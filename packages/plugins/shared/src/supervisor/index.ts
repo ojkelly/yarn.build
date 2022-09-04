@@ -799,12 +799,8 @@ class RunSupervisor {
     // #171 check if the output paths exist
     // if any don't, we need to rebuild
     if (!needsRun) {
-      const checkOutputFolders = [...outputPaths].filter(
-        (v) => v !== "node_modules"
-      );
-
-      const outputFolderCheck = await Promise.all(
-        [...checkOutputFolders].map(async (op) => {
+      const outputPathsCheck = await Promise.all(
+        [...outputPaths].map(async (op) => {
           try {
             const paths = (await glob(op, { dot: true })) as Filename[];
 
@@ -821,7 +817,7 @@ class RunSupervisor {
         })
       );
 
-      if (outputFolderCheck.some((v) => v === true)) {
+      if (outputPathsCheck.some((v) => v === true)) {
         needsRun = true;
       }
     }
