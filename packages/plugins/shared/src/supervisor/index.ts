@@ -678,6 +678,25 @@ class RunSupervisor {
       return false;
     }
 
+    // we need to build if our dependencies needs to build
+    for (const dependencyType of Manifest.hardDependencies) {
+      for (const descriptor of workspace.manifest
+          .getForScope(dependencyType)
+          .values()) {
+        const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
+
+        if (depWorkspace === null) continue;
+
+
+        if (this.checkIfRunIsRequiredCache[depWorkspace.relativeCwd] === true) {
+          this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
+
+          return true;
+        }
+      }
+    }
+
+
     let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
