@@ -749,18 +749,15 @@ class RunSupervisor {
       }
     }
 
-    const ignorePaths = [...outputPaths].map(
-      (d) => `${dir}${path.posix.sep}${d}` as PortablePath
-    );
-
-    const srcPaths = [...inputPaths]
-      ?.map((d) => `${dir}${path.posix.sep}${d}` as PortablePath)
-      .map((d) =>
-        d?.endsWith("/.") ? (d.substring(0, d.length - 2) as PortablePath) : d
-      );
-
     // Traverse the dirs and see if they've been modified
     {
+      const ignorePaths = [...outputPaths].map(
+          (d) => ppath.normalize(ppath.join(dir, d as Filename))
+      );
+
+      const srcPaths = [...inputPaths].map(
+          (d) => ppath.normalize(ppath.join(dir, d as Filename))
+      );
       const release = await this.runReport.mutex.acquire();
 
       try {
@@ -773,7 +770,7 @@ class RunSupervisor {
         }
 
         const currentLastModified = await getLastModifiedForPaths(
-          srcPaths ?? [dir],
+          srcPaths,
           ignorePaths
         );
 
