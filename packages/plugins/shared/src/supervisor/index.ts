@@ -798,7 +798,7 @@ class RunSupervisor {
 
     // #171 check if the output paths exist
     // if any don't, we need to rebuild
-    {
+    if (!needsRun) {
       const checkOutputFolders = [...outputPaths].filter(
         (v) => v !== "node_modules"
       );
