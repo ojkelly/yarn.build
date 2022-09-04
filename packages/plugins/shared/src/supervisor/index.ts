@@ -754,11 +754,6 @@ class RunSupervisor {
               ? tsconfig.include.forEach((p: string) => p && inputPaths.add(p))
               : inputPaths.add(tsconfig.include);
           }
-          if (tsconfig?.exclude) {
-            Array.isArray(tsconfig.exclude)
-              ? tsconfig.exclude.forEach((p: string) => p && outputPaths.add(p))
-              : outputPaths.add(tsconfig.exclude);
-          }
         }
       } catch (err) {
         console.warn(workspace.relativeCwd, "\n", err);
