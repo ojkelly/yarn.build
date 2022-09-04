@@ -59,6 +59,7 @@ const addTargets = async ({
     } else {
       // we're in a specific target
       await supervisor.addRunTarget(targetWorkspace);
+      // todo if our workspace needs to be rebuilt, mark all dependent workspaces for rerun
     }
   } catch (err) {
     if (err instanceof CyclicDependencyError) {
