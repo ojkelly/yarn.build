@@ -19,7 +19,14 @@ const isYarnBuildConfiguration = t.isObject({
   ignoreFile: t.isString(),
 });
 
+const isYarnBuildManifestConfiguration = t.isObject({
+  input: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
+  output: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
+});
+
 type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
+
+type YarnBuildManifestConfiguration = t.InferType<typeof isYarnBuildManifestConfiguration>;
 
 const DEFAULT_CONFIG: YarnBuildConfiguration = {
   folders: {
@@ -63,7 +70,7 @@ async function getConfiguration(
         tip = ` (config is corrupted, please check it matches the shape in the yarn.build readme.`;
 
       throw new Error(
-        `Parse error when loading ${rcPath}; please check it's proper Yaml${tip}`
+          `Parse error when loading ${rcPath}; please check it's proper Yaml${tip}`
       );
     }
   }
@@ -93,6 +100,20 @@ async function GetPluginConfiguration(
   };
 }
 
+function getWorkspaceConfiguration(packageJsonManifest: {
+  [key: string]: any;
+}): YarnBuildManifestConfiguration {
+  const configuration = {
+    ...packageJsonManifest["yarn.build"]
+  };
+
+  if (isYarnBuildManifestConfiguration(configuration)) {
+    return configuration;
+  }
+
+  return {};
+}
+
 export {
   isYarnBuildConfiguration,
   YarnBuildConfiguration,
@@ -100,4 +121,7 @@ export {
   GetPartialPluginConfiguration,
   DEFAULT_IGNORE_FILE,
   DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME,
+  isYarnBuildManifestConfiguration,
+  YarnBuildManifestConfiguration,
+  getWorkspaceConfiguration
 };

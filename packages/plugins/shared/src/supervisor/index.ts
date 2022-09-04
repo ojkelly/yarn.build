@@ -11,7 +11,10 @@ import {
 import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
-import { isYarnBuildConfiguration, YarnBuildConfiguration } from "../config";
+import {
+  getWorkspaceConfiguration,
+  YarnBuildConfiguration
+} from "../config";
 import micromatch from "micromatch";
 import glob from "glob-promise";
 
@@ -653,25 +656,6 @@ class RunSupervisor {
     return;
   };
 
-  private getWorkspaceConfig(workspace: Workspace): YarnBuildConfiguration {
-    const errors: string[] = [];
-    const workspaceConfiguration = {
-      ...this.pluginConfiguration,
-      folders: {
-        ...this.pluginConfiguration.folders,
-        ...workspace?.manifest.raw["yarn.build"],
-      },
-    };
-
-    if (isYarnBuildConfiguration(workspaceConfiguration, { errors })) {
-      return workspaceConfiguration;
-    }
-
-    console.warn(errors);
-
-    return this.pluginConfiguration;
-  }
-
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
     if (this.ignoreRunCache === true) {
       this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
@@ -697,25 +681,30 @@ class RunSupervisor {
     let needsRun = false;
     const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
-    const workspaceConfiguration = this.getWorkspaceConfig(workspace);
+    const workspaceConfiguration = getWorkspaceConfiguration(workspace.manifest.raw);
+    const useExplicitInputPaths = workspaceConfiguration?.input != null;
+    const useExplicitOutputPaths = workspaceConfiguration?.output != null;
 
     const inputPaths = new Set<string>();
+    const baseInputPaths = workspaceConfiguration.input ?? this.pluginConfiguration.folders.input;
 
-    Array.isArray(workspaceConfiguration.folders.input)
-      ? workspaceConfiguration.folders.input.forEach(
+    Array.isArray(baseInputPaths)
+      ? baseInputPaths.forEach(
           (p: string) => p && inputPaths.add(p)
         )
-      : inputPaths.add(workspaceConfiguration.folders.input);
+      : inputPaths.add(baseInputPaths);
+
 
     const outputPaths = new Set<string>();
+    const baseOutputPaths = workspaceConfiguration.output ?? this.pluginConfiguration.folders.output;
 
-    Array.isArray(workspaceConfiguration.folders.output)
-      ? workspaceConfiguration.folders.output.forEach(
+    Array.isArray(baseOutputPaths)
+      ? baseOutputPaths.forEach(
           (p) => p && outputPaths.add(p)
         )
-      : outputPaths.add(workspaceConfiguration.folders.output);
+      : outputPaths.add(baseOutputPaths);
 
-    {
+   if (!useExplicitOutputPaths) {
       // Check for conventional artifact folders in package.json
       if (typeof workspace?.manifest?.raw?.bin === "string") {
         outputPaths.add(workspace.manifest.raw.bin);
@@ -733,7 +722,7 @@ class RunSupervisor {
     }
 
     // check for a tsconfig.json # 170
-    {
+    if (!useExplicitInputPaths || !useExplicitOutputPaths) {
       try {
         const tsconfigPath = xfs.pathUtils.join(
           workspace.relativeCwd,
@@ -745,11 +734,11 @@ class RunSupervisor {
           // parse tsconfig for output, input and exclude
           const tsconfig = await xfs.readJsonPromise(tsconfigPath);
 
-          if (tsconfig?.compilerOptions?.outDir) {
+          if (useExplicitOutputPaths && tsconfig?.compilerOptions?.outDir) {
             outputPaths.add(tsconfig.compilerOptions.outDir);
           }
 
-          if (tsconfig?.include) {
+          if (useExplicitInputPaths && tsconfig?.include) {
             Array.isArray(tsconfig.include)
               ? tsconfig.include.forEach((p: string) => p && inputPaths.add(p))
               : inputPaths.add(tsconfig.include);
