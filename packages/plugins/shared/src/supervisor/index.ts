@@ -581,8 +581,6 @@ class RunSupervisor {
 
           const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
 
-          this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
-
           node.addDependency(dep);
 
           // this resolve call checks for cyclic dependencies
@@ -597,6 +595,7 @@ class RunSupervisor {
           }
 
           if (depNeedsRun || depsOfDepsNeedRerun) {
+            this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
             rerunParent = true;
             this.removeFromExcluded(depWorkspace);
           }
