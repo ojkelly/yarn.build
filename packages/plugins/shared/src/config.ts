@@ -22,6 +22,7 @@ const isYarnBuildConfiguration = t.isObject({
 const isYarnBuildManifestConfiguration = t.isObject({
   input: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
   output: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
+  tsconfig: t.isOptional(t.isString()),
 });
 
 type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;

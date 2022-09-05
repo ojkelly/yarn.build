@@ -700,6 +700,7 @@ class RunSupervisor {
     const workspaceConfiguration = getWorkspaceConfiguration(workspace.manifest.raw);
     const useExplicitInputPaths = workspaceConfiguration?.input != null;
     const useExplicitOutputPaths = workspaceConfiguration?.output != null;
+    const useExplicitTsConfig = workspaceConfiguration.tsconfig != null;
 
     const inputPaths = new Set<string>();
     const ignoredInputPaths = new Set<string>();
@@ -739,11 +740,12 @@ class RunSupervisor {
     }
 
     // check for a tsconfig.json # 170
-    if (!useExplicitInputPaths || !useExplicitOutputPaths) {
+    if (!useExplicitInputPaths || !useExplicitOutputPaths || useExplicitTsConfig) {
       try {
+        const tsconfigFile = workspaceConfiguration.tsconfig ?? "tsconfig.json";
         const tsconfigPath = xfs.pathUtils.join(
           workspace.relativeCwd,
-          "tsconfig.json" as Filename
+          npath.toPortablePath(tsconfigFile)
         );
         const tsconfigExists = await xfs.existsPromise(tsconfigPath);
 
@@ -752,10 +754,20 @@ class RunSupervisor {
           const tsconfig = parseTsconfig(tsconfigPath);
 
           if (tsconfig.compilerOptions?.incremental) {
-            ignoredInputPaths.add(tsconfig.compilerOptions.tsBuildInfoFile ?? "tsconfig.tsbuildinfo");
+            ignoredInputPaths.add(
+              ppath.normalize(
+                npath.toPortablePath(
+                  tsconfig.compilerOptions.tsBuildInfoFile ??
+                  npath.join(
+                    npath.dirname(tsconfigFile),
+                    `${npath.basename(tsconfigFile, npath.extname(tsconfigFile))}.tsbuildinfo`
+                  )
+                )
+              )
+            );
           }
 
-          if (!useExplicitInputPaths) {
+          if (!useExplicitInputPaths || useExplicitTsConfig) {
             // include contains relative file paths
             tsconfig.include?.forEach((file) => {
               inputPaths.add((ppath.normalize(npath.toPortablePath(file))));
@@ -767,7 +779,7 @@ class RunSupervisor {
             });
           }
 
-          if (!useExplicitOutputPaths && tsconfig.compilerOptions?.outDir != null) {
+          if ((!useExplicitOutputPaths || useExplicitTsConfig) && tsconfig.compilerOptions?.outDir != null) {
             // outDir directs to relative output folder
             outputPaths.add(ppath.normalize(npath.toPortablePath(tsconfig.compilerOptions.outDir)));
           }
