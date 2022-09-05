@@ -713,7 +713,7 @@ class RunSupervisor {
 
 
     const outputPaths = new Set<string>();
-    const baseOutputPaths = workspaceConfiguration.output ?? this.pluginConfiguration.folders.output;
+    const baseOutputPaths = workspaceConfiguration.output ?? [];
 
     Array.isArray(baseOutputPaths)
       ? baseOutputPaths.forEach(
@@ -771,6 +771,15 @@ class RunSupervisor {
       } catch (err) {
         console.warn(workspace.relativeCwd, "\n", err);
       }
+    }
+
+    // only add default output path if we didn't find anything, yet
+    if (outputPaths.size === 0) {
+      Array.isArray(this.pluginConfiguration.folders.output)
+          ? this.pluginConfiguration.folders.output.forEach(
+              (p) => p && outputPaths.add(p)
+          )
+          : outputPaths.add(this.pluginConfiguration.folders.output);
     }
 
     // Traverse the dirs and see if they've been modified
@@ -1667,6 +1676,7 @@ const getLastModifiedForPaths = async (
   paths: PortablePath[],
   ignored: PortablePath[] | undefined
 ): Promise<number> => {
+
   const allFilePaths = await globby(paths, {
     cwd: cwd,
     absolute: true,
@@ -1674,6 +1684,7 @@ const getLastModifiedForPaths = async (
     dot: true,
     ignore: ignored
   });
+
 
   const lastModifiedTimestamps = await Promise.all(allFilePaths.map(async (p) => {
     const stat = await xfs.statPromise(npath.toPortablePath(p));
