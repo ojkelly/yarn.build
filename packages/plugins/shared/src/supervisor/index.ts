@@ -751,6 +751,10 @@ class RunSupervisor {
           // parse tsconfig for output, input
           const tsconfig = parseTsconfig(tsconfigPath);
 
+          if (tsconfig.compilerOptions?.incremental) {
+            ignoredInputPaths.add(tsconfig.compilerOptions.tsBuildInfoFile ?? "tsconfig.tsbuildinfo");
+          }
+
           if (!useExplicitInputPaths) {
             // include contains relative file paths
             tsconfig.include?.forEach((file) => {
