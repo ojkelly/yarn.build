@@ -1,5 +1,5 @@
 import { Filename } from "@yarnpkg/fslib";
-import glob from "glob-promise";
+import globby from "globby";
 
 interface GetAllFilesProps {
   cwd: string;
@@ -9,11 +9,9 @@ export const getAllFiles = async ({
   cwd,
 }: GetAllFilesProps): Promise<Filename[]> => {
   try {
-    const files = (await glob(`${cwd}/**/*`, { dot: true })) as Filename[];
+    const files = (await globby(`**/*`, { dot: true, cwd: cwd, absolute: false })) as Filename[];
 
-    return files
-      .map((fileName) => fileName.split(`${cwd}/`)[1] ?? "")
-      .filter(Boolean) as Filename[];
+    return files;
   } catch (_e) {
     return [];
   }

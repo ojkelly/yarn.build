@@ -71,5 +71,8 @@
   },
   "jest": {
     "preset": "ts-jest"
+  },
+  "yarn.build": {
+    "output": "bundles"
   }
 }

@@ -10,17 +10,15 @@ import {
 } from "@yarnpkg/core";
 import isCI from "is-ci";
 import { cpus } from "os";
-import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
+import { Filename, PortablePath, npath, ppath, xfs } from "@yarnpkg/fslib";
 import {
   getWorkspaceConfiguration,
   YarnBuildConfiguration
 } from "../config";
-import micromatch from "micromatch";
-import glob from "glob-promise";
+import globby from "globby";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
-import path from "path";
 import PLimit, { Limit } from "p-limit";
 import { Mutex } from "await-semaphore";
 import fs from "fs";
@@ -35,6 +33,7 @@ import {
   Context,
   Attribute,
 } from "@ojkelly/yarn-build-shared/src/tracing";
+import { parseTsconfig } from "get-tsconfig";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -698,13 +697,12 @@ class RunSupervisor {
 
 
     let needsRun = false;
-    const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
-
     const workspaceConfiguration = getWorkspaceConfiguration(workspace.manifest.raw);
     const useExplicitInputPaths = workspaceConfiguration?.input != null;
     const useExplicitOutputPaths = workspaceConfiguration?.output != null;
 
     const inputPaths = new Set<string>();
+    const ignoredInputPaths = new Set<string>();
     const baseInputPaths = workspaceConfiguration.input ?? this.pluginConfiguration.folders.input;
 
     Array.isArray(baseInputPaths)
@@ -747,20 +745,27 @@ class RunSupervisor {
           workspace.relativeCwd,
           "tsconfig.json" as Filename
         );
-        const tsconfigStat = await xfs.statPromise(tsconfigPath);
+        const tsconfigExists = await xfs.existsPromise(tsconfigPath);
 
-        if (tsconfigStat.isFile()) {
-          // parse tsconfig for output, input and exclude
-          const tsconfig = await xfs.readJsonPromise(tsconfigPath);
+        if (tsconfigExists) {
+          // parse tsconfig for output, input
+          const tsconfig = parseTsconfig(tsconfigPath);
 
-          if (useExplicitOutputPaths && tsconfig?.compilerOptions?.outDir) {
-            outputPaths.add(tsconfig.compilerOptions.outDir);
+          if (!useExplicitInputPaths) {
+            // include contains relative file paths
+            tsconfig.include?.forEach((file) => {
+              inputPaths.add((ppath.normalize(npath.toPortablePath(file))));
+            });
+
+            tsconfig.exclude?.forEach((file) => {
+              // exclude contains relative file paths which will be ignored from include
+              ignoredInputPaths.add((ppath.normalize(npath.toPortablePath(file))));
+            });
           }
 
-          if (useExplicitInputPaths && tsconfig?.include) {
-            Array.isArray(tsconfig.include)
-              ? tsconfig.include.forEach((p: string) => p && inputPaths.add(p))
-              : inputPaths.add(tsconfig.include);
+          if (!useExplicitOutputPaths && tsconfig.compilerOptions?.outDir != null) {
+            // outDir directs to relative output folder
+            outputPaths.add(ppath.normalize(npath.toPortablePath(tsconfig.compilerOptions.outDir)));
           }
         }
       } catch (err) {
@@ -770,13 +775,11 @@ class RunSupervisor {
 
     // Traverse the dirs and see if they've been modified
     {
-      const ignorePaths = [...outputPaths].map(
-          (d) => ppath.normalize(ppath.join(dir, d as Filename))
-      );
+      const ignorePaths = [...new Set([...outputPaths, ...ignoredInputPaths])]
+          .map((p) => npath.toPortablePath(p));
+      const srcPaths = [...inputPaths]
+          .map((p) => npath.toPortablePath(p));
 
-      const srcPaths = [...inputPaths].map(
-          (d) => ppath.normalize(ppath.join(dir, d as Filename))
-      );
       const release = await this.runReport.mutex.acquire();
 
       try {
@@ -789,6 +792,7 @@ class RunSupervisor {
         }
 
         const currentLastModified = await getLastModifiedForPaths(
+          workspace.cwd,
           srcPaths,
           ignorePaths
         );
@@ -818,25 +822,20 @@ class RunSupervisor {
     // #171 check if the output paths exist
     // if any don't, we need to rebuild
     if (!needsRun) {
-      const outputPathsCheck = await Promise.all(
+      const outputPatternsCheck = await Promise.all(
         [...outputPaths].map(async (op) => {
           try {
-            const paths = (await glob(op, { dot: true })) as Filename[];
+            // note: we need to check every pattern/Path to ensure each return at least one result
+            const paths = await globby(op, { dot: true, cwd: workspace.cwd });
 
-            const files = await Promise.all(
-              paths.map((p) => xfs.existsPromise(
-                  xfs.pathUtils.join(workspace.relativeCwd, p))
-              )
-            );
-
-            return files.some((v) => v === true);
+            return paths.length === 0;
           } catch {
             return false;
           }
         })
       );
 
-      if (outputPathsCheck.some((v) => v === true)) {
+      if (outputPatternsCheck.some((v) => v === true)) {
         needsRun = true;
       }
     }
@@ -1664,37 +1663,27 @@ class RunSupervisor {
 }
 
 const getLastModifiedForPaths = async (
+  cwd: PortablePath,
   paths: PortablePath[],
   ignored: PortablePath[] | undefined
 ): Promise<number> => {
-  const lastModifiedTimestamps = await Promise.all(
-    paths.map(async (p) => {
-      if (ignored?.some((i) => p.startsWith(i))) {
-        return 0;
-      }
+  const allFilePaths = await globby(paths, {
+    cwd: cwd,
+    absolute: true,
+    expandDirectories: true,
+    dot: true,
+    ignore: ignored
+  });
 
-      if (ignored?.some((i) => micromatch.isMatch(p, i))) {
-        return 0;
-      }
+  const lastModifiedTimestamps = await Promise.all(allFilePaths.map(async (p) => {
+    const stat = await xfs.statPromise(npath.toPortablePath(p));
 
-      const stat = await xfs.statPromise(p);
+    if (stat.isFile()) {
+      return stat.mtimeMs;
+    }
 
-      if (stat.isFile()) {
-        return stat.mtimeMs;
-      }
-
-      if (stat.isDirectory()) {
-        const contents = await xfs.readdirPromise(p);
-
-        return await getLastModifiedForPaths(
-          contents.map((c) => `${p}${path.posix.sep}${c}` as PortablePath),
-          ignored
-        );
-      }
-
-      return 0;
-    })
-  );
+    return 0;
+  }));
 
   return Math.max(...lastModifiedTimestamps);
 };
