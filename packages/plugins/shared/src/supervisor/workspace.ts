@@ -62,13 +62,14 @@ const addTargets = async ({
      const needsRerun = await supervisor.addRunTarget(targetWorkspace);
 
      if (needsRerun) {
-       // we need a rerun, mark all depent workspaces for rerun for the next build
        const dependentWorkspaces = targetWorkspace.getRecursiveWorkspaceDependents();
 
-       for (const workspace of dependentWorkspaces) {
-         supervisor.markWorkspaceForRerun(workspace);
+       // mark all dependent workspaces for rerun for the next build
+       for (const dependentWorkspace of dependentWorkspaces) {
+         supervisor.markWorkspaceForRerun(dependentWorkspace);
        }
 
+       // todo find all dependencies that needs to be built again and mark their dependents for rerun
 
      }
     }

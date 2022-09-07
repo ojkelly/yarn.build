@@ -58,7 +58,6 @@ type RunLogEntry = {
   lastModified?: number;
   status?: RunStatus;
   rerun?: boolean;
-  haveCheckedForRerun?: boolean;
   command: string;
   exitCode?: string;
 };
@@ -282,7 +281,6 @@ class RunSupervisor {
           runLog.set(id, {
             lastModified: runLogFile.packages[id].lastModified,
             status: runLogFile.packages[id].status,
-            haveCheckedForRerun: runLogFile.packages[id].haveCheckedForRerun,
             rerun: runLogFile.packages[id].rerun,
             command: this.runCommand,
           });
@@ -642,7 +640,6 @@ class RunSupervisor {
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
           lastModified: previousRunLog.lastModified,
           status: RunStatus.succeeded,
-          haveCheckedForRerun: false,
           rerun: false,
           command: this.runCommand,
         });
@@ -671,24 +668,12 @@ class RunSupervisor {
     this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
       lastModified: previousRunLog?.lastModified ?? 0,
       status: RunStatus.succeeded,
-      haveCheckedForRerun: true,
       rerun: true,
       command: this.runCommand,
     });
   }
 
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
-    console.log("checkIfRunIsRequired", workspace.relativeCwd, this.runLog?.get(
-        `${workspace.relativeCwd}#${this.runCommand}`
-    )?.rerun);
-
-    // todo we still have to check at least once to get the updated timestamps, otherwise we'll get unceeesary builds in the future
-
-    if (this.ignoreRunCache === true) {
-      this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
-      return true;
-    }
-
     // if we've already checked this workspace, we don't need to check it again
     if (
       typeof this.checkIfRunIsRequiredCache[workspace.relativeCwd] !==
@@ -704,13 +689,20 @@ class RunSupervisor {
       return false;
     }
 
+    let needsRun = false;
+
+    // force re-run when we can ignore the cache
+    if (this.ignoreRunCache) {
+      needsRun = true;
+    }
+
     // if this workspace is already marked for rerun, we don't need to check
     const previousRunLog = this.runLog?.get(
         `${workspace.relativeCwd}#${this.runCommand}`
     );
 
     if (previousRunLog?.rerun) {
-      return true;
+      needsRun = true;
     }
 
     // we need to build if our dependencies needs to build
@@ -723,15 +715,12 @@ class RunSupervisor {
         if (depWorkspace === null) continue;
 
         if (this.checkIfRunIsRequiredCache[depWorkspace.relativeCwd] === true) {
-          this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
-
-          return true;
+          needsRun = true;
+          break;
         }
       }
     }
 
-
-    let needsRun = false;
     const workspaceConfiguration = getWorkspaceConfiguration(workspace.manifest.raw);
     const useExplicitInputPaths = workspaceConfiguration?.input != null;
     const useExplicitOutputPaths = workspaceConfiguration?.output != null;
@@ -853,10 +842,30 @@ class RunSupervisor {
           needsRun = true;
         }
 
+        // #171 check if the output paths exist
+        // if any don't, we need to rebuild
+        if (!needsRun) {
+          const outputPatternsCheck = await Promise.all(
+              [...outputPaths].map(async (op) => {
+                try {
+                  // note: we need to check every pattern/Path to ensure each return at least one result
+                  const paths = await globby(op, { dot: true, cwd: workspace.cwd });
+
+                  return paths.length === 0;
+                } catch {
+                  return false;
+                }
+              })
+          );
+
+          if (outputPatternsCheck.some((v) => v === true)) {
+            needsRun = true;
+          }
+        }
+
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
           lastModified: currentLastModified,
           status: needsRun ? RunStatus.succeeded : RunStatus.pending,
-          haveCheckedForRerun: true,
           rerun: needsRun,
           command: this.runCommand,
         });
@@ -871,26 +880,7 @@ class RunSupervisor {
       }
     }
 
-    // #171 check if the output paths exist
-    // if any don't, we need to rebuild
-    if (!needsRun) {
-      const outputPatternsCheck = await Promise.all(
-        [...outputPaths].map(async (op) => {
-          try {
-            // note: we need to check every pattern/Path to ensure each return at least one result
-            const paths = await globby(op, { dot: true, cwd: workspace.cwd });
 
-            return paths.length === 0;
-          } catch {
-            return false;
-          }
-        })
-      );
-
-      if (outputPatternsCheck.some((v) => v === true)) {
-        needsRun = true;
-      }
-    }
 
     this.checkIfRunIsRequiredCache[workspace.relativeCwd] = needsRun;
 
@@ -1601,7 +1591,6 @@ class RunSupervisor {
                     {
                       lastModified: currentRunLog?.lastModified,
                       status: RunStatus.skipped,
-                      haveCheckedForRerun: false,
                       rerun: false,
                       command: this.runCommand,
                     }
@@ -1637,7 +1626,6 @@ class RunSupervisor {
                     {
                       lastModified: currentRunLog?.lastModified,
                       status: RunStatus.failed,
-                      haveCheckedForRerun: false,
                       rerun: true,
                       command: this.runCommand,
                       exitCode: `${exitCode}`,
@@ -1662,7 +1650,6 @@ class RunSupervisor {
                   {
                     lastModified: currentRunLog?.lastModified,
                     status: RunStatus.succeeded,
-                    haveCheckedForRerun: false,
                     rerun: false,
                     command: this.runCommand,
                   }
@@ -1684,7 +1671,6 @@ class RunSupervisor {
                   {
                     lastModified: currentRunLog?.lastModified,
                     status: RunStatus.failed,
-                    haveCheckedForRerun: false,
                     rerun: true,
                     command: this.runCommand,
                   }
