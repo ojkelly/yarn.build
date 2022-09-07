@@ -282,8 +282,8 @@ class RunSupervisor {
           runLog.set(id, {
             lastModified: runLogFile.packages[id].lastModified,
             status: runLogFile.packages[id].status,
-            haveCheckedForRerun: false,
-            rerun: true,
+            haveCheckedForRerun: runLogFile.packages[id].haveCheckedForRerun,
+            rerun: runLogFile.packages[id].rerun,
             command: this.runCommand,
           });
         }
@@ -314,11 +314,7 @@ class RunSupervisor {
       },
     };
 
-    for (const [id, entry] of this.runLog) {
-      if (entry.status !== RunStatus.succeeded) {
-        continue;
-      }
-
+    for (const [id] of this.runLog) {
       runLogFile.packages[id] = {
         ...runLogFile.packages[id],
         ...this.runLog.get(id),
@@ -516,35 +512,35 @@ class RunSupervisor {
   // Add a run target to the run graph
   // we may call this function multiple times per package when discovering the
   // full run graph
-  async addRunTarget(workspace: Workspace): Promise<void> {
+  async addRunTarget(workspace: Workspace): Promise<boolean> {
     // skip if this workspace is excluded
     if (this.excluded.has(workspace)) {
-      return;
+      return false;
     }
 
     // skip if this workspace matches the predicate for excluding packages
     if (this.excludeWorkspacePredicate(workspace)) {
       this.excluded.add(workspace);
 
-      return;
+      return false;
     }
 
     // skip if the package does not contain the intended run command
     if (
       typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
     ) {
-      return;
+      return false;
     }
 
     // add the workspace to the run graph
     const node = this.runGraph.addNode(workspace.relativeCwd);
 
-    await this.plan(node, workspace);
+   return await this.plan(node, workspace);
   }
 
   // this function may be called more than once per package as the run graph
   // is constructed
-  plan = async (node: Node, workspace: Workspace): Promise<void> => {
+  plan = async (node: Node, workspace: Workspace): Promise<boolean> => {
     if (!node) {
       throw new Error(
         "Internal error: lost reference to parent workspace. Please open an issue."
@@ -553,6 +549,7 @@ class RunSupervisor {
 
     this.runGraph.checkCyclical(node);
 
+    let rerun = false;
     let rerunParent = false;
 
     this.runMutexes[workspace.relativeCwd] = new Mutex();
@@ -617,6 +614,7 @@ class RunSupervisor {
     );
 
     if (rerunParent || hasChanges) {
+      rerun = true;
       this.runReporter.emit(
         RunSupervisorReporterEvents.pending,
         workspace.relativeCwd,
@@ -633,7 +631,6 @@ class RunSupervisor {
       this.entrypoints.add(node);
       this.runTargets.push(workspace);
 
-      return;
     } else {
       // Use the previous log entry if we don't need to rerun.
       // This ensures we always have all our run targets in the log.
@@ -645,20 +642,50 @@ class RunSupervisor {
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
           lastModified: previousRunLog.lastModified,
           status: RunStatus.succeeded,
-          haveCheckedForRerun: true,
+          haveCheckedForRerun: false,
           rerun: false,
           command: this.runCommand,
         });
       }
     }
 
-    return;
+    return rerun;
   };
 
+  markWorkspaceForRerun(workspace: Workspace) {
+    // skip if the package does not contain the intended run command
+    if (
+        typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+    ) {
+      return;
+    }
+
+
+    console.log("markWorkspaceForRerun", workspace.relativeCwd);
+
+    const previousRunLog = this.runLog?.get(
+        `${workspace.relativeCwd}#${this.runCommand}`
+    );
+
+    // This ensures we always have all our run targets in the log.
+    this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+      lastModified: previousRunLog?.lastModified ?? 0,
+      status: RunStatus.succeeded,
+      haveCheckedForRerun: true,
+      rerun: true,
+      command: this.runCommand,
+    });
+  }
+
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
+    console.log("checkIfRunIsRequired", workspace.relativeCwd, this.runLog?.get(
+        `${workspace.relativeCwd}#${this.runCommand}`
+    )?.rerun);
+
+    // todo we still have to check at least once to get the updated timestamps, otherwise we'll get unceeesary builds in the future
+
     if (this.ignoreRunCache === true) {
       this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
-
       return true;
     }
 
@@ -677,6 +704,15 @@ class RunSupervisor {
       return false;
     }
 
+    // if this workspace is already marked for rerun, we don't need to check
+    const previousRunLog = this.runLog?.get(
+        `${workspace.relativeCwd}#${this.runCommand}`
+    );
+
+    if (previousRunLog?.rerun) {
+      return true;
+    }
+
     // we need to build if our dependencies needs to build
     for (const dependencyType of Manifest.hardDependencies) {
       for (const descriptor of workspace.manifest
@@ -685,7 +721,6 @@ class RunSupervisor {
         const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
 
         if (depWorkspace === null) continue;
-
 
         if (this.checkIfRunIsRequiredCache[depWorkspace.relativeCwd] === true) {
           this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
@@ -808,14 +843,6 @@ class RunSupervisor {
       const release = await this.runReport.mutex.acquire();
 
       try {
-        const previousRunLog = this.runLog?.get(
-          `${workspace.relativeCwd}#${this.runCommand}`
-        );
-
-        if (previousRunLog?.haveCheckedForRerun) {
-          return previousRunLog?.rerun ?? true;
-        }
-
         const currentLastModified = await getLastModifiedForPaths(
           workspace.cwd,
           srcPaths,
@@ -1574,7 +1601,7 @@ class RunSupervisor {
                     {
                       lastModified: currentRunLog?.lastModified,
                       status: RunStatus.skipped,
-                      haveCheckedForRerun: true,
+                      haveCheckedForRerun: false,
                       rerun: false,
                       command: this.runCommand,
                     }
@@ -1610,8 +1637,8 @@ class RunSupervisor {
                     {
                       lastModified: currentRunLog?.lastModified,
                       status: RunStatus.failed,
-                      haveCheckedForRerun: true,
-                      rerun: false,
+                      haveCheckedForRerun: false,
+                      rerun: true,
                       command: this.runCommand,
                       exitCode: `${exitCode}`,
                     }
@@ -1635,7 +1662,7 @@ class RunSupervisor {
                   {
                     lastModified: currentRunLog?.lastModified,
                     status: RunStatus.succeeded,
-                    haveCheckedForRerun: true,
+                    haveCheckedForRerun: false,
                     rerun: false,
                     command: this.runCommand,
                   }
@@ -1657,8 +1684,8 @@ class RunSupervisor {
                   {
                     lastModified: currentRunLog?.lastModified,
                     status: RunStatus.failed,
-                    haveCheckedForRerun: true,
-                    rerun: false,
+                    haveCheckedForRerun: false,
+                    rerun: true,
                     command: this.runCommand,
                   }
                 );
