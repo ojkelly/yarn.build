@@ -510,35 +510,35 @@ class RunSupervisor {
   // Add a run target to the run graph
   // we may call this function multiple times per package when discovering the
   // full run graph
-  async addRunTarget(workspace: Workspace): Promise<boolean> {
+  async addRunTarget(workspace: Workspace): Promise<void> {
     // skip if this workspace is excluded
     if (this.excluded.has(workspace)) {
-      return false;
+      return;
     }
 
     // skip if this workspace matches the predicate for excluding packages
     if (this.excludeWorkspacePredicate(workspace)) {
       this.excluded.add(workspace);
 
-      return false;
+      return;
     }
 
     // skip if the package does not contain the intended run command
     if (
       typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
     ) {
-      return false;
+      return;
     }
 
     // add the workspace to the run graph
     const node = this.runGraph.addNode(workspace.relativeCwd);
 
-   return await this.plan(node, workspace);
+    await this.plan(node, workspace);
   }
 
   // this function may be called more than once per package as the run graph
   // is constructed
-  plan = async (node: Node, workspace: Workspace): Promise<boolean> => {
+  plan = async (node: Node, workspace: Workspace): Promise<void> => {
     if (!node) {
       throw new Error(
         "Internal error: lost reference to parent workspace. Please open an issue."
@@ -667,8 +667,6 @@ class RunSupervisor {
         }
       }
     }
-
-    return rerun;
   };
 
   private markWorkspaceForRerun(workspace: Workspace) {
