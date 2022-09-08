@@ -34,6 +34,7 @@ import {
   Attribute,
 } from "@ojkelly/yarn-build-shared/src/tracing";
 import { parseTsconfig } from "get-tsconfig";
+import objectHash from "object-hash";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -55,7 +56,7 @@ type RunLogFile = {
 };
 type RunLog = Map<string, RunLogEntry>;
 type RunLogEntry = {
-  lastModified?: number;
+  checksum?: string;
   status?: RunStatus;
   rerun?: boolean;
   command: string;
@@ -279,7 +280,7 @@ class RunSupervisor {
       if (runLogFile && runLogFile.packages) {
         for (const id in runLogFile.packages) {
           runLog.set(id, {
-            lastModified: runLogFile.packages[id].lastModified,
+            checksum: runLogFile.packages[id].checksum,
             status: runLogFile.packages[id].status,
             rerun: runLogFile.packages[id].rerun,
             command: this.runCommand,
@@ -638,7 +639,7 @@ class RunSupervisor {
 
       if (previousRunLog) {
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-          lastModified: previousRunLog.lastModified,
+          checksum: previousRunLog.checksum,
           status: RunStatus.succeeded,
           rerun: false,
           command: this.runCommand,
@@ -683,7 +684,7 @@ class RunSupervisor {
 
     // This ensures we always have all our run targets in the log.
     this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-      lastModified: previousRunLog?.lastModified ?? 0,
+      checksum: previousRunLog?.checksum ?? "",
       status: RunStatus.succeeded,
       rerun: true,
       command: this.runCommand,
@@ -864,13 +865,13 @@ class RunSupervisor {
       const release = await this.runReport.mutex.acquire();
 
       try {
-        const currentLastModified = await getLastModifiedForPaths(
+        const currentHash = await getHashForPaths(
           workspace.cwd,
           srcPaths,
           ignorePaths
         );
 
-        if (previousRunLog?.lastModified !== currentLastModified) {
+        if (previousRunLog?.checksum !== currentHash) {
           needsRun = true;
         }
 
@@ -896,7 +897,7 @@ class RunSupervisor {
         }
 
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-          lastModified: currentLastModified,
+          checksum: currentHash,
           status: needsRun ? RunStatus.succeeded : RunStatus.pending,
           rerun: needsRun,
           command: this.runCommand,
@@ -1621,7 +1622,7 @@ class RunSupervisor {
                   this.runLog?.set(
                     `${workspace.relativeCwd}#${this.runCommand}`,
                     {
-                      lastModified: currentRunLog?.lastModified,
+                      checksum: currentRunLog?.checksum,
                       status: RunStatus.skipped,
                       rerun: false,
                       command: this.runCommand,
@@ -1656,7 +1657,7 @@ class RunSupervisor {
                   this.runLog?.set(
                     `${workspace.relativeCwd}#${this.runCommand}`,
                     {
-                      lastModified: currentRunLog?.lastModified,
+                      checksum: currentRunLog?.checksum,
                       status: RunStatus.failed,
                       rerun: true,
                       command: this.runCommand,
@@ -1680,7 +1681,7 @@ class RunSupervisor {
                 this.runLog?.set(
                   `${workspace.relativeCwd}#${this.runCommand}`,
                   {
-                    lastModified: currentRunLog?.lastModified,
+                    checksum: currentRunLog?.checksum,
                     status: RunStatus.succeeded,
                     rerun: false,
                     command: this.runCommand,
@@ -1701,7 +1702,7 @@ class RunSupervisor {
                 this.runLog?.set(
                   `${workspace.relativeCwd}#${this.runCommand}`,
                   {
-                    lastModified: currentRunLog?.lastModified,
+                    checksum: currentRunLog?.checksum,
                     status: RunStatus.failed,
                     rerun: true,
                     command: this.runCommand,
@@ -1732,11 +1733,11 @@ class RunSupervisor {
   };
 }
 
-const getLastModifiedForPaths = async (
+const getHashForPaths = async (
   cwd: PortablePath,
   paths: PortablePath[],
   ignored: PortablePath[] | undefined
-): Promise<number> => {
+): Promise<string> => {
 
   const allFilePaths = await globby(paths, {
     cwd: cwd,
@@ -1746,18 +1747,19 @@ const getLastModifiedForPaths = async (
     ignore: ignored
   });
 
+  allFilePaths.sort();
 
-  const lastModifiedTimestamps = await Promise.all(allFilePaths.map(async (p) => {
-    const stat = await xfs.statPromise(npath.toPortablePath(p));
+  const fileDetails = await Promise.all(allFilePaths.map(async (p) => {
+    const filePath = npath.toPortablePath(p);
+    const stat = await xfs.statPromise(filePath);
 
-    if (stat.isFile()) {
-      return stat.mtimeMs;
-    }
-
-    return 0;
+    return {
+      path: ppath.relative(cwd, filePath),
+      lastModified: stat.isFile() ? stat.mtimeMs : 0
+    };
   }));
 
-  return Math.max(...lastModifiedTimestamps);
+  return objectHash(fileDetails);
 };
 
 export const formatTimestampDifference = (from: number, to: number): string => {

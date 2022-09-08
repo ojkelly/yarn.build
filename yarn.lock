@@ -1076,6 +1076,7 @@ __metadata:
     "@types/jest": ^26.0.19
     "@types/js-yaml": ^4.0.2
     "@types/node": ^17.0.23
+    "@types/object-hash": ^2.2.1
     "@types/slice-ansi": ^4.0.0
     "@types/yup": ^0.26.12
     "@yarnpkg/builder": "*"
@@ -1099,6 +1100,7 @@ __metadata:
     jest: ^26.6.3
     jest-pnp-resolver: ^1.2.1
     js-yaml: ^4.1.0
+    object-hash: ^3.0.0
     p-limit: ^2.3.0
     p-queue: ^6.3.0
     replace: ^1.2.1
@@ -2768,6 +2770,13 @@ __metadata:
   version: 2.4.1
   resolution: "@types/normalize-package-data@npm:2.4.1"
   checksum: e87bccbf11f95035c89a132b52b79ce69a1e3652fe55962363063c9c0dae0fe2477ebc585e03a9652adc6f381d24ba5589cc5e51849df4ced3d3e004a7d40ed5
+  languageName: node
+  linkType: hard
+
+"@types/object-hash@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "@types/object-hash@npm:2.2.1"
+  checksum: bbcbf076903e11fa6d61dd5cc365bce2b080b18502ef52672a427443262e465d7b46b8f2821e8cea0307de66aee2eb92ad6e2bed2346acd7c8de118d4123fe3a
   languageName: node
   linkType: hard
 
@@ -8569,6 +8578,13 @@ fsevents@^2.1.2:
     define-property: ^0.2.5
     kind-of: ^3.0.3
   checksum: a9e35f07e3a2c882a7e979090360d1a20ab51d1fa19dfdac3aa8873b328a7c4c7683946ee97c824ae40079d848d6740a3788fa14f2185155dab7ed970a72c783
+  languageName: node
+  linkType: hard
+
+"object-hash@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "object-hash@npm:3.0.0"
+  checksum: 80b4904bb3857c52cc1bfd0b52c0352532ca12ed3b8a6ff06a90cd209dfda1b95cee059a7625eb9da29537027f68ac4619363491eedb2f5d3dddbba97494fd6c
   languageName: node
   linkType: hard
 

@@ -1484,6 +1484,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:26.0.24"],\
             ["@types/js-yaml", "npm:4.0.2"],\
             ["@types/node", "npm:17.0.23"],\
+            ["@types/object-hash", "npm:2.2.1"],\
             ["@types/slice-ansi", "npm:4.0.0"],\
             ["@types/yup", "npm:0.26.37"],\
             ["@yarnpkg/builder", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:3.1.0"],\
@@ -1507,6 +1508,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["jest", "npm:26.6.3"],\
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],\
             ["js-yaml", "npm:4.1.0"],\
+            ["object-hash", "npm:3.0.0"],\
             ["p-limit", "npm:2.3.0"],\
             ["p-queue", "npm:6.6.2"],\
             ["replace", "npm:1.2.1"],\
@@ -3897,6 +3899,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-normalize-package-data-npm-2.4.1-c31c56ae6a-e87bccbf11.zip/node_modules/@types/normalize-package-data/",\
           "packageDependencies": [\
             ["@types/normalize-package-data", "npm:2.4.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@types/object-hash", [\
+        ["npm:2.2.1", {\
+          "packageLocation": "./.yarn/cache/@types-object-hash-npm-2.2.1-1e19446be3-bbcbf07690.zip/node_modules/@types/object-hash/",\
+          "packageDependencies": [\
+            ["@types/object-hash", "npm:2.2.1"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -10935,6 +10946,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["copy-descriptor", "npm:0.1.1"],\
             ["define-property", "npm:0.2.5"],\
             ["kind-of", "npm:3.2.2"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["object-hash", [\
+        ["npm:3.0.0", {\
+          "packageLocation": "./.yarn/cache/object-hash-npm-3.0.0-d941e0cabe-80b4904bb3.zip/node_modules/object-hash/",\
+          "packageDependencies": [\
+            ["object-hash", "npm:3.0.0"]\
           ],\
           "linkType": "HARD"\
         }]\
