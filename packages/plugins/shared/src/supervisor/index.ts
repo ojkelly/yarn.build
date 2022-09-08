@@ -1755,6 +1755,7 @@ const getHashForPaths = async (
 
     return {
       path: ppath.relative(cwd, filePath),
+      size: stat.isFile() ? stat.size : 0,
       lastModified: stat.isFile() ? stat.mtimeMs : 0
     };
   }));
