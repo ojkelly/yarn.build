@@ -57,21 +57,8 @@ const addTargets = async ({
 
       await supervisor.addRunTarget(targetWorkspace);
     } else {
-
       // we're in a specific target
-     const needsRerun = await supervisor.addRunTarget(targetWorkspace);
-
-     if (needsRerun) {
-       const dependentWorkspaces = targetWorkspace.getRecursiveWorkspaceDependents();
-
-       // mark all dependent workspaces for rerun for the next build
-       for (const dependentWorkspace of dependentWorkspaces) {
-         supervisor.markWorkspaceForRerun(dependentWorkspace);
-       }
-
-       // todo find all dependencies that needs to be built again and mark their dependents for rerun
-
-     }
+      await supervisor.addRunTarget(targetWorkspace);
     }
   } catch (err) {
     if (err instanceof CyclicDependencyError) {

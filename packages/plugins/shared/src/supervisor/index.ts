@@ -646,19 +646,38 @@ class RunSupervisor {
       }
     }
 
+    if (rerun) {
+      // mark all dependent projects for rerun for the next build
+      const dependentWorkspaces = workspace.getRecursiveWorkspaceDependents();
+
+      for (const dependentWorkspace of dependentWorkspaces) {
+        this.markWorkspaceForRerun(dependentWorkspace);
+      }
+
+      // determine all our dependencies that need a rebuild and mark their dependent projects for rerun
+      const dependencyWorkspaces = workspace.getRecursiveWorkspaceDependencies();
+
+      for (const dependencyWorkspace of dependencyWorkspaces) {
+        if (this.isWorkspaceMarkedForRerun(dependencyWorkspace)) {
+          const dependentWorkspaces = dependencyWorkspace.getRecursiveWorkspaceDependents();
+
+          for (const dependentWorkspace of dependentWorkspaces) {
+            this.markWorkspaceForRerun(dependentWorkspace);
+          }
+        }
+      }
+    }
+
     return rerun;
   };
 
-  markWorkspaceForRerun(workspace: Workspace) {
+  private markWorkspaceForRerun(workspace: Workspace) {
     // skip if the package does not contain the intended run command
     if (
         typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
     ) {
       return;
     }
-
-
-    console.log("markWorkspaceForRerun", workspace.relativeCwd);
 
     const previousRunLog = this.runLog?.get(
         `${workspace.relativeCwd}#${this.runCommand}`
@@ -671,6 +690,21 @@ class RunSupervisor {
       rerun: true,
       command: this.runCommand,
     });
+  }
+
+  private isWorkspaceMarkedForRerun(workspace: Workspace): boolean {
+    // skip if the package does not contain the intended run command
+    if (
+        typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+    ) {
+      return false;
+    }
+
+    const previousRunLog = this.runLog?.get(
+        `${workspace.relativeCwd}#${this.runCommand}`
+    );
+
+    return previousRunLog?.rerun ?? false;
   }
 
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
