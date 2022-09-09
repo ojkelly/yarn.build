@@ -40,8 +40,6 @@
     "clipanion": "^3.x",
     "date-fns": "^2.12.0",
     "esprima": "^4.0.1",
-    "get-tsconfig": "^4.2.0",
-    "globby": "^11.0.4",
     "ignore": "^5.1.8",
     "is-ci": "^2.0.0",
     "p-limit": "^2.3.0",

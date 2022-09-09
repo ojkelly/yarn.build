@@ -1536,7 +1536,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/is-ci", "npm:2.0.0"],\
             ["@types/jest", "npm:26.0.24"],\
             ["@types/js-yaml", "npm:4.0.2"],\
-            ["@types/micromatch", "npm:4.0.2"],\
             ["@types/slice-ansi", "npm:4.0.0"],\
             ["@types/yup", "npm:0.26.37"],\
             ["@yarnpkg/builder", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:3.1.0"],\
@@ -1553,14 +1552,11 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["clipanion", "virtual:11e49090eef2ab4a7d256d57407eff59125c10a45a2c4a95d4b4eed662e01c6bb0b545ee238f4cce0100c8d2885c1a88c24bcf184f4baba2c58b80f525a4f6ab#npm:3.0.1"],\
             ["date-fns", "npm:2.23.0"],\
             ["esprima", "npm:4.0.1"],\
-            ["get-tsconfig", "npm:4.2.0"],\
-            ["globby", "npm:11.1.0"],\
             ["ignore", "npm:5.1.8"],\
             ["is-ci", "npm:2.0.0"],\
             ["jest", "npm:26.6.3"],\
             ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.2"],\
             ["js-yaml", "npm:4.1.0"],\
-            ["micromatch", "npm:4.0.4"],\
             ["p-limit", "npm:2.3.0"],\
             ["p-queue", "npm:6.6.2"],\
             ["replace", "npm:1.2.1"],\
@@ -1609,8 +1605,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["clipanion", "virtual:11e49090eef2ab4a7d256d57407eff59125c10a45a2c4a95d4b4eed662e01c6bb0b545ee238f4cce0100c8d2885c1a88c24bcf184f4baba2c58b80f525a4f6ab#npm:3.0.1"],\
             ["date-fns", "npm:2.23.0"],\
             ["esprima", "npm:4.0.1"],\
-            ["get-tsconfig", "npm:4.2.0"],\
-            ["globby", "npm:11.1.0"],\
             ["ignore", "npm:5.1.8"],\
             ["is-ci", "npm:2.0.0"],\
             ["jest", "npm:26.6.3"],\
@@ -1662,7 +1656,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["clipanion", "virtual:11e49090eef2ab4a7d256d57407eff59125c10a45a2c4a95d4b4eed662e01c6bb0b545ee238f4cce0100c8d2885c1a88c24bcf184f4baba2c58b80f525a4f6ab#npm:3.0.1"],\
             ["date-fns", "npm:2.23.0"],\
             ["esprima", "npm:4.0.1"],\
-            ["get-tsconfig", "npm:4.2.0"],\
             ["globby", "npm:11.1.0"],\
             ["ignore", "npm:5.1.8"],\
             ["is-ci", "npm:2.0.0"],\
@@ -1754,8 +1747,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["clipanion", "virtual:11e49090eef2ab4a7d256d57407eff59125c10a45a2c4a95d4b4eed662e01c6bb0b545ee238f4cce0100c8d2885c1a88c24bcf184f4baba2c58b80f525a4f6ab#npm:3.0.1"],\
             ["date-fns", "npm:2.23.0"],\
             ["esprima", "npm:4.0.1"],\
-            ["get-tsconfig", "npm:4.2.0"],\
-            ["globby", "npm:11.1.0"],\
             ["ignore", "npm:5.1.8"],\
             ["is-ci", "npm:2.0.0"],\
             ["jest", "npm:26.6.3"],\
