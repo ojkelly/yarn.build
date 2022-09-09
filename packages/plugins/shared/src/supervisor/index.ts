@@ -546,9 +546,7 @@ class RunSupervisor {
     }
 
     // if we've already checked this workspace, we don't need to check it again
-    if (
-      typeof this.planCache[workspace.relativeCwd] !== `undefined`
-    ) {
+    if (typeof this.planCache[workspace.relativeCwd] !== `undefined`) {
       return this.planCache[workspace.relativeCwd];
     }
 
@@ -719,13 +717,16 @@ class RunSupervisor {
       return this.checkIfRunIsRequiredCache[workspace.relativeCwd];
     }
 
-    //  skip if this workspace doesn't have the command we want to run
+    // skip if this workspace doesn't have the command we want to run
     if (typeof workspace.manifest.scripts.get(this.runCommand) !== `string`) {
       this.checkIfRunIsRequiredCache[workspace.relativeCwd] = false;
 
       return false;
     }
 
+    // workspace have never been checked before:
+    // - check if we need to rerun when files or dependencies needs an update
+    // - calculate the workspace checksum to prevent future builds
     let needsRun = false;
 
     // force re-run when we can ignore the cache
@@ -733,7 +734,7 @@ class RunSupervisor {
       needsRun = true;
     }
 
-    // if this workspace is already marked for rerun, we don't need to check
+    // if this workspace is already marked for rerun
     const previousRunLog = this.runLog?.get(
       `${workspace.relativeCwd}#${this.runCommand}`
     );
@@ -743,18 +744,10 @@ class RunSupervisor {
     }
 
     // we need to build if our dependencies needs to build
-    for (const dependencyType of Manifest.hardDependencies) {
-      for (const descriptor of workspace.manifest
-        .getForScope(dependencyType)
-        .values()) {
-        const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
-
-        if (depWorkspace === null) continue;
-
-        if (this.checkIfRunIsRequiredCache[depWorkspace.relativeCwd] === true) {
-          needsRun = true;
-          break;
-        }
+    for (const depWorkspace of workspace.getRecursiveWorkspaceDependencies()) {
+      if (this.checkIfRunIsRequiredCache[depWorkspace.relativeCwd] === true) {
+        needsRun = true;
+        break;
       }
     }
 
