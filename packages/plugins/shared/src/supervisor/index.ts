@@ -655,17 +655,17 @@ class RunSupervisor {
         this.markWorkspaceForRerun(dependentWorkspace);
       }
 
-      // determine all our dependencies that need a rebuild and mark their dependent projects for rerun
-      const dependencyWorkspaces = workspace.getRecursiveWorkspaceDependencies();
+      // determine dependencies that need a rebuild and mark their dependent projects for rerun
+      const dependencyWorkspaces = Array
+          .from(workspace.getRecursiveWorkspaceDependencies())
+          .filter((w) => this.isWorkspaceMarkedForRerun(w));
 
       for (const dependencyWorkspace of dependencyWorkspaces) {
-        if (this.isWorkspaceMarkedForRerun(dependencyWorkspace)) {
           const dependentWorkspaces = dependencyWorkspace.getRecursiveWorkspaceDependents();
 
           for (const dependentWorkspace of dependentWorkspaces) {
             this.markWorkspaceForRerun(dependentWorkspace);
           }
-        }
       }
     }
   };
@@ -1782,6 +1782,7 @@ export const formatTimestampDifference = (from: number, to: number): string => {
     output += `${minutes}m`;
     milliseconds -= minutes * 60000;
   }
+
 
   if (milliseconds) {
     if (minutes) {
