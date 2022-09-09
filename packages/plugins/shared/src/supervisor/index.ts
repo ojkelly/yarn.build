@@ -800,45 +800,54 @@ class RunSupervisor {
     if (!useExplicitInputPaths || !useExplicitOutputPaths || useExplicitTsConfig) {
       try {
         const tsconfigFile = workspaceConfiguration.tsconfig ?? "tsconfig.json";
-        const tsconfigPath = xfs.pathUtils.join(
-          workspace.relativeCwd,
+        const tsconfigAbsolutePath = xfs.pathUtils.join(
+          workspace.cwd,
           npath.toPortablePath(tsconfigFile)
         );
-        const tsconfigExists = await xfs.existsPromise(tsconfigPath);
+        const tsconfigExists = await xfs.existsPromise(tsconfigAbsolutePath);
 
         if (tsconfigExists) {
           // parse tsconfig for output, input
-          const tsconfig = parseTsconfig(tsconfigPath);
+          const tsconfig = parseTsconfig(tsconfigAbsolutePath);
+          const tsConfigAbsoluteDirPath = ppath.dirname(tsconfigAbsolutePath);
 
           if (tsconfig.compilerOptions?.incremental) {
-            ignoredInputPaths.add(
-              ppath.normalize(
-                npath.toPortablePath(
-                  tsconfig.compilerOptions.tsBuildInfoFile ??
-                  npath.join(
-                    npath.dirname(tsconfigFile),
-                    `${npath.basename(tsconfigFile, npath.extname(tsconfigFile))}.tsbuildinfo`
-                  )
-                )
-              )
-            );
+            // note: tsbuildinfo needs to be resolved from tsconfig
+            const tsBuildInfoFile = tsconfig.compilerOptions.tsBuildInfoFile ?? `${ppath.basename(tsconfigAbsolutePath, ppath.extname(tsconfigAbsolutePath))}.tsbuildinfo`;
+            const tsBuildInfoAbsoluteFilePath = ppath.join(tsConfigAbsoluteDirPath, npath.toPortablePath(tsBuildInfoFile));
+            const tsBuildInfoRelativeFilePath = ppath.relative(workspace.cwd, tsBuildInfoAbsoluteFilePath);
+
+            ignoredInputPaths.add(tsBuildInfoRelativeFilePath);
           }
 
           if (!useExplicitInputPaths || useExplicitTsConfig) {
-            // include contains relative file paths
             tsconfig.include?.forEach((file) => {
-              inputPaths.add((ppath.normalize(npath.toPortablePath(file))));
+              // include contains relative file paths which needs to be resolved from tsconfig
+              const absoluteFilePath = ppath.join(tsConfigAbsoluteDirPath, npath.toPortablePath(file));
+              const realtiveFilePath = ppath.relative(workspace.cwd, absoluteFilePath);
+
+              inputPaths.add(realtiveFilePath);
             });
 
             tsconfig.exclude?.forEach((file) => {
-              // exclude contains relative file paths which will be ignored from include
-              ignoredInputPaths.add((ppath.normalize(npath.toPortablePath(file))));
+              // exclude contains relative file paths which needs to be resolved from tsconfig
+              // this paths will reduce the paths from include
+              const absoluteFilePath = ppath.join(tsConfigAbsoluteDirPath, npath.toPortablePath(file));
+              const realtiveFilePath = ppath.relative(workspace.cwd, absoluteFilePath);
+
+              ignoredInputPaths.add(realtiveFilePath);
             });
           }
 
           if ((!useExplicitOutputPaths || useExplicitTsConfig) && tsconfig.compilerOptions?.outDir != null) {
-            // outDir directs to relative output folder
-            outputPaths.add(ppath.normalize(npath.toPortablePath(tsconfig.compilerOptions.outDir)));
+            // outDir directs to relative output folder which needs to be resolved from tsconfig
+            const absoluteFilePath = ppath.join(
+                tsConfigAbsoluteDirPath,
+                npath.toPortablePath(npath.toPortablePath(tsconfig.compilerOptions.outDir))
+            );
+            const realtiveFilePath = ppath.relative(workspace.cwd, absoluteFilePath);
+
+            outputPaths.add(realtiveFilePath);
           }
         }
       } catch (err) {
