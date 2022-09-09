@@ -866,7 +866,7 @@ class RunSupervisor {
 
     // Traverse the dirs and see if they've been modified
     {
-      const ignorePaths = [...new Set([...outputPaths, ...ignoredInputPaths])]
+      const ignorePaths = [...new Set(["node_modules", ...outputPaths, ...ignoredInputPaths])]
           .map((p) => npath.toPortablePath(p));
       const srcPaths = [...inputPaths]
           .map((p) => npath.toPortablePath(p));
