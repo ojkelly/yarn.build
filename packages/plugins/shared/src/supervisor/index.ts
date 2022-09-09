@@ -182,6 +182,8 @@ class RunSupervisor {
 
   checkIfRunIsRequiredCache: { [key: PortablePath]: boolean } = {};
 
+  planCache: { [key: PortablePath]: boolean } = {};
+
   private hasSetup = false;
 
   constructor({
@@ -536,11 +538,18 @@ class RunSupervisor {
 
   // this function may be called more than once per package as the run graph
   // is constructed
-  plan = async (node: Node, workspace: Workspace): Promise<void> => {
+  plan = async (node: Node, workspace: Workspace): Promise<boolean> => {
     if (!node) {
       throw new Error(
         "Internal error: lost reference to parent workspace. Please open an issue."
       );
+    }
+
+    // if we've already checked this workspace, we don't need to check it again
+    if (
+      typeof this.planCache[workspace.relativeCwd] !== `undefined`
+    ) {
+      return this.planCache[workspace.relativeCwd];
     }
 
     this.runGraph.checkCyclical(node);
@@ -581,15 +590,9 @@ class RunSupervisor {
           // this resolve call checks for cyclic dependencies
           this.runGraph.checkCyclical(dep);
 
-          const depsOfDepsNeedRerun = await this.plan(dep, depWorkspace);
+          const depNeedsRun = await this.plan(dep, depWorkspace);
 
-          let depNeedsRun = false;
-
-          if (depWorkspace !== this.project.topLevelWorkspace) {
-            depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
-          }
-
-          if (depNeedsRun || depsOfDepsNeedRerun) {
+          if (depNeedsRun) {
             this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
             rerunParent = true;
             this.removeFromExcluded(depWorkspace);
@@ -665,6 +668,10 @@ class RunSupervisor {
         }
       }
     }
+
+    this.planCache[workspace.relativeCwd] = rerun;
+
+    return rerun;
   };
 
   private markWorkspaceForRerun(workspace: Workspace) {
