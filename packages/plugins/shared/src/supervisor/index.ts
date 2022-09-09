@@ -11,10 +11,7 @@ import {
 import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, npath, ppath, xfs } from "@yarnpkg/fslib";
-import {
-  getWorkspaceConfiguration,
-  YarnBuildConfiguration
-} from "../config";
+import { getWorkspaceConfiguration, YarnBuildConfiguration } from "../config";
 import globby from "globby";
 
 import { EventEmitter } from "events";
@@ -629,7 +626,6 @@ class RunSupervisor {
       this.removeFromExcluded(workspace);
       this.entrypoints.add(node);
       this.runTargets.push(workspace);
-
     } else {
       // Use the previous log entry if we don't need to rerun.
       // This ensures we always have all our run targets in the log.
@@ -656,16 +652,17 @@ class RunSupervisor {
       }
 
       // determine dependencies that need a rebuild and mark their dependent projects for rerun
-      const dependencyWorkspaces = Array
-          .from(workspace.getRecursiveWorkspaceDependencies())
-          .filter((w) => this.isWorkspaceMarkedForRerun(w));
+      const dependencyWorkspaces = Array.from(
+        workspace.getRecursiveWorkspaceDependencies()
+      ).filter((w) => this.isWorkspaceMarkedForRerun(w));
 
       for (const dependencyWorkspace of dependencyWorkspaces) {
-          const dependentWorkspaces = dependencyWorkspace.getRecursiveWorkspaceDependents();
+        const dependentWorkspaces =
+          dependencyWorkspace.getRecursiveWorkspaceDependents();
 
-          for (const dependentWorkspace of dependentWorkspaces) {
-            this.markWorkspaceForRerun(dependentWorkspace);
-          }
+        for (const dependentWorkspace of dependentWorkspaces) {
+          this.markWorkspaceForRerun(dependentWorkspace);
+        }
       }
     }
   };
@@ -673,13 +670,13 @@ class RunSupervisor {
   private markWorkspaceForRerun(workspace: Workspace) {
     // skip if the package does not contain the intended run command
     if (
-        typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+      typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
     ) {
       return;
     }
 
     const previousRunLog = this.runLog?.get(
-        `${workspace.relativeCwd}#${this.runCommand}`
+      `${workspace.relativeCwd}#${this.runCommand}`
     );
 
     // This ensures we always have all our run targets in the log.
@@ -694,13 +691,13 @@ class RunSupervisor {
   private isWorkspaceMarkedForRerun(workspace: Workspace): boolean {
     // skip if the package does not contain the intended run command
     if (
-        typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+      typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
     ) {
       return false;
     }
 
     const previousRunLog = this.runLog?.get(
-        `${workspace.relativeCwd}#${this.runCommand}`
+      `${workspace.relativeCwd}#${this.runCommand}`
     );
 
     return previousRunLog?.rerun ?? false;
@@ -731,7 +728,7 @@ class RunSupervisor {
 
     // if this workspace is already marked for rerun, we don't need to check
     const previousRunLog = this.runLog?.get(
-        `${workspace.relativeCwd}#${this.runCommand}`
+      `${workspace.relativeCwd}#${this.runCommand}`
     );
 
     if (previousRunLog?.rerun) {
@@ -741,8 +738,8 @@ class RunSupervisor {
     // we need to build if our dependencies needs to build
     for (const dependencyType of Manifest.hardDependencies) {
       for (const descriptor of workspace.manifest
-          .getForScope(dependencyType)
-          .values()) {
+        .getForScope(dependencyType)
+        .values()) {
         const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
 
         if (depWorkspace === null) continue;
@@ -754,32 +751,30 @@ class RunSupervisor {
       }
     }
 
-    const workspaceConfiguration = getWorkspaceConfiguration(workspace.manifest.raw);
+    const workspaceConfiguration = getWorkspaceConfiguration(
+      workspace.manifest.raw
+    );
     const useExplicitInputPaths = workspaceConfiguration?.input != null;
     const useExplicitOutputPaths = workspaceConfiguration?.output != null;
     const useExplicitTsConfig = workspaceConfiguration.tsconfig != null;
 
     const inputPaths = new Set<string>();
     const ignoredInputPaths = new Set<string>();
-    const baseInputPaths = workspaceConfiguration.input ?? this.pluginConfiguration.folders.input;
+    const baseInputPaths =
+      workspaceConfiguration.input ?? this.pluginConfiguration.folders.input;
 
     Array.isArray(baseInputPaths)
-      ? baseInputPaths.forEach(
-          (p: string) => p && inputPaths.add(p)
-        )
+      ? baseInputPaths.forEach((p: string) => p && inputPaths.add(p))
       : inputPaths.add(baseInputPaths);
-
 
     const outputPaths = new Set<string>();
     const baseOutputPaths = workspaceConfiguration.output ?? [];
 
     Array.isArray(baseOutputPaths)
-      ? baseOutputPaths.forEach(
-          (p) => p && outputPaths.add(p)
-        )
+      ? baseOutputPaths.forEach((p) => p && outputPaths.add(p))
       : outputPaths.add(baseOutputPaths);
 
-   if (!useExplicitOutputPaths) {
+    if (!useExplicitOutputPaths) {
       // Check for conventional artifact folders in package.json
       if (typeof workspace?.manifest?.raw?.bin === "string") {
         outputPaths.add(workspace.manifest.raw.bin);
@@ -797,7 +792,11 @@ class RunSupervisor {
     }
 
     // check for a tsconfig.json # 170
-    if (!useExplicitInputPaths || !useExplicitOutputPaths || useExplicitTsConfig) {
+    if (
+      !useExplicitInputPaths ||
+      !useExplicitOutputPaths ||
+      useExplicitTsConfig
+    ) {
       try {
         const tsconfigFile = workspaceConfiguration.tsconfig ?? "tsconfig.json";
         const tsconfigAbsolutePath = xfs.pathUtils.join(
@@ -813,9 +812,20 @@ class RunSupervisor {
 
           if (tsconfig.compilerOptions?.incremental) {
             // note: tsbuildinfo needs to be resolved from tsconfig
-            const tsBuildInfoFile = tsconfig.compilerOptions.tsBuildInfoFile ?? `${ppath.basename(tsconfigAbsolutePath, ppath.extname(tsconfigAbsolutePath))}.tsbuildinfo`;
-            const tsBuildInfoAbsoluteFilePath = ppath.join(tsConfigAbsoluteDirPath, npath.toPortablePath(tsBuildInfoFile));
-            const tsBuildInfoRelativeFilePath = ppath.relative(workspace.cwd, tsBuildInfoAbsoluteFilePath);
+            const tsBuildInfoFile =
+              tsconfig.compilerOptions.tsBuildInfoFile ??
+              `${ppath.basename(
+                tsconfigAbsolutePath,
+                ppath.extname(tsconfigAbsolutePath)
+              )}.tsbuildinfo`;
+            const tsBuildInfoAbsoluteFilePath = ppath.join(
+              tsConfigAbsoluteDirPath,
+              npath.toPortablePath(tsBuildInfoFile)
+            );
+            const tsBuildInfoRelativeFilePath = ppath.relative(
+              workspace.cwd,
+              tsBuildInfoAbsoluteFilePath
+            );
 
             ignoredInputPaths.add(tsBuildInfoRelativeFilePath);
           }
@@ -823,8 +833,14 @@ class RunSupervisor {
           if (!useExplicitInputPaths || useExplicitTsConfig) {
             tsconfig.include?.forEach((file) => {
               // include contains relative file paths which needs to be resolved from tsconfig
-              const absoluteFilePath = ppath.join(tsConfigAbsoluteDirPath, npath.toPortablePath(file));
-              const realtiveFilePath = ppath.relative(workspace.cwd, absoluteFilePath);
+              const absoluteFilePath = ppath.join(
+                tsConfigAbsoluteDirPath,
+                npath.toPortablePath(file)
+              );
+              const realtiveFilePath = ppath.relative(
+                workspace.cwd,
+                absoluteFilePath
+              );
 
               inputPaths.add(realtiveFilePath);
             });
@@ -832,20 +848,34 @@ class RunSupervisor {
             tsconfig.exclude?.forEach((file) => {
               // exclude contains relative file paths which needs to be resolved from tsconfig
               // this paths will reduce the paths from include
-              const absoluteFilePath = ppath.join(tsConfigAbsoluteDirPath, npath.toPortablePath(file));
-              const realtiveFilePath = ppath.relative(workspace.cwd, absoluteFilePath);
+              const absoluteFilePath = ppath.join(
+                tsConfigAbsoluteDirPath,
+                npath.toPortablePath(file)
+              );
+              const realtiveFilePath = ppath.relative(
+                workspace.cwd,
+                absoluteFilePath
+              );
 
               ignoredInputPaths.add(realtiveFilePath);
             });
           }
 
-          if ((!useExplicitOutputPaths || useExplicitTsConfig) && tsconfig.compilerOptions?.outDir != null) {
+          if (
+            (!useExplicitOutputPaths || useExplicitTsConfig) &&
+            tsconfig.compilerOptions?.outDir != null
+          ) {
             // outDir directs to relative output folder which needs to be resolved from tsconfig
             const absoluteFilePath = ppath.join(
-                tsConfigAbsoluteDirPath,
-                npath.toPortablePath(npath.toPortablePath(tsconfig.compilerOptions.outDir))
+              tsConfigAbsoluteDirPath,
+              npath.toPortablePath(
+                npath.toPortablePath(tsconfig.compilerOptions.outDir)
+              )
             );
-            const realtiveFilePath = ppath.relative(workspace.cwd, absoluteFilePath);
+            const realtiveFilePath = ppath.relative(
+              workspace.cwd,
+              absoluteFilePath
+            );
 
             outputPaths.add(realtiveFilePath);
           }
@@ -858,18 +888,18 @@ class RunSupervisor {
     // only add default output path if we didn't find anything, yet
     if (outputPaths.size === 0) {
       Array.isArray(this.pluginConfiguration.folders.output)
-          ? this.pluginConfiguration.folders.output.forEach(
-              (p) => p && outputPaths.add(p)
+        ? this.pluginConfiguration.folders.output.forEach(
+            (p) => p && outputPaths.add(p)
           )
-          : outputPaths.add(this.pluginConfiguration.folders.output);
+        : outputPaths.add(this.pluginConfiguration.folders.output);
     }
 
     // Traverse the dirs and see if they've been modified
     {
-      const ignorePaths = [...new Set(["node_modules", ...outputPaths, ...ignoredInputPaths])]
-          .map((p) => npath.toPortablePath(p));
-      const srcPaths = [...inputPaths]
-          .map((p) => npath.toPortablePath(p));
+      const ignorePaths = [
+        ...new Set(["node_modules", ...outputPaths, ...ignoredInputPaths]),
+      ].map((p) => npath.toPortablePath(p));
+      const srcPaths = [...inputPaths].map((p) => npath.toPortablePath(p));
 
       const release = await this.runReport.mutex.acquire();
 
@@ -888,16 +918,19 @@ class RunSupervisor {
         // if any don't, we need to rebuild
         if (!needsRun) {
           const outputPatternsCheck = await Promise.all(
-              [...outputPaths].map(async (op) => {
-                try {
-                  // note: we need to check every pattern/Path to ensure each return at least one result
-                  const paths = await globby(op, { dot: true, cwd: workspace.cwd });
+            [...outputPaths].map(async (op) => {
+              try {
+                // note: we need to check every pattern/Path to ensure each return at least one result
+                const paths = await globby(op, {
+                  dot: true,
+                  cwd: workspace.cwd,
+                });
 
-                  return paths.length === 0;
-                } catch {
-                  return false;
-                }
-              })
+                return paths.length === 0;
+              } catch {
+                return false;
+              }
+            })
           );
 
           if (outputPatternsCheck.some((v) => v === true)) {
@@ -921,8 +954,6 @@ class RunSupervisor {
         release();
       }
     }
-
-
 
     this.checkIfRunIsRequiredCache[workspace.relativeCwd] = needsRun;
 
@@ -1747,27 +1778,28 @@ const getHashForPaths = async (
   paths: PortablePath[],
   ignored: PortablePath[] | undefined
 ): Promise<string> => {
-
   const allFilePaths = await globby(paths, {
     cwd: cwd,
     absolute: true,
     expandDirectories: true,
     dot: true,
-    ignore: ignored
+    ignore: ignored,
   });
 
   allFilePaths.sort();
 
-  const fileDetails = await Promise.all(allFilePaths.map(async (p) => {
-    const filePath = npath.toPortablePath(p);
-    const stat = await xfs.statPromise(filePath);
+  const fileDetails = await Promise.all(
+    allFilePaths.map(async (p) => {
+      const filePath = npath.toPortablePath(p);
+      const stat = await xfs.statPromise(filePath);
 
-    return {
-      path: ppath.relative(cwd, filePath),
-      size: stat.isFile() ? stat.size : 0,
-      lastModified: stat.isFile() ? stat.mtimeMs : 0
-    };
-  }));
+      return {
+        path: ppath.relative(cwd, filePath),
+        size: stat.isFile() ? stat.size : 0,
+        lastModified: stat.isFile() ? stat.mtimeMs : 0,
+      };
+    })
+  );
 
   return objectHash(fileDetails);
 };
@@ -1782,7 +1814,6 @@ export const formatTimestampDifference = (from: number, to: number): string => {
     output += `${minutes}m`;
     milliseconds -= minutes * 60000;
   }
-
 
   if (milliseconds) {
     if (minutes) {

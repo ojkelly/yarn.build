@@ -27,7 +27,9 @@ const isYarnBuildManifestConfiguration = t.isObject({
 
 type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
 
-type YarnBuildManifestConfiguration = t.InferType<typeof isYarnBuildManifestConfiguration>;
+type YarnBuildManifestConfiguration = t.InferType<
+  typeof isYarnBuildManifestConfiguration
+>;
 
 const DEFAULT_CONFIG: YarnBuildConfiguration = {
   folders: {
@@ -71,7 +73,7 @@ async function getConfiguration(
         tip = ` (config is corrupted, please check it matches the shape in the yarn.build readme.`;
 
       throw new Error(
-          `Parse error when loading ${rcPath}; please check it's proper Yaml${tip}`
+        `Parse error when loading ${rcPath}; please check it's proper Yaml${tip}`
       );
     }
   }
@@ -105,7 +107,7 @@ function getWorkspaceConfiguration(packageJsonManifest: {
   [key: string]: any;
 }): YarnBuildManifestConfiguration {
   const configuration = {
-    ...packageJsonManifest["yarn.build"]
+    ...packageJsonManifest["yarn.build"],
   };
 
   if (isYarnBuildManifestConfiguration(configuration)) {
@@ -124,5 +126,5 @@ export {
   DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME,
   isYarnBuildManifestConfiguration,
   YarnBuildManifestConfiguration,
-  getWorkspaceConfiguration
+  getWorkspaceConfiguration,
 };
