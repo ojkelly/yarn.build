@@ -807,7 +807,7 @@ class RunSupervisor {
 
         if (tsconfigExists) {
           // parse tsconfig for output, input
-          const tsconfig = parseTsconfig(tsconfigAbsolutePath);
+          const tsconfig = parseTsconfig(npath.fromPortablePath(tsconfigAbsolutePath));
           const tsConfigAbsoluteDirPath = ppath.dirname(tsconfigAbsolutePath);
 
           if (tsconfig.compilerOptions?.incremental) {
@@ -872,12 +872,12 @@ class RunSupervisor {
                 npath.toPortablePath(tsconfig.compilerOptions.outDir)
               )
             );
-            const realtiveFilePath = ppath.relative(
+            const relativeFilePath = ppath.relative(
               workspace.cwd,
               absoluteFilePath
             );
 
-            outputPaths.add(realtiveFilePath);
+            outputPaths.add(relativeFilePath);
           }
         }
       } catch (err) {
@@ -917,13 +917,14 @@ class RunSupervisor {
         // #171 check if the output paths exist
         // if any don't, we need to rebuild
         if (!needsRun) {
+          const cwd = npath.fromPortablePath(workspace.cwd);
           const outputPatternsCheck = await Promise.all(
             [...outputPaths].map(async (op) => {
               try {
                 // note: we need to check every pattern/Path to ensure each return at least one result
                 const paths = await globby(op, {
                   dot: true,
-                  cwd: workspace.cwd,
+                  cwd: cwd,
                 });
 
                 return paths.length === 0;
@@ -1779,7 +1780,7 @@ const getHashForPaths = async (
   ignored: PortablePath[] | undefined
 ): Promise<string> => {
   const allFilePaths = await globby(paths, {
-    cwd: cwd,
+    cwd: npath.fromPortablePath(cwd),
     absolute: true,
     expandDirectories: true,
     dot: true,
