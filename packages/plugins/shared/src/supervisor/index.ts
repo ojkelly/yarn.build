@@ -807,7 +807,9 @@ class RunSupervisor {
 
         if (tsconfigExists) {
           // parse tsconfig for output, input
-          const tsconfig = parseTsconfig(npath.fromPortablePath(tsconfigAbsolutePath));
+          const tsconfig = parseTsconfig(
+            npath.fromPortablePath(tsconfigAbsolutePath)
+          );
           const tsConfigAbsoluteDirPath = ppath.dirname(tsconfigAbsolutePath);
 
           if (tsconfig.compilerOptions?.incremental) {
