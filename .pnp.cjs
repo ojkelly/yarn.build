@@ -69,6 +69,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         "reference": "workspace:packages/examples/words/lorem"\
       },\
       {\
+        "name": "@internal/quitter",\
+        "reference": "workspace:packages/examples/words/quitter"\
+      },\
+      {\
         "name": "@internal/sit",\
         "reference": "workspace:packages/examples/words/sit"\
       },\
@@ -112,6 +116,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
       ["@internal/phrase-in-hac", ["workspace:packages/examples/phrases/in-hac"]],\
       ["@internal/phrase-lorem-ipsum", ["workspace:packages/examples/phrases/lorem-ipsum"]],\
       ["@internal/phrase-nullam-risus", ["workspace:packages/examples/phrases/nullam-risus"]],\
+      ["@internal/quitter", ["workspace:packages/examples/words/quitter"]],\
       ["@internal/sit", ["workspace:packages/examples/words/sit"]],\
       ["@ojkelly/yarn-build-shared", ["workspace:packages/plugins/shared"]],\
       ["@ojkelly/yarn-plugin-all", ["workspace:packages/plugins/plugin-all"]],\
@@ -1152,6 +1157,16 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/jest", "npm:26.0.24"],\
             ["jest", "npm:26.6.3"],\
             ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:26.5.6"],\
+            ["typescript", "patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=a1c5e5"]\
+          ],\
+          "linkType": "SOFT"\
+        }]\
+      ]],\
+      ["@internal/quitter", [\
+        ["workspace:packages/examples/words/quitter", {\
+          "packageLocation": "./packages/examples/words/quitter/",\
+          "packageDependencies": [\
+            ["@internal/quitter", "workspace:packages/examples/words/quitter"],\
             ["typescript", "patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=a1c5e5"]\
           ],\
           "linkType": "SOFT"\

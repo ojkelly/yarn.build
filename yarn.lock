@@ -769,6 +769,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@internal/quitter@workspace:packages/examples/words/quitter":
+  version: 0.0.0-use.local
+  resolution: "@internal/quitter@workspace:packages/examples/words/quitter"
+  dependencies:
+    typescript: ^4
+  languageName: unknown
+  linkType: soft
+
 "@internal/sit@workspace:*, @internal/sit@workspace:packages/examples/words/sit":
   version: 0.0.0-use.local
   resolution: "@internal/sit@workspace:packages/examples/words/sit"
