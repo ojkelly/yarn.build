@@ -11,7 +11,7 @@ const DEFAULT_IGNORE_FILE = ".bundleignore" as Filename;
 const isYarnBuildConfiguration = t.isObject({
   folders: t.isObject({
     input: t.isOneOf([t.isString(), t.isArray(t.isString())]),
-    output: t.isOneOf([t.isString(), t.isArray(t.isString())]),
+    output: t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())])),
   }),
   exclude: t.isArray(t.isString()),
   bail: t.isBoolean(),
@@ -21,7 +21,9 @@ const isYarnBuildConfiguration = t.isObject({
 
 const isYarnBuildManifestConfiguration = t.isObject({
   input: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
-    output: t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())])),
+  output: t.isOptional(
+    t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())]))
+  ),
   tsconfig: t.isOptional(t.isString()),
 });
 
