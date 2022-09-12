@@ -759,21 +759,17 @@ class RunSupervisor {
     const useExplicitOutputPaths =
       typeof workspaceConfiguration?.output !== "undefined";
 
-    const inputPaths = new Set<string>();
-    const ignoredInputPaths = new Set<string>();
     const baseInputPaths =
       workspaceConfiguration.input ?? this.pluginConfiguration.folders.input;
+    const ignoredInputPaths = new Set<string>();
+    const inputPaths = new Set<string>(
+      Array.isArray(baseInputPaths) ? baseInputPaths : [baseInputPaths]
+    );
 
-    Array.isArray(baseInputPaths)
-      ? baseInputPaths.forEach((p: string) => p && inputPaths.add(p))
-      : inputPaths.add(baseInputPaths);
-
-    const outputPaths = new Set<string>();
     const baseOutputPaths = workspaceConfiguration.output ?? [];
-
-    Array.isArray(baseOutputPaths)
-      ? baseOutputPaths.forEach((p) => p && outputPaths.add(p))
-      : outputPaths.add(baseOutputPaths);
+    const outputPaths = new Set<string>(
+      Array.isArray(baseOutputPaths) ? baseOutputPaths : [baseOutputPaths]
+    );
 
     if (!useExplicitOutputPaths) {
       // Check for conventional artifact folders in package.json
