@@ -21,7 +21,7 @@ const isYarnBuildConfiguration = t.isObject({
 
 const isYarnBuildManifestConfiguration = t.isObject({
   input: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
-  output: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
+    output: t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())])),
   tsconfig: t.isOptional(t.isString()),
 });
 
@@ -34,7 +34,7 @@ type YarnBuildManifestConfiguration = t.InferType<
 const DEFAULT_CONFIG: YarnBuildConfiguration = {
   folders: {
     input: ".",
-    output: "build",
+    output: null,
   },
   exclude: [],
   bail: true,

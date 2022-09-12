@@ -893,7 +893,7 @@ class RunSupervisor {
         ? this.pluginConfiguration.folders.output.forEach(
             (p) => p && outputPaths.add(p)
           )
-        : outputPaths.add(this.pluginConfiguration.folders.output);
+        : typeof this.pluginConfiguration.folders.output === `string` && outputPaths.add(this.pluginConfiguration.folders.output);
     }
 
     // Traverse the dirs and see if they've been modified
