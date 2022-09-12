@@ -47,7 +47,7 @@
     "ts-pnp": "^1.2.0"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18.6||17.x||16.x"
   },
   "dependencies": {
     "@kablamo/kerosene": "^0.0.20",
