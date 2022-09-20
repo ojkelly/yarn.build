@@ -9,7 +9,8 @@
       "packages/plugins/*",
       "packages/examples/*",
       "packages/examples/words/*",
-      "packages/examples/phrases/*"
+      "packages/examples/phrases/*",
+      "!e2e"
     ]
   },
   "private": true,
