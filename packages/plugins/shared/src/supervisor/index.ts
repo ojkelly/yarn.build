@@ -10,14 +10,12 @@ import {
 } from "@yarnpkg/core";
 import isCI from "is-ci";
 import { cpus } from "os";
-import { Filename, PortablePath, ppath, xfs } from "@yarnpkg/fslib";
-import { isYarnBuildConfiguration, YarnBuildConfiguration } from "../config";
-import micromatch from "micromatch";
-import glob from "glob-promise";
+import { Filename, PortablePath, npath, ppath, xfs } from "@yarnpkg/fslib";
+import { getWorkspaceConfiguration, YarnBuildConfiguration } from "../config";
+import globby from "globby";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
-import path from "path";
 import PLimit, { Limit } from "p-limit";
 import { Mutex } from "await-semaphore";
 import fs from "fs";
@@ -32,6 +30,8 @@ import {
   Context,
   Attribute,
 } from "@ojkelly/yarn-build-shared/src/tracing";
+import { parseTsconfig } from "get-tsconfig";
+import objectHash from "object-hash";
 
 const YARN_RUN_CACHE_FILENAME = "yarn.build.json" as Filename;
 
@@ -45,6 +45,7 @@ enum RunStatus {
   failed = "failed",
   succeeded = "succeeded",
 }
+
 type RunLogFile = {
   comment: string;
   packages: {
@@ -53,10 +54,9 @@ type RunLogFile = {
 };
 type RunLog = Map<string, RunLogEntry>;
 type RunLogEntry = {
-  lastModified?: number;
+  checksum?: string;
   status?: RunStatus;
   rerun?: boolean;
-  haveCheckedForRerun?: boolean;
   command: string;
   exitCode?: string;
 };
@@ -183,6 +183,8 @@ class RunSupervisor {
 
   checkIfRunIsRequiredCache: { [key: PortablePath]: boolean } = {};
 
+  planCache: { [key: PortablePath]: boolean } = {};
+
   private hasSetup = false;
 
   constructor({
@@ -278,10 +280,9 @@ class RunSupervisor {
       if (runLogFile && runLogFile.packages) {
         for (const id in runLogFile.packages) {
           runLog.set(id, {
-            lastModified: runLogFile.packages[id].lastModified,
+            checksum: runLogFile.packages[id].checksum,
             status: runLogFile.packages[id].status,
-            haveCheckedForRerun: false,
-            rerun: true,
+            rerun: runLogFile.packages[id].rerun,
             command: this.runCommand,
           });
         }
@@ -312,11 +313,7 @@ class RunSupervisor {
       },
     };
 
-    for (const [id, entry] of this.runLog) {
-      if (entry.status !== RunStatus.succeeded) {
-        continue;
-      }
-
+    for (const [id] of this.runLog) {
       runLogFile.packages[id] = {
         ...runLogFile.packages[id],
         ...this.runLog.get(id),
@@ -542,15 +539,21 @@ class RunSupervisor {
 
   // this function may be called more than once per package as the run graph
   // is constructed
-  plan = async (node: Node, workspace: Workspace): Promise<void> => {
+  plan = async (node: Node, workspace: Workspace): Promise<boolean> => {
     if (!node) {
       throw new Error(
         "Internal error: lost reference to parent workspace. Please open an issue."
       );
     }
 
+    // if we've already checked this workspace, we don't need to check it again
+    if (typeof this.planCache[workspace.relativeCwd] !== `undefined`) {
+      return this.planCache[workspace.relativeCwd];
+    }
+
     this.runGraph.checkCyclical(node);
 
+    let rerun = false;
     let rerunParent = false;
 
     this.runMutexes[workspace.relativeCwd] = new Mutex();
@@ -581,22 +584,15 @@ class RunSupervisor {
 
           const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
 
-          this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
-
           node.addDependency(dep);
 
           // this resolve call checks for cyclic dependencies
           this.runGraph.checkCyclical(dep);
 
-          const depsOfDepsNeedRerun = await this.plan(dep, depWorkspace);
+          const depNeedsRun = await this.plan(dep, depWorkspace);
 
-          let depNeedsRun = false;
-
-          if (depWorkspace !== this.project.topLevelWorkspace) {
-            depNeedsRun = await this.checkIfRunIsRequired(depWorkspace);
-          }
-
-          if (depNeedsRun || depsOfDepsNeedRerun) {
+          if (depNeedsRun) {
+            this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
             rerunParent = true;
             this.removeFromExcluded(depWorkspace);
           }
@@ -616,6 +612,7 @@ class RunSupervisor {
     );
 
     if (rerunParent || hasChanges) {
+      rerun = true;
       this.runReporter.emit(
         RunSupervisorReporterEvents.pending,
         workspace.relativeCwd,
@@ -631,8 +628,6 @@ class RunSupervisor {
       this.removeFromExcluded(workspace);
       this.entrypoints.add(node);
       this.runTargets.push(workspace);
-
-      return;
     } else {
       // Use the previous log entry if we don't need to rerun.
       // This ensures we always have all our run targets in the log.
@@ -642,44 +637,79 @@ class RunSupervisor {
 
       if (previousRunLog) {
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-          lastModified: previousRunLog.lastModified,
+          checksum: previousRunLog.checksum,
           status: RunStatus.succeeded,
-          haveCheckedForRerun: true,
           rerun: false,
           command: this.runCommand,
         });
       }
     }
 
-    return;
-  };
+    if (rerun) {
+      // mark all dependent projects for rerun for the next build
+      const dependentWorkspaces = workspace.getRecursiveWorkspaceDependents();
 
-  private getWorkspaceConfig(workspace: Workspace): YarnBuildConfiguration {
-    const errors: string[] = [];
-    const workspaceConfiguration = {
-      ...this.pluginConfiguration,
-      folders: {
-        ...this.pluginConfiguration.folders,
-        ...workspace?.manifest.raw["yarn.build"],
-      },
-    };
+      for (const dependentWorkspace of dependentWorkspaces) {
+        this.markWorkspaceForRerun(dependentWorkspace);
+      }
 
-    if (isYarnBuildConfiguration(workspaceConfiguration, { errors })) {
-      return workspaceConfiguration;
+      // determine dependencies that need a rebuild and mark their dependent projects for rerun
+      const dependencyWorkspaces = Array.from(
+        workspace.getRecursiveWorkspaceDependencies()
+      ).filter((w) => this.isWorkspaceMarkedForRerun(w));
+
+      for (const dependencyWorkspace of dependencyWorkspaces) {
+        const dependentWorkspaces =
+          dependencyWorkspace.getRecursiveWorkspaceDependents();
+
+        for (const dependentWorkspace of dependentWorkspaces) {
+          this.markWorkspaceForRerun(dependentWorkspace);
+        }
+      }
     }
 
-    console.warn(errors);
+    this.planCache[workspace.relativeCwd] = rerun;
 
-    return this.pluginConfiguration;
+    return rerun;
+  };
+
+  private markWorkspaceForRerun(workspace: Workspace) {
+    // skip if the package does not contain the intended run command
+    if (
+      typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+    ) {
+      return;
+    }
+
+    const previousRunLog = this.runLog?.get(
+      `${workspace.relativeCwd}#${this.runCommand}`
+    );
+
+    // This ensures we always have all our run targets in the log.
+    this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
+      checksum: previousRunLog?.checksum ?? "",
+      status: RunStatus.succeeded,
+      rerun: true,
+      command: this.runCommand,
+    });
+  }
+
+  private isWorkspaceMarkedForRerun(workspace: Workspace): boolean {
+    // skip if the package does not contain the intended run command
+    if (
+      typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+    ) {
+      return false;
+    }
+
+    const previousRunLog = this.runLog?.get(
+      `${workspace.relativeCwd}#${this.runCommand}`
+    );
+
+    return previousRunLog?.rerun ?? false;
   }
 
   private async checkIfRunIsRequired(workspace: Workspace): Promise<boolean> {
-    if (this.ignoreRunCache === true) {
-      this.checkIfRunIsRequiredCache[workspace.relativeCwd] = true;
-
-      return true;
-    }
-
     // if we've already checked this workspace, we don't need to check it again
     if (
       typeof this.checkIfRunIsRequiredCache[workspace.relativeCwd] !==
@@ -688,35 +718,60 @@ class RunSupervisor {
       return this.checkIfRunIsRequiredCache[workspace.relativeCwd];
     }
 
-    //  skip if this workspace doesn't have the command we want to run
+    // skip if this workspace doesn't have the command we want to run
     if (typeof workspace.manifest.scripts.get(this.runCommand) !== `string`) {
       this.checkIfRunIsRequiredCache[workspace.relativeCwd] = false;
 
       return false;
     }
 
+    // workspace have never been checked before:
+    // - check if we need to rerun when files or dependencies needs an update
+    // - calculate the workspace checksum to prevent future builds
     let needsRun = false;
-    const dir = ppath.resolve(workspace.project.cwd, workspace.relativeCwd);
 
-    const workspaceConfiguration = this.getWorkspaceConfig(workspace);
+    // force re-run when we can ignore the cache
+    if (this.ignoreRunCache) {
+      needsRun = true;
+    }
 
-    const inputPaths = new Set<string>();
+    // if this workspace is already marked for rerun
+    const previousRunLog = this.runLog?.get(
+      `${workspace.relativeCwd}#${this.runCommand}`
+    );
 
-    Array.isArray(workspaceConfiguration.folders.input)
-      ? workspaceConfiguration.folders.input.forEach(
-          (p: string) => p && inputPaths.add(p)
-        )
-      : inputPaths.add(workspaceConfiguration.folders.input);
+    if (previousRunLog?.rerun) {
+      needsRun = true;
+    }
 
-    const outputPaths = new Set<string>();
+    // we need to build if our dependencies needs to build
+    for (const depWorkspace of workspace.getRecursiveWorkspaceDependencies()) {
+      if (this.checkIfRunIsRequiredCache[depWorkspace.relativeCwd] === true) {
+        needsRun = true;
+        break;
+      }
+    }
 
-    Array.isArray(workspaceConfiguration.folders.output)
-      ? workspaceConfiguration.folders.output.forEach(
-          (p) => p && outputPaths.add(p)
-        )
-      : outputPaths.add(workspaceConfiguration.folders.output);
+    const workspaceConfiguration = getWorkspaceConfiguration(
+      workspace.manifest.raw
+    );
+    const useExplicitInputPaths = workspaceConfiguration?.input != null;
+    const useExplicitOutputPaths =
+      typeof workspaceConfiguration?.output !== "undefined";
 
-    {
+    const baseInputPaths =
+      workspaceConfiguration.input ?? this.pluginConfiguration.folders.input;
+    const ignoredInputPaths = new Set<string>();
+    const inputPaths = new Set<string>(
+      Array.isArray(baseInputPaths) ? baseInputPaths : [baseInputPaths]
+    );
+
+    const baseOutputPaths = workspaceConfiguration.output ?? [];
+    const outputPaths = new Set<string>(
+      Array.isArray(baseOutputPaths) ? baseOutputPaths : [baseOutputPaths]
+    );
+
+    if (!useExplicitOutputPaths) {
       // Check for conventional artifact folders in package.json
       if (typeof workspace?.manifest?.raw?.bin === "string") {
         outputPaths.add(workspace.manifest.raw.bin);
@@ -734,31 +789,90 @@ class RunSupervisor {
     }
 
     // check for a tsconfig.json # 170
-    {
+    if (!useExplicitInputPaths || !useExplicitOutputPaths) {
       try {
-        const tsconfigPath = xfs.pathUtils.join(
-          workspace.relativeCwd,
-          "tsconfig.json" as Filename
+        const tsconfigFile = workspaceConfiguration.tsconfig ?? "tsconfig.json";
+        const tsconfigAbsolutePath = xfs.pathUtils.join(
+          workspace.cwd,
+          npath.toPortablePath(tsconfigFile)
         );
-        const tsconfigStat = await xfs.statPromise(tsconfigPath);
+        const tsconfigExists = await xfs.existsPromise(tsconfigAbsolutePath);
 
-        if (tsconfigStat.isFile()) {
-          // parse tsconfig for output, input and exclude
-          const tsconfig = await xfs.readJsonPromise(tsconfigPath);
+        if (tsconfigExists) {
+          // parse tsconfig for output, input
+          const tsconfig = parseTsconfig(
+            npath.fromPortablePath(tsconfigAbsolutePath)
+          );
+          const tsConfigAbsoluteDirPath = ppath.dirname(tsconfigAbsolutePath);
 
-          if (tsconfig?.compilerOptions?.outDir) {
-            outputPaths.add(tsconfig.compilerOptions.outDir);
+          if (!useExplicitInputPaths) {
+            if (tsconfig.compilerOptions?.incremental) {
+              // note: tsbuildinfo needs to be resolved from tsconfig
+              const tsBuildInfoFile =
+                tsconfig.compilerOptions.tsBuildInfoFile ??
+                `${ppath.basename(
+                  tsconfigAbsolutePath,
+                  ppath.extname(tsconfigAbsolutePath)
+                )}.tsbuildinfo`;
+              const tsBuildInfoAbsoluteFilePath = ppath.join(
+                tsConfigAbsoluteDirPath,
+                npath.toPortablePath(tsBuildInfoFile)
+              );
+              const tsBuildInfoRelativeFilePath = ppath.relative(
+                workspace.cwd,
+                tsBuildInfoAbsoluteFilePath
+              );
+
+              ignoredInputPaths.add(tsBuildInfoRelativeFilePath);
+            }
+
+            tsconfig.include?.forEach((file) => {
+              // include contains relative file paths which needs to be resolved from tsconfig
+              const absoluteFilePath = ppath.join(
+                tsConfigAbsoluteDirPath,
+                npath.toPortablePath(file)
+              );
+              const realtiveFilePath = ppath.relative(
+                workspace.cwd,
+                absoluteFilePath
+              );
+
+              inputPaths.add(realtiveFilePath);
+            });
+
+            tsconfig.exclude?.forEach((file) => {
+              // exclude contains relative file paths which needs to be resolved from tsconfig
+              // this paths will reduce the paths from include
+              const absoluteFilePath = ppath.join(
+                tsConfigAbsoluteDirPath,
+                npath.toPortablePath(file)
+              );
+              const realtiveFilePath = ppath.relative(
+                workspace.cwd,
+                absoluteFilePath
+              );
+
+              ignoredInputPaths.add(realtiveFilePath);
+            });
           }
 
-          if (tsconfig?.include) {
-            Array.isArray(tsconfig.include)
-              ? tsconfig.include.forEach((p: string) => p && inputPaths.add(p))
-              : inputPaths.add(tsconfig.include);
-          }
-          if (tsconfig?.exclude) {
-            Array.isArray(tsconfig.exclude)
-              ? tsconfig.exclude.forEach((p: string) => p && outputPaths.add(p))
-              : outputPaths.add(tsconfig.exclude);
+          if (
+            !useExplicitOutputPaths &&
+            tsconfig.compilerOptions?.outDir != null
+          ) {
+            // outDir directs to relative output folder which needs to be resolved from tsconfig
+            const absoluteFilePath = ppath.join(
+              tsConfigAbsoluteDirPath,
+              npath.toPortablePath(
+                npath.toPortablePath(tsconfig.compilerOptions.outDir)
+              )
+            );
+            const relativeFilePath = ppath.relative(
+              workspace.cwd,
+              absoluteFilePath
+            );
+
+            outputPaths.add(relativeFilePath);
           }
         }
       } catch (err) {
@@ -766,42 +880,64 @@ class RunSupervisor {
       }
     }
 
-    const ignorePaths = [...outputPaths].map(
-      (d) => `${dir}${path.posix.sep}${d}` as PortablePath
-    );
-
-    const srcPaths = [...inputPaths]
-      ?.map((d) => `${dir}${path.posix.sep}${d}` as PortablePath)
-      .map((d) =>
-        d?.endsWith("/.") ? (d.substring(0, d.length - 2) as PortablePath) : d
-      );
+    // only add default output path if we didn't find anything, yet
+    if (outputPaths.size === 0) {
+      Array.isArray(this.pluginConfiguration.folders.output)
+        ? this.pluginConfiguration.folders.output.forEach(
+            (p) => p && outputPaths.add(p)
+          )
+        : typeof this.pluginConfiguration.folders.output === `string` &&
+          outputPaths.add(this.pluginConfiguration.folders.output);
+    }
 
     // Traverse the dirs and see if they've been modified
     {
+      const ignorePaths = [
+        ...new Set(["node_modules", ...outputPaths, ...ignoredInputPaths]),
+      ].map((p) => npath.toPortablePath(p));
+      const srcPaths = [...inputPaths].map((p) => npath.toPortablePath(p));
+
       const release = await this.runReport.mutex.acquire();
 
       try {
-        const previousRunLog = this.runLog?.get(
-          `${workspace.relativeCwd}#${this.runCommand}`
-        );
-
-        if (previousRunLog?.haveCheckedForRerun) {
-          return previousRunLog?.rerun ?? true;
-        }
-
-        const currentLastModified = await getLastModifiedForPaths(
-          srcPaths ?? [dir],
+        const currentHash = await getHashForPaths(
+          workspace.cwd,
+          srcPaths,
           ignorePaths
         );
 
-        if (previousRunLog?.lastModified !== currentLastModified) {
+        if (previousRunLog?.checksum !== currentHash) {
           needsRun = true;
         }
 
+        // #171 check if the output paths exist
+        // if any don't, we need to rebuild
+        if (!needsRun) {
+          const cwd = npath.fromPortablePath(workspace.cwd);
+          const outputPatternsCheck = await Promise.all(
+            [...outputPaths].map(async (op) => {
+              try {
+                // note: we need to check every pattern/Path to ensure each return at least one result
+                const paths = await globby(op, {
+                  dot: true,
+                  cwd: cwd,
+                });
+
+                return paths.length === 0;
+              } catch {
+                return false;
+              }
+            })
+          );
+
+          if (outputPatternsCheck.some((v) => v === true)) {
+            needsRun = true;
+          }
+        }
+
         this.runLog?.set(`${workspace.relativeCwd}#${this.runCommand}`, {
-          lastModified: currentLastModified,
+          checksum: currentHash,
           status: needsRun ? RunStatus.succeeded : RunStatus.pending,
-          haveCheckedForRerun: true,
           rerun: needsRun,
           command: this.runCommand,
         });
@@ -813,44 +949,6 @@ class RunSupervisor {
         );
       } finally {
         release();
-      }
-    }
-
-    // #171 check if the output paths exist
-    // if any don't, we need to rebuild
-    {
-      const checkOutputFolders = [...outputPaths].filter(
-        (v) => v !== "node_modules"
-      );
-
-      const outputFolderCheck = await Promise.all(
-        [...checkOutputFolders].map(async (op) => {
-          try {
-            const paths = (await glob(op, { dot: true })) as Filename[];
-
-            const files = await Promise.all(
-              paths.map(async (p) => {
-                const opstat = await xfs.statPromise(
-                  xfs.pathUtils.join(workspace.relativeCwd, p)
-                );
-
-                if (!opstat.isDirectory()) {
-                  return true;
-                }
-
-                return false;
-              })
-            );
-
-            return files.some((v) => v === true);
-          } catch {
-            return false;
-          }
-        })
-      );
-
-      if (outputFolderCheck.some((v) => v === true)) {
-        needsRun = true;
       }
     }
 
@@ -1561,9 +1659,8 @@ class RunSupervisor {
                   this.runLog?.set(
                     `${workspace.relativeCwd}#${this.runCommand}`,
                     {
-                      lastModified: currentRunLog?.lastModified,
+                      checksum: currentRunLog?.checksum,
                       status: RunStatus.skipped,
-                      haveCheckedForRerun: true,
                       rerun: false,
                       command: this.runCommand,
                     }
@@ -1597,10 +1694,9 @@ class RunSupervisor {
                   this.runLog?.set(
                     `${workspace.relativeCwd}#${this.runCommand}`,
                     {
-                      lastModified: currentRunLog?.lastModified,
+                      checksum: currentRunLog?.checksum,
                       status: RunStatus.failed,
-                      haveCheckedForRerun: true,
-                      rerun: false,
+                      rerun: true,
                       command: this.runCommand,
                       exitCode: `${exitCode}`,
                     }
@@ -1622,9 +1718,8 @@ class RunSupervisor {
                 this.runLog?.set(
                   `${workspace.relativeCwd}#${this.runCommand}`,
                   {
-                    lastModified: currentRunLog?.lastModified,
+                    checksum: currentRunLog?.checksum,
                     status: RunStatus.succeeded,
-                    haveCheckedForRerun: true,
                     rerun: false,
                     command: this.runCommand,
                   }
@@ -1644,10 +1739,9 @@ class RunSupervisor {
                 this.runLog?.set(
                   `${workspace.relativeCwd}#${this.runCommand}`,
                   {
-                    lastModified: currentRunLog?.lastModified,
+                    checksum: currentRunLog?.checksum,
                     status: RunStatus.failed,
-                    haveCheckedForRerun: true,
-                    rerun: false,
+                    rerun: true,
                     command: this.runCommand,
                   }
                 );
@@ -1676,40 +1770,35 @@ class RunSupervisor {
   };
 }
 
-const getLastModifiedForPaths = async (
+const getHashForPaths = async (
+  cwd: PortablePath,
   paths: PortablePath[],
   ignored: PortablePath[] | undefined
-): Promise<number> => {
-  const lastModifiedTimestamps = await Promise.all(
-    paths.map(async (p) => {
-      if (ignored?.some((i) => p.startsWith(i))) {
-        return 0;
-      }
+): Promise<string> => {
+  const allFilePaths = await globby(paths, {
+    cwd: npath.fromPortablePath(cwd),
+    absolute: true,
+    expandDirectories: true,
+    dot: true,
+    ignore: ignored,
+  });
 
-      if (ignored?.some((i) => micromatch.isMatch(p, i))) {
-        return 0;
-      }
+  allFilePaths.sort();
 
-      const stat = await xfs.statPromise(p);
+  const fileDetails = await Promise.all(
+    allFilePaths.map(async (p) => {
+      const filePath = npath.toPortablePath(p);
+      const stat = await xfs.statPromise(filePath);
 
-      if (stat.isFile()) {
-        return stat.mtimeMs;
-      }
-
-      if (stat.isDirectory()) {
-        const contents = await xfs.readdirPromise(p);
-
-        return await getLastModifiedForPaths(
-          contents.map((c) => `${p}${path.posix.sep}${c}` as PortablePath),
-          ignored
-        );
-      }
-
-      return 0;
+      return {
+        path: ppath.relative(cwd, filePath),
+        size: stat.isFile() ? stat.size : 0,
+        lastModified: stat.isFile() ? stat.mtimeMs : 0,
+      };
     })
   );
 
-  return Math.max(...lastModifiedTimestamps);
+  return objectHash(fileDetails);
 };
 
 export const formatTimestampDifference = (from: number, to: number): string => {

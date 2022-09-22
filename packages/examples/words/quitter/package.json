@@ -1,0 +1,16 @@
+{
+  "name": "@internal/quitter",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build": "tsc --noEmit"
+  },
+  "yarn.build": {
+    "output": null
+  },
+  "dependencies": {
+    "typescript": "^4"
+  }
+}

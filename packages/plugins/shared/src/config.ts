@@ -11,7 +11,7 @@ const DEFAULT_IGNORE_FILE = ".bundleignore" as Filename;
 const isYarnBuildConfiguration = t.isObject({
   folders: t.isObject({
     input: t.isOneOf([t.isString(), t.isArray(t.isString())]),
-    output: t.isOneOf([t.isString(), t.isArray(t.isString())]),
+    output: t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())])),
   }),
   exclude: t.isArray(t.isString()),
   bail: t.isBoolean(),
@@ -19,12 +19,24 @@ const isYarnBuildConfiguration = t.isObject({
   ignoreFile: t.isString(),
 });
 
+const isYarnBuildManifestConfiguration = t.isObject({
+  input: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
+  output: t.isOptional(
+    t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())]))
+  ),
+  tsconfig: t.isOptional(t.isString()),
+});
+
 type YarnBuildConfiguration = t.InferType<typeof isYarnBuildConfiguration>;
+
+type YarnBuildManifestConfiguration = t.InferType<
+  typeof isYarnBuildManifestConfiguration
+>;
 
 const DEFAULT_CONFIG: YarnBuildConfiguration = {
   folders: {
     input: ".",
-    output: ["build", "node_modules"],
+    output: null,
   },
   exclude: [],
   bail: true,
@@ -93,6 +105,20 @@ async function GetPluginConfiguration(
   };
 }
 
+function getWorkspaceConfiguration(packageJsonManifest: {
+  [key: string]: any;
+}): YarnBuildManifestConfiguration {
+  const configuration = {
+    ...packageJsonManifest["yarn.build"],
+  };
+
+  if (isYarnBuildManifestConfiguration(configuration)) {
+    return configuration;
+  }
+
+  return {};
+}
+
 export {
   isYarnBuildConfiguration,
   YarnBuildConfiguration,
@@ -100,4 +126,7 @@ export {
   GetPartialPluginConfiguration,
   DEFAULT_IGNORE_FILE,
   DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME,
+  isYarnBuildManifestConfiguration,
+  YarnBuildManifestConfiguration,
+  getWorkspaceConfiguration,
 };
