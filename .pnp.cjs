@@ -5845,7 +5845,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/babel__core", null],\
             ["@types/webpack", null],\
             ["find-cache-dir", "npm:3.3.1"],\
-            ["loader-utils", "npm:1.4.0"],\
+            ["loader-utils", "npm:1.4.1"],\
             ["make-dir", "npm:3.1.0"],\
             ["schema-utils", "npm:2.7.1"],\
             ["webpack", "virtual:5991fbdba1201ef5048861110484c613a4bf592070a172c621a88a91f4ad3df3109af87475ff5cfd9eefcf8da4a8244112063e86d2c8c03aa9d916d48d791afb#npm:5.46.0"]\
@@ -10206,10 +10206,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]\
       ]],\
       ["loader-utils", [\
-        ["npm:1.4.0", {\
-          "packageLocation": "./.yarn/cache/loader-utils-npm-1.4.0-a56254a277-d150b15e7a.zip/node_modules/loader-utils/",\
+        ["npm:1.4.1", {\
+          "packageLocation": "./.yarn/cache/loader-utils-npm-1.4.1-91a9c6b986-ea0b648cba.zip/node_modules/loader-utils/",\
           "packageDependencies": [\
-            ["loader-utils", "npm:1.4.0"],\
+            ["loader-utils", "npm:1.4.1"],\
             ["big.js", "npm:5.2.2"],\
             ["emojis-list", "npm:3.0.0"],\
             ["json5", "npm:1.0.1"]\
@@ -13596,7 +13596,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/typescript", null],\
             ["chalk", "npm:2.4.2"],\
             ["enhanced-resolve", "npm:4.5.0"],\
-            ["loader-utils", "npm:1.4.0"],\
+            ["loader-utils", "npm:1.4.1"],\
             ["micromatch", "npm:4.0.4"],\
             ["semver", "npm:6.3.0"],\
             ["typescript", "patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=a1c5e5"]\
