@@ -2201,7 +2201,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@opentelemetry/instrumentation", "virtual:c844646bbfb8df76a899a489a6bfe05ee1d15bc1dbec770ff2303007c5d896057aa3a4e787bf66a153bca572a661097a88b6cd7956d6e8d72035cd8cf93c93a0#npm:0.29.2"],\
             ["@opentelemetry/semantic-conventions", "npm:1.3.1"],\
             ["@types/opentelemetry__api", null],\
-            ["fastify", "npm:3.29.0"]\
+            ["fastify", "npm:3.29.4"]\
           ],\
           "packagePeers": [\
             "@opentelemetry/api",\
@@ -7846,14 +7846,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]\
       ]],\
       ["fastify", [\
-        ["npm:3.29.0", {\
-          "packageLocation": "./.yarn/cache/fastify-npm-3.29.0-233f7cd5ad-ed2964035e.zip/node_modules/fastify/",\
+        ["npm:3.29.4", {\
+          "packageLocation": "./.yarn/cache/fastify-npm-3.29.4-42f3d4e84a-add73f5bcc.zip/node_modules/fastify/",\
           "packageDependencies": [\
-            ["fastify", "npm:3.29.0"],\
+            ["fastify", "npm:3.29.4"],\
             ["@fastify/ajv-compiler", "npm:1.1.0"],\
             ["@fastify/error", "npm:2.0.0"],\
             ["abstract-logging", "npm:2.0.1"],\
             ["avvio", "npm:7.2.5"],\
+            ["content-type", "npm:1.0.4"],\
             ["fast-json-stringify", "npm:2.7.13"],\
             ["find-my-way", "npm:4.5.1"],\
             ["flatstr", "npm:1.0.12"],\
