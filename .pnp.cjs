@@ -3173,10 +3173,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]\
       ]],\
       ["@sideway/formula", [\
-        ["npm:3.0.0", {\
-          "packageLocation": "./.yarn/cache/@sideway-formula-npm-3.0.0-8688cb96b6-8ae26a0ed6.zip/node_modules/@sideway/formula/",\
+        ["npm:3.0.1", {\
+          "packageLocation": "./.yarn/cache/@sideway-formula-npm-3.0.1-ee371b2ddf-e4beeebc9d.zip/node_modules/@sideway/formula/",\
           "packageDependencies": [\
-            ["@sideway/formula", "npm:3.0.0"]\
+            ["@sideway/formula", "npm:3.0.1"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -9873,7 +9873,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@hapi/hoek", "npm:9.3.0"],\
             ["@hapi/topo", "npm:5.1.0"],\
             ["@sideway/address", "npm:4.1.4"],\
-            ["@sideway/formula", "npm:3.0.0"],\
+            ["@sideway/formula", "npm:3.0.1"],\
             ["@sideway/pinpoint", "npm:2.0.0"]\
           ],\
           "linkType": "HARD"\
