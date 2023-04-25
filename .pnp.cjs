@@ -1730,7 +1730,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["tslib", "npm:2.3.0"],\
             ["typanion", "npm:3.3.2"],\
             ["typescript", "patch:typescript@npm%3A4.6.2#~builtin<compat/typescript>::version=4.6.2&hash=a1c5e5"],\
-            ["yaml", "npm:2.0.0"],\
+            ["yaml", "npm:2.2.2"],\
             ["yawn-yaml", "npm:1.5.0"]\
           ],\
           "linkType": "SOFT"\
@@ -14459,10 +14459,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           ],\
           "linkType": "HARD"\
         }],\
-        ["npm:2.0.0", {\
-          "packageLocation": "./.yarn/cache/yaml-npm-2.0.0-ac55c91e6a-6335cbead8.zip/node_modules/yaml/",\
+        ["npm:2.2.2", {\
+          "packageLocation": "./.yarn/cache/yaml-npm-2.2.2-6e3cddb343-d90c235e09.zip/node_modules/yaml/",\
           "packageDependencies": [\
-            ["yaml", "npm:2.0.0"]\
+            ["yaml", "npm:2.2.2"]\
           ],\
           "linkType": "HARD"\
         }]\
