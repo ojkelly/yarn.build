@@ -1,8 +1,19 @@
 # yarn.build
 
+> **Note** gold.build — a next-gen build tool and CICD platform on a serverless supercomputer
+> 
+> **I'm working on [Gold](https://gold.build) the successor to yarn.build**. It builds on the features of yarn.build, including zero-config for common setups, polyglot language support, and massive parralelisation of the build via a CICD platform designed from the ground up around a next-generation build tool. 
+> 
+> **I'm looking for early users to help test and refine it**, if that's you [sign up to the waitlist](https://gold.build) and I'll let you know when the first release is ready.
+> 
+> After too much frusteration of trying to fit a build tool into a CICD pipeline, I've decided to try to fix the problem properly.
+> 
+> I'm still accepting patches for yarn.build. 
+
+
 [![Netlify Status](https://api.netlify.com/api/v1/badges/6b14fc77-846f-4035-944a-ff1c7843b70d/deploy-status)](https://app.netlify.com/sites/loving-wing-5cc62e/deploys)
 
-yarn.BUILD is a plugin for [Yarn 2/3 (berry)](https://github.com/yarnpkg/berry). It uses your dependency graph to build just whats needed, when it's needed. You can setup a monorepo with a few backend packages, a server package, maybe a graphQL schema package, and a frontend package. And build it all, in the order it's needed. Then, only rebuild when something changes.
+yarn.BUILD is a plugin for [Yarn 3 (berry)](https://github.com/yarnpkg/berry). It uses your dependency graph to build just whats needed, when it's needed. You can setup a monorepo with a few backend packages, a server package, maybe a graphQL schema package, and a frontend package. And build it all, in the order it's needed. Then, only rebuild when something changes.
 
 See the full docs at [yarn.BUILD](https://yarn.build)
 
@@ -27,10 +38,11 @@ yarn plugin import https://yarn.build/v2
 ```
 
 ## NEW! OpenTelemetry Support
+<details>
 
 yarn.build's `build`, `test` and `bundle` commands now come with optional OpenTelemetry (OTEL) instrumentation.
 
-To use it, you need to run an OTEL Collector with a http receiver:
+<summary>To use it, you need to run an OTEL Collector with a http receiver:</summary>
 
 ```yaml
 receivers:
@@ -43,6 +55,7 @@ receivers:
 And set the appropirate envar for example `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` if you are running the collector on the same host as you're running yarn.build.
 
 NOTE: yarn.build doesn't currently support the `grpc` endpoint, becuase bundling the required `.proto` files might need a rework of the yarn plugin bundler, which is out of scope of the intial yarn.build OTEL integration.
+</details>
 
 ## Commands
 
@@ -207,8 +220,9 @@ If you want to customise the input and output folders per package you can setup 
 ```
 
 ## Troubleshooting
+<details>
 
-**The output is interlaced, or mangled, or not useful in CI**
+<summary>**The output is interlaced, or mangled, or not useful in CI**</summary>
 
 yarn.build uses `is-ci` to check if it's running in a CI environment, and will not print progress in the same way it does when run locally (or with an interactive tty).
 
@@ -227,6 +241,7 @@ Adapted for Docker / BuildKit, the following will set `CI` for the script, but n
 ```
 RUN env CI=true yarn build
 ```
+</details>
 
 ---
 
@@ -241,6 +256,9 @@ To install:
 ```
 yarn plugin import https://yarn.build/yaml
 ```
+
+<details>
+<summary>How to use `plugin-package-yaml`</summary>
 
 Once installed, any folder with a `package.yaml` and without a `package.json` will run through this plugin. This lets you opt-in packages that don't have any tooling that _requires_ `package.json` to be present on disk.
 
@@ -325,7 +343,7 @@ yarn.build:
   input: .
   output: .build
 ```
-
+</details>
 ---
 
 For developing on this repository see [packages/plugins/readme.md](packages/plugins/readme.md)
