@@ -1152,18 +1152,20 @@ class RunSupervisor {
     formatUtils.pretty(this.configuration, s, `grey`);
 
   formatHeader(name: string, depth = 0, withBrand = false): string {
-    const label = `${this.grey("-".repeat(depth) + "[")} ${name} ${this.grey(
-      "]"
-    )}`;
+    const divTkn = "-";
+    const div = divTkn.repeat(depth);
+    const greyDiv = this.grey(div);
+    const greyLeftBracket = this.grey("[");
+    const greyRightBracket = this.grey("]");
+    const label = `${greyDiv}${greyLeftBracket} ${name} ${greyRightBracket}`;
     const length = stripAnsi(label).length;
     const brand = withBrand ? "[ yarn.build ]" : "";
-    let repeat = DIVIDER_LENGTH - length;
+    const blockSize = Math.max(DIVIDER_LENGTH - (length + brand.length), 0);
+    const block = divTkn.repeat(blockSize);
+    const greyBlock = this.grey(block);
+    const greyBrand = this.grey(brand);
 
-    if (withBrand) {
-      repeat -= brand.length;
-    }
-
-    return label + this.grey("-".repeat(repeat)) + this.grey(brand);
+    return `${label}${greyBlock}${greyBrand}`;
   }
 
   generateHeaderString(): string {
