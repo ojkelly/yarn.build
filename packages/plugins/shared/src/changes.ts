@@ -1,58 +1,53 @@
 import { exec } from "child_process";
+import { promisify } from "util";
 import { Workspace } from "@yarnpkg/core";
-import { PortablePath } from "@yarnpkg/fslib";
 
-async function GetChangedWorkspaces(options: {
+const execAsync = promisify(exec);
+
+interface Options {
   root: Workspace;
   commit?: string;
   sinceBranch?: string;
-}): Promise<Workspace[]> {
-  return new Promise((resolve, reject) => {
-    let cmd = "";
-
-    if (options.commit) {
-      cmd = `git diff --name-only ..${options.commit}`;
-    }
-    if (options.sinceBranch && options.sinceBranch.length > 0) {
-      cmd = `git diff --name-only ${options.sinceBranch}...`;
-    }
-
-    if (cmd.length === 0) {
-      throw new Error("Unable to determine how to detect changes.");
-    }
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
-      }
-
-      if (stdout) {
-        const files = stdout.split("\n");
-
-        const matched = [...options.root.workspacesCwds]
-          .map((workspacePath) => {
-            if (
-              files.some((v) =>
-                v.startsWith(workspacePath.replace(`${options.root.cwd}/`, ""))
-              )
-            ) {
-              return workspacePath;
-            }
-
-            return undefined;
-          })
-          .filter((item): item is PortablePath => !!item);
-
-        const r = matched
-          .map((p) => !!p && options.root.project.workspacesByCwd.get(p))
-          .filter((item): item is Workspace => !!item);
-
-        resolve(r);
-      }
-      if (stderr) {
-        resolve([]);
-      }
-    });
-  });
 }
 
-export { GetChangedWorkspaces };
+function getCommand(options: Options): string {
+  const { commit, sinceBranch } = options;
+
+  if (commit) {
+    return `git diff --name-only ..${commit}`;
+  }
+
+  if (sinceBranch) {
+    return `git diff --name-only ${sinceBranch}...`;
+  }
+
+  throw new Error("Unable to determine how to detect changes.");
+}
+
+export async function GetChangedWorkspaces(
+  options: Options
+): Promise<Workspace[]> {
+  try {
+    const cmd = getCommand(options);
+    const { stdout } = await execAsync(cmd);
+    const files = stdout.split("\n");
+
+    const changedWorkspaces = options.root.project.workspaces.filter(
+      (workspace) =>
+        files.some((file) =>
+          file.startsWith(workspace.relativeCwd.replace(/^\.\//, ""))
+        )
+    );
+
+    const allDependents = changedWorkspaces.reduce((acc, workspace) => {
+      const dependents = workspace.getRecursiveWorkspaceDependents();
+
+      return new Set([...acc, ...dependents, workspace]);
+    }, new Set<Workspace>());
+
+    return Array.from(allDependents.values());
+  } catch (error) {
+    return [];
+  }
+}
+
