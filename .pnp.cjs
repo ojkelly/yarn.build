@@ -864,7 +864,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/long", "npm:4.0.2"],\
             ["lodash.camelcase", "npm:4.3.0"],\
             ["long", "npm:4.0.0"],\
-            ["protobufjs", "npm:6.11.3"],\
+            ["protobufjs", "npm:6.11.4"],\
             ["yargs", "npm:16.2.0"]\
           ],\
           "linkType": "HARD"\
@@ -1945,7 +1945,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@opentelemetry/resources", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:1.3.1"],\
             ["@opentelemetry/sdk-trace-base", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:1.3.1"],\
             ["@types/opentelemetry__api", null],\
-            ["protobufjs", "npm:6.11.3"]\
+            ["protobufjs", "npm:6.11.4"]\
           ],\
           "packagePeers": [\
             "@opentelemetry/api",\
@@ -2748,7 +2748,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@opentelemetry/core", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:1.3.1"],\
             ["@opentelemetry/otlp-exporter-base", "virtual:19d1dddd5f82c07b91fc46b5ec0f99699fca2e2d7f5afe84341e08e55ba666ef315156b209cbead00788f486c463564cd50dd06434ff97561afaf39b1cc5a75d#npm:0.29.2"],\
             ["@types/opentelemetry__api", null],\
-            ["protobufjs", "npm:6.11.3"]\
+            ["protobufjs", "npm:6.11.4"]\
           ],\
           "packagePeers": [\
             "@opentelemetry/api",\
@@ -11797,10 +11797,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]\
       ]],\
       ["protobufjs", [\
-        ["npm:6.11.3", {\
-          "packageLocation": "./.yarn/unplugged/protobufjs-npm-6.11.3-566fb31188/node_modules/protobufjs/",\
+        ["npm:6.11.4", {\
+          "packageLocation": "./.yarn/unplugged/protobufjs-npm-6.11.4-af11968b80/node_modules/protobufjs/",\
           "packageDependencies": [\
-            ["protobufjs", "npm:6.11.3"],\
+            ["protobufjs", "npm:6.11.4"],\
             ["@protobufjs/aspromise", "npm:1.1.2"],\
             ["@protobufjs/base64", "npm:1.1.2"],\
             ["@protobufjs/codegen", "npm:2.0.4"],\
