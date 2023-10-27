@@ -481,12 +481,12 @@ export default class Bundler extends BaseCommand {
 
               span.setAttributes({
                 [Attribute.PACKAGE_DIRECTORY]: packageCwd,
-                [Attribute.PACKAGE_NAME]: workspace.locator.name,
+                [Attribute.PACKAGE_NAME]: workspace.anchoredLocator.name,
               });
-              if (typeof workspace.locator.scope === "string") {
+              if (typeof workspace.anchoredLocator.scope === "string") {
                 span.setAttribute(
                   Attribute.PACKAGE_SCOPE,
-                  `@${workspace.locator.scope}`
+                  `@${workspace.anchoredLocator.scope}`
                 );
               }
 

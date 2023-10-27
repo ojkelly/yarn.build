@@ -193,7 +193,7 @@ export default class Build extends BaseCommand {
         }
 
         if (!!this.excludeCurrent) {
-          this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.locator));
+          this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.anchoredLocator));
         }
 
         if (!isRoot && this.onlyCurrent) {
@@ -211,7 +211,7 @@ export default class Build extends BaseCommand {
             this.exclude?.some(
               (t) =>
                 micromatch.isMatch(
-                  structUtils.stringifyIdent(targetWorkspace.locator),
+                  structUtils.stringifyIdent(targetWorkspace.anchoredLocator),
                   t
                 ) ||
                 micromatch.isMatch(
@@ -232,7 +232,7 @@ export default class Build extends BaseCommand {
             // match on @scope/name
             return (
               micromatch.isMatch(
-                structUtils.stringifyIdent(targetWorkspace.locator),
+                structUtils.stringifyIdent(targetWorkspace.anchoredLocator),
                 t
               ) ||
               // match on path
