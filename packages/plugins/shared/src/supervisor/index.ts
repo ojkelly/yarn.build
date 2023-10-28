@@ -608,7 +608,7 @@ class RunSupervisor {
     this.runReporter.emit(
       RunSupervisorReporterEvents.pending,
       workspace.relativeCwd,
-      workspace.locator
+      workspace.anchoredLocator
     );
 
     if (rerunParent || hasChanges) {
@@ -616,7 +616,7 @@ class RunSupervisor {
       this.runReporter.emit(
         RunSupervisorReporterEvents.pending,
         workspace.relativeCwd,
-        workspace.locator,
+        workspace.anchoredLocator,
         `${
           workspace.manifest.name?.scope
             ? `@${workspace.manifest.name?.scope}/`
@@ -1543,7 +1543,7 @@ class RunSupervisor {
             this.configuration,
             w.relativeCwd,
             "grey"
-          )}${formatUtils.pretty(this.configuration, w.locator, "IDENT")}\n`;
+          )}${formatUtils.pretty(this.configuration, w.anchoredLocator, "IDENT")}\n`;
         }
       }
 
@@ -1597,13 +1597,13 @@ class RunSupervisor {
               const prefix = workspace.relativeCwd;
 
               const attr = {
-                [Attribute.PACKAGE_NAME]: workspace.locator.name,
+                [Attribute.PACKAGE_NAME]: workspace.anchoredLocator.name,
                 [Attribute.PACKAGE_DIRECTORY]: workspace.relativeCwd,
                 [Attribute.PACKAGE_COMMAND]: this.runCommand,
               };
 
-              if (typeof workspace.locator.scope === "string") {
-                attr[Attribute.PACKAGE_SCOPE] = `@${workspace.locator.scope}`;
+              if (typeof workspace.anchoredLocator.scope === "string") {
+                attr[Attribute.PACKAGE_SCOPE] = `@${workspace.anchoredLocator.scope}`;
               }
 
               const command = workspace.manifest.scripts.get(this.runCommand);
@@ -1619,7 +1619,7 @@ class RunSupervisor {
               this.runReporter.emit(
                 RunSupervisorReporterEvents.start,
                 workspace.relativeCwd,
-                workspace.locator,
+                workspace.anchoredLocator,
                 `${
                   workspace.manifest.name?.scope
                     ? `@${workspace.manifest.name?.scope}/`

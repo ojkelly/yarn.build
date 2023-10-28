@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "author": "Owen Kelly",
   "license": "MIT",
-  "packageManager": "yarn@3.2.3",
+  "packageManager": "yarn@4.0.0",
   "workspaces": {
     "packages": [
       "packages/plugins/*",
@@ -58,13 +58,13 @@
   },
   "resolutions": {
     "typescript": "^4.6.2",
-    "@yarnpkg/builder": "^3",
-    "@yarnpkg/cli": "^3",
-    "@yarnpkg/core": "^3",
-    "@yarnpkg/fslib": "^2.5",
-    "@yarnpkg/libzip": "^2",
-    "@yarnpkg/plugin-pack": "^3",
-    "@yarnpkg/parsers": "^2",
-    "@yarnpkg/pnpify": "^2.4.0"
+    "@yarnpkg/builder": "^4",
+    "@yarnpkg/cli": "^4",
+    "@yarnpkg/core": "^4",
+    "@yarnpkg/fslib": "^3",
+    "@yarnpkg/libzip": "^3",
+    "@yarnpkg/plugin-pack": "^4",
+    "@yarnpkg/parsers": "^3",
+    "@yarnpkg/pnpify": "^4"
   }
 }
