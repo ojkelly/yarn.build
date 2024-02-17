@@ -69,7 +69,7 @@ class Graph {
   private resolveNode(
     node: Node,
     resolved: Set<string>,
-    unresolved: Set<string>
+    unresolved: Set<string>,
   ) {
     unresolved.add(node.id);
 
@@ -114,7 +114,7 @@ class Graph {
         });
 
         return runLog;
-      }
+      },
     );
   }
 
@@ -122,7 +122,7 @@ class Graph {
     queue: Set<RunQueueItem>,
     runLog: RunLog,
     progress: Set<Node>,
-    iteration = 0
+    iteration = 0,
   ): Promise<void> {
     progress.forEach((n, i) => {
       this.dryRunCallback(n, iteration - 1); // this is always for the previous iteration
@@ -156,7 +156,7 @@ class Graph {
     queue: Set<RunQueueItem>,
     runLog: RunLog,
     progress: Set<Node>,
-    resolve: () => void
+    resolve: () => void,
   ) {
     if (queue.size !== 0) {
       queue.forEach((q) => {
@@ -197,7 +197,7 @@ class Graph {
   private resolveQueue(
     node: Node,
     queue: Set<RunQueueItem>,
-    runLog: RunLog
+    runLog: RunLog,
   ): string[] {
     const parentDependencies: string[] = [];
 
@@ -327,7 +327,7 @@ type RunLog = { [id: string]: { success: boolean; done: boolean } };
 type RunSuccess = boolean;
 type RunCallback = (
   ctx: Context,
-  cancelDependentJobs: () => void
+  cancelDependentJobs: () => void,
 ) => Promise<RunSuccess>;
 type RunLogCallback = (ctx: Context, runLog: RunLog) => void;
 

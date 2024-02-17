@@ -26,11 +26,11 @@ export default class BuildQuery extends BaseCommand {
   async execute(): Promise<0 | 1> {
     const configuration = await Configuration.find(
       this.context.cwd,
-      this.context.plugins
+      this.context.plugins,
     );
     const { project, workspace } = await Project.find(
       configuration,
-      this.context.cwd
+      this.context.cwd,
     );
 
     if (!workspace) {

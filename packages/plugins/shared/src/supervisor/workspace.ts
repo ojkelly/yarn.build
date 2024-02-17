@@ -4,7 +4,7 @@ import { CyclicDependencyError } from "./graph";
 
 const getWorkspaceChildrenRecursive = (
   rootWorkspace: Workspace,
-  project: Project
+  project: Project,
 ): Array<Workspace> => {
   const workspaceList = [];
 
@@ -14,7 +14,7 @@ const getWorkspaceChildrenRecursive = (
     if (childWorkspace) {
       workspaceList.push(
         childWorkspace,
-        ...getWorkspaceChildrenRecursive(childWorkspace, project)
+        ...getWorkspaceChildrenRecursive(childWorkspace, project),
       );
     }
   }
@@ -36,7 +36,7 @@ const addTargets = async ({
       // we're in the root, need to run all
       const workspaceList = getWorkspaceChildrenRecursive(
         targetWorkspace,
-        project
+        project,
       );
 
       for (const workspace of workspaceList) {
@@ -107,12 +107,12 @@ that both packages can depend on.
 ---
 
 `,
-        `grey`
+        `grey`,
       );
       msg += formatUtils.pretty(
         supervisor.configuration,
         `FATAL: You have a cyclic dependency.`,
-        "red"
+        "red",
       );
 
       console.error(msg);

@@ -22,7 +22,7 @@ const isYarnBuildConfiguration = t.isObject({
 const isYarnBuildManifestConfiguration = t.isObject({
   input: t.isOptional(t.isOneOf([t.isString(), t.isArray(t.isString())])),
   output: t.isOptional(
-    t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())]))
+    t.isNullable(t.isOneOf([t.isString(), t.isArray(t.isString())])),
   ),
   tsconfig: t.isOptional(t.isString()),
 });
@@ -45,14 +45,14 @@ const DEFAULT_CONFIG: YarnBuildConfiguration = {
 };
 
 async function getConfiguration(
-  configuration: Configuration
+  configuration: Configuration,
 ): Promise<DeepPartial<YarnBuildConfiguration>> {
   // TODO: make this more customisable
   const rcFilename = DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME;
 
   const rcPath = ppath.join(
     configuration.projectCwd || configuration.startingCwd,
-    rcFilename as PortablePath
+    rcFilename as PortablePath,
   );
 
   if (xfs.existsSync(rcPath)) {
@@ -75,7 +75,7 @@ async function getConfiguration(
         tip = ` (config is corrupted, please check it matches the shape in the yarn.build readme.`;
 
       throw new Error(
-        `Parse error when loading ${rcPath}; please check it's proper Yaml${tip}`
+        `Parse error when loading ${rcPath}; please check it's proper Yaml${tip}`,
       );
     }
   }
@@ -85,13 +85,13 @@ async function getConfiguration(
 }
 
 async function GetPartialPluginConfiguration(
-  configuration: Configuration
+  configuration: Configuration,
 ): Promise<DeepPartial<YarnBuildConfiguration>> {
   return await getConfiguration(configuration);
 }
 
 async function GetPluginConfiguration(
-  configuration: Configuration
+  configuration: Configuration,
 ): Promise<YarnBuildConfiguration> {
   const data = await getConfiguration(configuration);
 

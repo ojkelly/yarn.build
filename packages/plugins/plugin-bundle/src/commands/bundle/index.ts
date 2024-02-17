@@ -76,7 +76,7 @@ export default class Bundler extends BaseCommand {
     `bundle.zip` as Filename,
     {
       description: `sets the name of the archive. Any files matching this, will be excluded from subsequent archives. Defaults to ./bundle.zip`,
-    }
+    },
   );
 
   exclude = Option.Array(`--exclude`, [], {
@@ -136,14 +136,14 @@ export default class Bundler extends BaseCommand {
     ctx: Context,
     tmpDir: PortablePath,
     tmpPackageCwd: PortablePath,
-    configuration: Configuration
+    configuration: Configuration,
   ): Promise<void> {
     return await this.tracer.startSpan(
       { name: `remove unused packages`, ctx },
       async ({ span }) => {
         const { project, workspace } = await Project.find(
           configuration,
-          tmpPackageCwd
+          tmpPackageCwd,
         );
 
         if (!workspace) {
@@ -161,9 +161,8 @@ export default class Bundler extends BaseCommand {
           root.workspace,
         ]);
 
-        const pluginConfiguration = await GetPartialPluginConfiguration(
-          configuration
-        );
+        const pluginConfiguration =
+          await GetPartialPluginConfiguration(configuration);
 
         this.exclude = pluginConfiguration.exclude
           ? [...this.exclude, ...pluginConfiguration.exclude]
@@ -207,7 +206,7 @@ export default class Bundler extends BaseCommand {
             });
           }
         }
-      }
+      },
     );
   }
 
@@ -219,7 +218,7 @@ export default class Bundler extends BaseCommand {
     }: {
       tmpDir: PortablePath;
       cwd: PortablePath;
-    }
+    },
   ): Promise<boolean> {
     const span = trace.getSpan(ctx);
 
@@ -269,7 +268,7 @@ export default class Bundler extends BaseCommand {
       yarnDirectory: string;
       cacheDirectory: string;
       shouldRemoveEmptyDirectories?: boolean;
-    }
+    },
   ): Promise<void> {
     const gitDir = `${tmpDir}/.git` as PortablePath;
 
@@ -302,7 +301,7 @@ export default class Bundler extends BaseCommand {
         } catch (_e) {
           // Empty on purpose
         }
-      })
+      }),
     );
     if (shouldRemoveEmptyDirectories) {
       await this.removeEmptyDirectories(ctx, { tmpDir, cwd: tmpDir });
@@ -354,12 +353,12 @@ export default class Bundler extends BaseCommand {
 
               if (typeof this.outputDirectory == "string") {
                 const resolvedOutputDir = resolveNativePath(
-                  this.outputDirectory
+                  this.outputDirectory,
                 );
 
                 span.setAttribute(
                   Attribute.YARN_BUILD_FLAGS_BUNDLE_OUTPUT_DIRECTORY,
-                  resolvedOutputDir
+                  resolvedOutputDir,
                 );
 
                 if (!xfs.existsSync(resolvedOutputDir)) {
@@ -375,7 +374,7 @@ export default class Bundler extends BaseCommand {
               // Get the configuration where our source code is
               const sourceConfiguration = await Configuration.find(
                 this.context.cwd,
-                this.context.plugins
+                this.context.plugins,
               );
 
               if (sourceConfiguration.projectCwd === null) {
@@ -385,7 +384,7 @@ export default class Bundler extends BaseCommand {
               // find the relative dir of the package thats selected
               const packageCwd = originalCwd.replace(
                 sourceConfiguration.projectCwd,
-                ""
+                "",
               );
 
               let noCompressIsSafe = false;
@@ -394,14 +393,14 @@ export default class Bundler extends BaseCommand {
               if (this.noCompress === true) {
                 if (typeof this.outputDirectory !== "string") {
                   throw new Error(
-                    "ERROR: you set --no-compress, but did not specify --output-directory"
+                    "ERROR: you set --no-compress, but did not specify --output-directory",
                   );
                 } else {
                   outputPath = resolveNativePath(this.outputDirectory);
 
                   if (outputPath.startsWith(sourceConfiguration.projectCwd)) {
                     throw new Error(
-                      "ERROR: --output-directory is inside project root with --no-compress set.\nThis is no allowed to prevent you destroying your project"
+                      "ERROR: --output-directory is inside project root with --no-compress set.\nThis is no allowed to prevent you destroying your project",
                     );
                   }
                 }
@@ -424,7 +423,7 @@ export default class Bundler extends BaseCommand {
                   xfs.copyPromise(tmpDir, cwd, {
                     baseFs,
                   }),
-                sourceConfiguration.projectCwd
+                sourceConfiguration.projectCwd,
               );
 
               const tmpPackageCwd = `${tmpDir}${packageCwd}` as PortablePath;
@@ -442,13 +441,13 @@ export default class Bundler extends BaseCommand {
 
               const configuration = await Configuration.find(
                 tmpPackageCwd,
-                this.context.plugins
+                this.context.plugins,
               );
 
               configuration.use(
                 "<custom>",
                 { enableNetwork: false },
-                tmpPackageCwd
+                tmpPackageCwd,
               );
 
               const cache = await Cache.find(configuration);
@@ -466,12 +465,12 @@ export default class Bundler extends BaseCommand {
                 ctx,
                 tmpDir,
                 tmpPackageCwd,
-                configuration
+                configuration,
               );
 
               const { project, workspace } = await Project.find(
                 configuration,
-                tmpPackageCwd
+                tmpPackageCwd,
               );
 
               if (!workspace) {
@@ -485,7 +484,7 @@ export default class Bundler extends BaseCommand {
               if (typeof workspace.anchoredLocator.scope === "string") {
                 span.setAttribute(
                   Attribute.PACKAGE_SCOPE,
-                  `@${workspace.anchoredLocator.scope}`
+                  `@${workspace.anchoredLocator.scope}`,
                 );
               }
 
@@ -547,7 +546,7 @@ export default class Bundler extends BaseCommand {
                       shouldRemoveEmptyDirectories: false,
                     });
                   }
-                }
+                },
               );
 
               await this.tracer.wrap(
@@ -562,7 +561,7 @@ export default class Bundler extends BaseCommand {
                     cacheDirectory,
                     shouldRemoveEmptyDirectories: true,
                   });
-                }
+                },
               );
 
               await this.tracer.wrap(
@@ -589,7 +588,7 @@ export default class Bundler extends BaseCommand {
 
                     xfs.writeFilePromise(
                       `${tmpDir}${path.posix.sep}entrypoint.js` as PortablePath,
-                      generateEntrypointFile(mainFile, pnp)
+                      generateEntrypointFile(mainFile, pnp),
                     );
                   }
 
@@ -599,7 +598,7 @@ export default class Bundler extends BaseCommand {
                     msg: `Completed`,
                     span,
                   });
-                }
+                },
               );
 
               const report = await this.tracer.startSpan(
@@ -621,7 +620,7 @@ export default class Bundler extends BaseCommand {
                             cache,
                             report,
                           }),
-                        { cache, report }
+                        { cache, report },
                       );
 
                       if (typeof this.temporaryDirectory !== `undefined`) {
@@ -635,14 +634,14 @@ export default class Bundler extends BaseCommand {
                       ) {
                         report.reportInfo(
                           null,
-                          "Moving build to output directory"
+                          "Moving build to output directory",
                         );
 
                         await this.tracer.wrap(
                           { name: "copy to output directory", ctx },
                           async ({ outputPath, tmpDir }) =>
                             baseFs.copyPromise(outputPath, tmpDir),
-                          { outputPath, tmpDir }
+                          { outputPath, tmpDir },
                         );
                       } else {
                         report.reportInfo(null, "Creating archive");
@@ -662,14 +661,14 @@ export default class Bundler extends BaseCommand {
                               tmpDir,
                               {
                                 baseFs,
-                              }
+                              },
                             ),
-                          { tmpDir, baseFs }
+                          { tmpDir, baseFs },
                         );
 
                         await this.tracer.wrap(
                           { name: "save zip", ctx },
-                          async () => zipFs.saveAndClose()
+                          async () => zipFs.saveAndClose(),
                         );
 
                         report.reportJson({
@@ -678,13 +677,13 @@ export default class Bundler extends BaseCommand {
                           outputArchive,
                         });
                       }
-                    }
+                    },
                   );
-                }
+                },
               );
 
               return report.exitCode();
-            }
+            },
           );
 
         if (typeof this.temporaryDirectory !== `undefined`) {
@@ -693,7 +692,7 @@ export default class Bundler extends BaseCommand {
           // Get a tmpDir to work in
           return await xfs.mktempPromise(bundle);
         }
-      }
+      },
     );
   }
 }

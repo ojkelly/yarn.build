@@ -112,7 +112,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
     return ManifestFiles.find((manifest) => {
       return this.realFs.existsSync(
-        npath.fromPortablePath(`${rest}${manifest}`)
+        npath.fromPortablePath(`${rest}${manifest}`),
       );
     });
   }
@@ -158,7 +158,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           | BufferEncoding
           | (fs.BaseEncodingOptions & { flag?: string | undefined })
           | null
-          | undefined
+          | undefined,
       );
       let rawManifest = ``;
 
@@ -188,7 +188,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     p: FSPath<PortablePath>,
     content: string | Buffer | ArrayBuffer | DataView,
     manifestFilename: ManifestFilename,
-    opts?: WriteFileOptions
+    opts?: WriteFileOptions,
   ): boolean {
     if (typeof content === `string` || Buffer.isBuffer(content)) {
       // hand this one back to be written as normal
@@ -207,14 +207,14 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
         const rawManifest = this.realFs.readFileSync(
           nativeManifestPath,
-          `utf-8`
+          `utf-8`,
         );
 
         const rpkg = parseDocument(rawManifest, { schema: "json" });
 
         const recursiveSet = (
           source: any,
-          ppath: Array<string | number>
+          ppath: Array<string | number>,
         ): void => {
           for (const property in source) {
             const value = source[property];
@@ -253,12 +253,12 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           this.realFs.writeFileSync(
             npath.fromPortablePath(nativeManifestPath),
             pkgStr,
-            opts as fs.WriteFileOptions
+            opts as fs.WriteFileOptions,
           );
         } else {
           this.realFs.writeFileSync(
             npath.fromPortablePath(nativeManifestPath),
-            pkgStr
+            pkgStr,
           );
         }
 
@@ -296,7 +296,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         npath.fromPortablePath(p),
         flags,
         mode,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -309,19 +309,19 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async opendirPromise(
     p: PortablePath,
-    opts?: OpendirOptions
+    opts?: OpendirOptions,
   ): Promise<Dir<PortablePath>> {
     return await new Promise<Dir<PortablePath>>((resolve, reject) => {
       if (typeof opts !== `undefined`) {
         this.realFs.opendir(
           npath.fromPortablePath(p),
           opts,
-          this.makeCallback(resolve, reject) as any
+          this.makeCallback(resolve, reject) as any,
         );
       } else {
         this.realFs.opendir(
           npath.fromPortablePath(p),
-          this.makeCallback(resolve, reject) as any
+          this.makeCallback(resolve, reject) as any,
         );
       }
     }).then((dir) => {
@@ -338,10 +338,10 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       typeof opts !== `undefined`
         ? (this.realFs.opendirSync(
             npath.fromPortablePath(p),
-            opts
+            opts,
           ) as Dir<PortablePath>)
         : (this.realFs.opendirSync(
-            npath.fromPortablePath(p)
+            npath.fromPortablePath(p),
           ) as Dir<PortablePath>);
 
     return Object.defineProperty(dir, `path`, {
@@ -356,7 +356,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     buffer: Buffer,
     offset = 0,
     length = 0,
-    position: number | null = -1
+    position: number | null = -1,
   ) {
     return await new Promise<number>((resolve, reject) => {
       this.realFs.read(
@@ -371,7 +371,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           } else {
             resolve(bytesRead);
           }
-        }
+        },
       );
     });
   }
@@ -381,7 +381,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     buffer: Buffer,
     offset: number,
     length: number,
-    position: number
+    position: number,
   ) {
     return this.realFs.readSync(fd, buffer, offset, length, position);
   }
@@ -391,7 +391,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     buffer: Buffer,
     offset?: number,
     length?: number,
-    position?: number
+    position?: number,
   ): Promise<number>;
 
   writePromise(fd: number, buffer: string, position?: number): Promise<number>;
@@ -401,7 +401,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     buffer: Buffer | string,
     offset?: number,
     length?: number,
-    position?: number
+    position?: number,
   ): Promise<number> {
     return await new Promise<number>((resolve, reject) => {
       if (typeof buffer === `string`) {
@@ -409,7 +409,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           fd,
           buffer,
           offset,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       } else {
         return this.realFs.write(
@@ -418,7 +418,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           offset,
           length,
           position,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       }
     });
@@ -429,7 +429,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     buffer: Buffer,
     offset?: number,
     length?: number,
-    position?: number
+    position?: number,
   ): number;
 
   writeSync(fd: number, buffer: string, position?: number): number;
@@ -439,7 +439,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     buffer: Buffer | string,
     offset?: number,
     length?: number,
-    position?: number
+    position?: number,
   ) {
     if (typeof buffer === `string`) {
       return this.realFs.writeSync(fd, buffer, offset);
@@ -469,7 +469,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
     return this.realFs.createReadStream(
       realPath,
-      opts as BufferEncoding | undefined
+      opts as BufferEncoding | undefined,
     );
   }
 
@@ -484,7 +484,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
     return this.realFs.createWriteStream(
       realPath,
-      opts as BufferEncoding | undefined
+      opts as BufferEncoding | undefined,
     );
   }
 
@@ -495,7 +495,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.realpath(
         npath.fromPortablePath(p),
         {},
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     }).then((path) => {
       return npath.toPortablePath(path);
@@ -506,7 +506,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     p = this.patchManifestPath(p);
 
     return npath.toPortablePath(
-      this.realFs.realpathSync(npath.fromPortablePath(p), {})
+      this.realFs.realpathSync(npath.fromPortablePath(p), {}),
     );
   }
 
@@ -535,7 +535,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.access(
         npath.fromPortablePath(p),
         mode,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -551,12 +551,12 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   // @ts-expect-error unknown
   async statPromise(
     p: PortablePath,
-    opts: { bigint: true }
+    opts: { bigint: true },
   ): Promise<BigIntStats>;
 
   async statPromise(
     p: PortablePath,
-    opts?: { bigint: boolean }
+    opts?: { bigint: boolean },
   ): Promise<BigIntStats | Stats>;
 
   async statPromise(p: PortablePath, opts?: { bigint: boolean }) {
@@ -567,12 +567,12 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         this.realFs.stat(
           npath.fromPortablePath(p),
           opts as fs.StatOptions & { bigint?: false | undefined },
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       } else {
         this.realFs.stat(
           npath.fromPortablePath(p),
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       }
     });
@@ -601,7 +601,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async fstatPromise(
     fd: number,
-    opts?: { bigint: boolean }
+    opts?: { bigint: boolean },
   ): Promise<BigIntStats | Stats>;
 
   async fstatPromise(fd: number, opts?: { bigint: boolean }) {
@@ -634,12 +634,12 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   // @ts-expect-error unknown
   async lstatPromise(
     p: PortablePath,
-    opts: { bigint: true }
+    opts: { bigint: true },
   ): Promise<BigIntStats>;
 
   async lstatPromise(
     p: PortablePath,
-    opts?: { bigint: boolean }
+    opts?: { bigint: boolean },
   ): Promise<BigIntStats | Stats>;
 
   async lstatPromise(p: PortablePath, opts?: { bigint: boolean }) {
@@ -651,12 +651,12 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         this.realFs.lstat(
           npath.fromPortablePath(p),
           opts,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       } else {
         this.realFs.lstat(
           npath.fromPortablePath(p),
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       }
     });
@@ -685,7 +685,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.chmod(
         npath.fromPortablePath(p),
         mask,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -704,7 +704,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         npath.fromPortablePath(p),
         uid,
         gid,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -723,7 +723,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.rename(
         npath.fromPortablePath(oldP),
         npath.fromPortablePath(newP),
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -734,7 +734,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
     return this.realFs.renameSync(
       npath.fromPortablePath(oldP),
-      npath.fromPortablePath(newP)
+      npath.fromPortablePath(newP),
     );
   }
 
@@ -745,7 +745,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         npath.fromPortablePath(sourceP),
         npath.fromPortablePath(destP),
         flags,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -757,25 +757,25 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     return this.realFs.copyFileSync(
       npath.fromPortablePath(sourceP),
       npath.fromPortablePath(destP),
-      flags
+      flags,
     );
   }
 
   async changeFilePromise(
     p: FSPath<PortablePath>,
-    content: Buffer
+    content: Buffer,
   ): Promise<void>;
 
   async changeFilePromise(
     p: FSPath<PortablePath>,
     content: string,
-    opts?: ChangeFileOptions
+    opts?: ChangeFileOptions,
   ): Promise<void>;
 
   async changeFilePromise(
     p: FSPath<PortablePath>,
     content: Buffer | string,
-    opts: ChangeFileOptions = {}
+    opts: ChangeFileOptions = {},
   ) {
     if (Buffer.isBuffer(content)) {
       return this.writeFilePromise(p, content, opts);
@@ -789,13 +789,13 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   changeFileSync(
     p: PortablePath,
     content: string,
-    opts?: ChangeFileOptions
+    opts?: ChangeFileOptions,
   ): void;
 
   changeFileSync(
     p: PortablePath,
     content: Buffer | string,
-    opts: ChangeFileOptions = {}
+    opts: ChangeFileOptions = {},
   ) {
     if (Buffer.isBuffer(content)) {
       return this.writeFileSync(p, content, opts);
@@ -807,7 +807,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   async appendFilePromise(
     p: FSPath<PortablePath>,
     content: string | Buffer | ArrayBuffer | DataView,
-    opts?: WriteFileOptions
+    opts?: WriteFileOptions,
   ) {
     p = this.patchManifestPath(p as PortablePath);
 
@@ -820,13 +820,13 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           fsNativePath,
           content as string | Uint8Array,
           opts as fs.WriteFileOptions,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       } else {
         this.realFs.appendFile(
           fsNativePath,
           content as string | Uint8Array,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       }
     });
@@ -837,7 +837,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   appendFileSync(
     p: PortablePath,
     content: string | Buffer | ArrayBuffer | DataView,
-    opts?: WriteFileOptions
+    opts?: WriteFileOptions,
   ) {
     const fsNativePath = typeof p === `string` ? npath.fromPortablePath(p) : p;
 
@@ -845,7 +845,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.appendFileSync(
         fsNativePath,
         content as string | Uint8Array,
-        opts as fs.WriteFileOptions
+        opts as fs.WriteFileOptions,
       );
     } else {
       this.realFs.appendFileSync(fsNativePath, content as string | Uint8Array);
@@ -855,7 +855,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   async writeFilePromise(
     p: FSPath<PortablePath>,
     content: string | Buffer | ArrayBuffer | DataView,
-    opts?: WriteFileOptions
+    opts?: WriteFileOptions,
   ) {
     await new Promise<void>((resolve, reject) => {
       p = this.patchManifestPath(p as PortablePath);
@@ -879,13 +879,13 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           fsNativePath,
           content as string | NodeJS.ArrayBufferView,
           opts as fs.WriteFileOptions,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       } else {
         this.realFs.writeFile(
           fsNativePath,
           content as string | NodeJS.ArrayBufferView,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       }
     });
@@ -896,7 +896,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   writeFileSync(
     p: PortablePath,
     content: string | Buffer | ArrayBuffer | DataView,
-    opts?: WriteFileOptions
+    opts?: WriteFileOptions,
   ) {
     p = this.patchManifestPath(p as PortablePath);
     const m = this.isPathForManifest(p);
@@ -915,12 +915,12 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       return this.realFs.writeFileSync(
         fsNativePath,
         content as string | NodeJS.ArrayBufferView,
-        opts as fs.WriteFileOptions
+        opts as fs.WriteFileOptions,
       );
     } else {
       return this.realFs.writeFileSync(
         fsNativePath,
-        content as string | NodeJS.ArrayBufferView
+        content as string | NodeJS.ArrayBufferView,
       );
     }
   }
@@ -939,7 +939,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     return await new Promise<void>((resolve, reject) => {
       this.realFs.unlink(
         npath.fromPortablePath(p),
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -953,7 +953,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   async utimesPromise(
     p: PortablePath,
     atime: Date | string | number,
-    mtime: Date | string | number
+    mtime: Date | string | number,
   ) {
     return await new Promise<void>((resolve, reject) => {
       p = this.patchManifestPath(p);
@@ -962,7 +962,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         npath.fromPortablePath(p),
         atime,
         mtime,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -970,7 +970,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   utimesSync(
     p: PortablePath,
     atime: Date | string | number,
-    mtime: Date | string | number
+    mtime: Date | string | number,
   ) {
     p = this.patchManifestPath(p);
 
@@ -984,7 +984,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         opts as
           | fs.Mode
           | (fs.MakeDirectoryOptions & { recursive?: false | undefined }),
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -1002,12 +1002,12 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         this.realFs.rmdir(
           npath.fromPortablePath(p),
           opts,
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       } else {
         this.realFs.rmdir(
           npath.fromPortablePath(p),
-          this.makeCallback(resolve, reject)
+          this.makeCallback(resolve, reject),
         );
       }
     });
@@ -1024,7 +1024,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.link(
         npath.fromPortablePath(existingP),
         npath.fromPortablePath(newP),
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -1032,21 +1032,21 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   linkSync(existingP: PortablePath, newP: PortablePath) {
     return this.realFs.linkSync(
       npath.fromPortablePath(existingP),
-      npath.fromPortablePath(newP)
+      npath.fromPortablePath(newP),
     );
   }
 
   async symlinkPromise(
     target: PortablePath,
     p: PortablePath,
-    type?: SymlinkType
+    type?: SymlinkType,
   ) {
     return await new Promise<void>((resolve, reject) => {
       this.realFs.symlink(
         npath.fromPortablePath(target.replace(/\/+$/, ``) as PortablePath),
         npath.fromPortablePath(p),
         type,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -1055,7 +1055,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     return this.realFs.symlinkSync(
       npath.fromPortablePath(target.replace(/\/+$/, ``) as PortablePath),
       npath.fromPortablePath(p),
-      type
+      type,
     );
   }
 
@@ -1082,7 +1082,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.readFile(
         fsNativePath,
         encoding,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -1111,7 +1111,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
         | BufferEncoding
         | (fs.BaseEncodingOptions & { flag?: string | undefined })
         | null
-        | undefined
+        | undefined,
     );
   }
 
@@ -1119,23 +1119,23 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   async readdirPromise(
     p: PortablePath,
-    opts: { withFileTypes: false }
+    opts: { withFileTypes: false },
   ): Promise<Array<Filename>>;
 
   async readdirPromise(
     p: PortablePath,
-    opts: { withFileTypes: true }
+    opts: { withFileTypes: true },
   ): Promise<Array<Dirent>>;
 
   async readdirPromise(
     p: PortablePath,
-    opts: { withFileTypes: boolean }
+    opts: { withFileTypes: boolean },
   ): Promise<Array<Filename> | Array<Dirent>>;
 
   // TODO: patch this?
   async readdirPromise(
     p: PortablePath,
-    { withFileTypes }: { withFileTypes?: boolean } = {}
+    { withFileTypes }: { withFileTypes?: boolean } = {},
   ): Promise<Array<string> | Array<Dirent>> {
     return await new Promise<Array<Filename> | Array<Dirent>>(
       (resolve, reject) => {
@@ -1143,18 +1143,18 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
           this.realFs.readdir(
             npath.fromPortablePath(p),
             { withFileTypes: true },
-            this.makeCallback(resolve, reject) as any
+            this.makeCallback(resolve, reject) as any,
           );
         } else {
           this.realFs.readdir(
             npath.fromPortablePath(p),
             this.makeCallback(
               (value) => resolve(value as Array<Filename>),
-              reject
-            )
+              reject,
+            ),
           );
         }
-      }
+      },
     );
   }
 
@@ -1166,13 +1166,13 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   readdirSync(
     p: PortablePath,
-    opts: { withFileTypes: boolean }
+    opts: { withFileTypes: boolean },
   ): Array<Filename> | Array<Dirent>;
 
   // TODO: patch this?
   readdirSync(
     p: PortablePath,
-    { withFileTypes }: { withFileTypes?: boolean } = {}
+    { withFileTypes }: { withFileTypes?: boolean } = {},
   ): Array<string> | Array<Dirent> {
     if (withFileTypes) {
       return this.realFs.readdirSync(npath.fromPortablePath(p), {
@@ -1180,7 +1180,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       } as any);
     } else {
       return this.realFs.readdirSync(
-        npath.fromPortablePath(p)
+        npath.fromPortablePath(p),
       ) as Array<Filename>;
     }
   }
@@ -1189,7 +1189,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
     return await new Promise<string>((resolve, reject) => {
       this.realFs.readlink(
         npath.fromPortablePath(p),
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     }).then((path) => {
       return npath.toPortablePath(path);
@@ -1198,7 +1198,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   readlinkSync(p: PortablePath) {
     return npath.toPortablePath(
-      this.realFs.readlinkSync(npath.fromPortablePath(p))
+      this.realFs.readlinkSync(npath.fromPortablePath(p)),
     );
   }
 
@@ -1207,7 +1207,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       this.realFs.truncate(
         npath.fromPortablePath(p),
         len,
-        this.makeCallback(resolve, reject)
+        this.makeCallback(resolve, reject),
       );
     });
   }
@@ -1227,7 +1227,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       npath.fromPortablePath(p),
       // @ts-expect-error undefined
       a,
-      b
+      b,
     );
   }
 
@@ -1236,13 +1236,13 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
   watchFile(
     p: PortablePath,
     opts: WatchFileOptions,
-    cb: WatchFileCallback
+    cb: WatchFileCallback,
   ): StatWatcher;
 
   watchFile(
     p: PortablePath,
     a: WatchFileOptions | WatchFileCallback,
-    b?: WatchFileCallback
+    b?: WatchFileCallback,
   ) {
     p = this.patchManifestPath(p);
 
@@ -1250,7 +1250,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
       npath.fromPortablePath(p),
       // @ts-expect-error undefined
       a,
-      b
+      b,
     ) as unknown as StatWatcher;
   }
 
@@ -1262,7 +1262,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
   private makeCallback<T>(
     resolve: (value: T) => void,
-    reject: (reject: NodeJS.ErrnoException) => void
+    reject: (reject: NodeJS.ErrnoException) => void,
   ) {
     return (err: NodeJS.ErrnoException | null, result: T) => {
       if (err) {

@@ -25,7 +25,7 @@ function getCommand(options: Options): string {
 }
 
 export async function GetChangedWorkspaces(
-  options: Options
+  options: Options,
 ): Promise<Workspace[]> {
   try {
     const cmd = getCommand(options);
@@ -35,8 +35,8 @@ export async function GetChangedWorkspaces(
     const changedWorkspaces = options.root.project.workspaces.filter(
       (workspace) =>
         files.some((file) =>
-          file.startsWith(workspace.relativeCwd.replace(/^\.\//, ""))
-        )
+          file.startsWith(workspace.relativeCwd.replace(/^\.\//, "")),
+        ),
     );
 
     const allDependents = changedWorkspaces.reduce((acc, workspace) => {

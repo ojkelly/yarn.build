@@ -20,7 +20,7 @@ const NonRemovableFiles: Record<
   parentDirectories: ({ cwd, rootDir }) => {
     if (!cwd.startsWith(rootDir)) {
       throw new Error(
-        "Package directory not in rootDir. This should never happen"
+        "Package directory not in rootDir. This should never happen",
       );
     }
     let currentPath = cwd;
@@ -52,7 +52,7 @@ const getAllWorkspacesNonRemovablesHelper = ({
         Object.values(NonRemovableFiles)
           .map((fn) => fn({ cwd, rootDir }))
           .flat(),
-      ]
+      ],
     ),
   ];
 };
