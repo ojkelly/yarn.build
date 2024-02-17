@@ -54,7 +54,7 @@
     "@kablamo/kerosene": "^0.0.20",
     "is-ci": "^3.0.0",
     "node-stream-zip": "^1.15.0",
-    "typescript": "^45"
+    "typescript": "^5"
   },
   "resolutions": {
     "typescript": "^5",

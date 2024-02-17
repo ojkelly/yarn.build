@@ -12224,7 +12224,7 @@ __metadata:
     shx: "npm:^0.3.3"
     ts-jest: "npm:^26.4.4"
     ts-pnp: "npm:^1.2.0"
-    typescript: "npm:^45"
+    typescript: "npm:^5"
   languageName: unknown
   linkType: soft
 
