@@ -52,12 +52,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Enable Corepack
-        run: corepack enable
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+          cache: "yarn"
+
+      - name: Enable Corepack
+        run: corepack enable
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
