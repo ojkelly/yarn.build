@@ -37,7 +37,7 @@ module.exports = {
                   w.manifest.name.name,
                 ), '*'), {
               dependencies: {
-                // '@tools/do': 'workspace:*',
+                '@tools/do': 'workspace:*',
                 // You can also add your own dependencies here
                 // 'typescript': '*',
                 // 'eslint': '*',
