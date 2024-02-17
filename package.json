@@ -57,6 +57,7 @@
     "typescript": "^5.3.3"
   },
   "resolutions": {
+    "esbuild": "0.20.0",
     "typescript": "^5",
     "@yarnpkg/builder": "^4",
     "@yarnpkg/cli": "^4",

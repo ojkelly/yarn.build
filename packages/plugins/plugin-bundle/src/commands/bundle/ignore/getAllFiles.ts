@@ -1,5 +1,5 @@
 import { Filename } from "@yarnpkg/fslib";
-import globby from "globby";
+import { globby } from "globby";
 
 interface GetAllFilesProps {
   cwd: string;
