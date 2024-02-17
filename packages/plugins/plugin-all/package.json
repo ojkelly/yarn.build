@@ -50,19 +50,9 @@
     "strip-ansi": "^7.1.0"
   },
   "scripts": {
-    "b": "do build-plugin",
-    "dev": "yarn update:local",
     "build": "do build-plugin",
     "clean": "do clean-plugin",
     "build:update": "do update-plugin",
-    "build:plugin-local": "builder build plugin --no-minify && yarn run update:patch",
-    "build:plugin-stage": "builder build plugin  --no-minify",
-    "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-all.js ../../../.yarn/plugins/@ojkelly/plugin-all.cjs",
-    "update:patch": "yarn update:patch-name && yarn update:patch-node",
-    "update:patch-name": "replace '@yarnpkg/plugin-all' '@ojkelly/plugin-all' ./bundles/@yarnpkg/plugin-all.js",
-    "update:patch-node": "replace 'node:' '' ./bundles/@yarnpkg/plugin-all.js",
-    "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
-    "update:local": "yarn build:plugin-stage && yarn update:patch && yarn update:patch-node && yarn update:workspace",
     "test": "jest --passWithNoTests"
   },
   "repository": {
@@ -79,7 +69,9 @@
     "node": ">=12 <14 || 14.2 - 14.9 || >14.10.0"
   },
   "jest": {
-    "preset": "ts-jest"
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "resolver": "jest-pnp-resolver"
   },
   "yarn.build": {
     "output": "bundles"

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 "use strict";
 
@@ -6,16 +7,12 @@ const env = require("./util/env");
 const fs = require("fs-extra");
 
 // Clean -----------------------------------------------------------------------
-//
-// const {bundlePath} = require("./build-plugin");
 
 const bundlePath = `${env.repo.root}${env.pkg.path}/bundles`;
 
-// if (bundlePath.startsWith(env.repo.root)) {
-  console.log(`Cleaning up ${bundlePath}`);
-  try {
-    fs.removeSync(bundlePath);
-  } catch (err) {
-    console.error(err);
-  }
-// }
+console.log(`Cleaning up ${bundlePath}`);
+try {
+  fs.removeSync(bundlePath);
+} catch (err) {
+  console.error(err);
+}

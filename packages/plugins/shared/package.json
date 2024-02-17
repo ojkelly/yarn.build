@@ -64,5 +64,10 @@
     "p-queue": "^8.0.1",
     "slice-ansi": "^7.1.0",
     "strip-ansi": "^7.1.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "resolver": "jest-pnp-resolver"
   }
 }

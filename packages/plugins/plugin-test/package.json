@@ -48,15 +48,11 @@
     "strip-ansi": "^7.1.0"
   },
   "scripts": {
-    "build": "yarn build:plugin-stage",
-    "dev": "yarn update:local",
-    "build:plugin-stage": "builder build plugin",
-    "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-test.js ../../../.yarn/plugins/@ojkelly/plugin-test.cjs",
-    "update:patch-name": "replace '@yarnpkg/plugin-test' '@ojkelly/plugin-test' ./bundles/@yarnpkg/plugin-test.js",
-    "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
-    "update:local": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
-    "clean": "shx rm -fr build bundles",
-    "test": "jest --passWithNoTests"
+    "build": "do build-plugin",
+    "clean": "do clean-plugin",
+    "build:update": "do update-plugin",
+    "test": "jest --passWithNoTests",
+    "t": "yarn node --experimental-vm-modules $(yarn bin jest)"
   },
   "repository": {
     "type": "git",
@@ -72,7 +68,19 @@
     "node": ">=12 <14 || 14.2 - 14.9 || >14.10.0"
   },
   "jest": {
-    "preset": "ts-jest"
+    "testEnvironment": "node",
+    "resolver": "jest-pnp-resolver",
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "transform": {
+      "^.+\\.m?[tj]sx?$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    }
   },
   "yarn.build": {
     "output": "bundles"
