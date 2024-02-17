@@ -8854,7 +8854,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest@npm:^29.7.0":
+"jest@npm:^29.6.3, jest@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest@npm:29.7.0"
   dependencies:
@@ -12811,7 +12811,7 @@ __metadata:
     execa: "npm:^8.0.1"
     fs-extra: "npm:^11.2.0"
     is-ci: "npm:^3.0.1"
-    jest: "npm:^26.6.3"
+    jest: "npm:^29.6.3"
     jest-pnp-resolver: "npm:^1.2.3"
     node-stream-zip: "npm:^1.15.0"
     prettier: "npm:^3.2.5"
