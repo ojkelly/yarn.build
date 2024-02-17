@@ -1567,7 +1567,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/adipiscing/",\
         "packageDependencies": [\
           ["@internal/adipiscing", "workspace:packages/examples/words/adipiscing"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["ts-jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
@@ -1580,7 +1579,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/amet/",\
         "packageDependencies": [\
           ["@internal/amet", "workspace:packages/examples/words/amet"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
         ],\
@@ -1592,7 +1590,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/consectetur/",\
         "packageDependencies": [\
           ["@internal/consectetur", "workspace:packages/examples/words/consectetur"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["ts-jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
@@ -1605,7 +1602,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/dolor/",\
         "packageDependencies": [\
           ["@internal/dolor", "workspace:packages/examples/words/dolor"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
         ],\
@@ -1617,7 +1613,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/elit/",\
         "packageDependencies": [\
           ["@internal/elit", "workspace:packages/examples/words/elit"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
         ],\
@@ -1629,7 +1624,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/ipsum/",\
         "packageDependencies": [\
           ["@internal/ipsum", "workspace:packages/examples/words/ipsum"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
         ],\
@@ -1641,7 +1635,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/lorem/",\
         "packageDependencies": [\
           ["@internal/lorem", "workspace:packages/examples/words/lorem"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
         ],\
@@ -1655,7 +1648,6 @@ const RAW_RUNTIME_STATE =
           ["@internal/phrase-in-hac", "workspace:packages/examples/phrases/in-hac"],\
           ["@internal/consectetur", "workspace:packages/examples/words/consectetur"],\
           ["@internal/elit", "workspace:packages/examples/words/elit"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/jest", "npm:29.5.12"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["ts-jest", "virtual:056cd153bffbb8b9e46a8537f519343169e9fa6093470fb713acfb45803c1dd0731e0e999821452b0126cb7bcc155c2ebad6d844507292cd53c12f65c40dcbfa#npm:29.1.2"],\
@@ -1679,7 +1671,6 @@ const RAW_RUNTIME_STATE =
           ["@internal/phrase-in-hac", "workspace:packages/examples/phrases/in-hac"],\
           ["@internal/phrase-nullam-risus", "workspace:packages/examples/phrases/nullam-risus"],\
           ["@internal/sit", "workspace:packages/examples/words/sit"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/jest", "npm:29.5.12"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["ts-jest", "virtual:056cd153bffbb8b9e46a8537f519343169e9fa6093470fb713acfb45803c1dd0731e0e999821452b0126cb7bcc155c2ebad6d844507292cd53c12f65c40dcbfa#npm:29.1.2"],\
@@ -1695,7 +1686,6 @@ const RAW_RUNTIME_STATE =
           ["@internal/phrase-nullam-risus", "workspace:packages/examples/phrases/nullam-risus"],\
           ["@internal/adipiscing", "workspace:packages/examples/words/adipiscing"],\
           ["@internal/dolor", "workspace:packages/examples/words/dolor"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/jest", "npm:29.5.12"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["ts-jest", "virtual:056cd153bffbb8b9e46a8537f519343169e9fa6093470fb713acfb45803c1dd0731e0e999821452b0126cb7bcc155c2ebad6d844507292cd53c12f65c40dcbfa#npm:29.1.2"],\
@@ -1709,7 +1699,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/quitter/",\
         "packageDependencies": [\
           ["@internal/quitter", "workspace:packages/examples/words/quitter"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
         ],\
         "linkType": "SOFT"\
@@ -1720,7 +1709,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/sit/",\
         "packageDependencies": [\
           ["@internal/sit", "workspace:packages/examples/words/sit"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["jest", "virtual:b58d8752ff51db31b1ec97f1c817f936e547cfe7fc7a8f6cf52437419601adf4eafd233b3c7d13a128052fd519e2908ecec67929bc72c22ebee3fb09c33d41ea#npm:29.1.2"],\
           ["typescript", "patch:typescript@npm%3A5.3.3#optional!builtin<compat/typescript>::version=5.3.3&hash=e012d7"]\
         ],\
@@ -2211,7 +2199,6 @@ const RAW_RUNTIME_STATE =
           ["@opentelemetry/sdk-trace-base", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:1.21.0"],\
           ["@opentelemetry/sdk-trace-node", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:1.21.0"],\
           ["@opentelemetry/semantic-conventions", "npm:1.21.0"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/is-ci", "npm:3.0.4"],\
           ["@types/jest", "npm:26.0.24"],\
           ["@types/js-yaml", "npm:4.0.9"],\
@@ -2265,7 +2252,6 @@ const RAW_RUNTIME_STATE =
           ["@ojkelly/yarn-plugin-build", "workspace:packages/plugins/plugin-build"],\
           ["@ojkelly/yarn-plugin-bundle", "workspace:packages/plugins/plugin-bundle"],\
           ["@ojkelly/yarn-plugin-test", "workspace:packages/plugins/plugin-test"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/is-ci", "npm:3.0.4"],\
           ["@types/jest", "npm:26.0.24"],\
           ["@types/js-yaml", "npm:4.0.9"],\
@@ -2318,7 +2304,6 @@ const RAW_RUNTIME_STATE =
           ["@opentelemetry/sdk-node", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:0.48.0"],\
           ["@opentelemetry/sdk-trace-base", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:1.21.0"],\
           ["@opentelemetry/semantic-conventions", "npm:1.21.0"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/is-ci", "npm:3.0.4"],\
           ["@types/jest", "npm:26.0.24"],\
           ["@types/js-yaml", "npm:4.0.9"],\
@@ -2372,7 +2357,6 @@ const RAW_RUNTIME_STATE =
           ["@opentelemetry/sdk-node", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:0.48.0"],\
           ["@opentelemetry/sdk-trace-base", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:1.21.0"],\
           ["@opentelemetry/semantic-conventions", "npm:1.21.0"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/is-ci", "npm:3.0.4"],\
           ["@types/jest", "npm:26.0.24"],\
           ["@types/js-yaml", "npm:4.0.9"],\
@@ -2417,7 +2401,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/plugins/plugin-package-yaml/",\
         "packageDependencies": [\
           ["@ojkelly/yarn-plugin-package-yaml", "workspace:packages/plugins/plugin-package-yaml"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/is-ci", "npm:3.0.4"],\
           ["@types/jest", "npm:26.0.24"],\
           ["@types/js-yaml", "npm:3.12.10"],\
@@ -2465,7 +2448,6 @@ const RAW_RUNTIME_STATE =
           ["@ojkelly/yarn-plugin-test", "workspace:packages/plugins/plugin-test"],\
           ["@ojkelly/yarn-build-shared", "workspace:packages/plugins/shared"],\
           ["@ojkelly/yarn-plugin-build", "workspace:packages/plugins/plugin-build"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/is-ci", "npm:3.0.4"],\
           ["@types/jest", "npm:26.0.24"],\
           ["@types/js-yaml", "npm:4.0.9"],\

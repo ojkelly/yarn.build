@@ -13,7 +13,6 @@ test("bundling lambda-project to a zip", async () => {
 
   // Stage the test project far from the yarn.build project
   fs.copySync(__dirname, workDir, {
-    recursive: true,
     errorOnExist: true,
   });
 
@@ -44,7 +43,6 @@ test("bundling lambda-project to a zip with custom name", async () => {
 
   // Stage the test project far from the yarn.build project
   fs.copySync(__dirname, workDir, {
-    recursive: true,
     errorOnExist: true,
   });
 
@@ -74,9 +72,9 @@ test("run lambda-project after bundling without compression", async () => {
   const workDir = getTempDirName();
   const bundleOutput = getTempDirName();
 
+console.log({ workDir,bundleOutput });
   // Stage the test project far from the yarn.build project
   fs.copySync(__dirname, workDir, {
-    recursive: true,
     errorOnExist: true,
   });
 

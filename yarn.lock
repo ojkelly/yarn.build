@@ -2690,7 +2690,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tools/do@workspace:*, @tools/do@workspace:packages/tools/do":
+"@tools/do@workspace:packages/tools/do":
   version: 0.0.0-use.local
   resolution: "@tools/do@workspace:packages/tools/do"
   dependencies:
