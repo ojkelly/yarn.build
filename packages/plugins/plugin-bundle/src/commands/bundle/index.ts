@@ -645,7 +645,6 @@ export default class Bundler extends BaseCommand {
                           { outputPath, tmpDir }
                         );
                       } else {
-
                         report.reportInfo(null, "Creating archive");
 
                         const zipFs = new ZipFS(outputArchive, {
