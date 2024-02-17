@@ -20,7 +20,7 @@ jobs:
 
       - name: Check dependencies
         run: |
-          yarn install --check-cache
+          yarn install --immutable --immutable-cache
 
       - name: Prettier
         # run yarn style:fix if your PR fails here
