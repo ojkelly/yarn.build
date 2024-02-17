@@ -12,11 +12,11 @@ import isCI from "is-ci";
 import { cpus } from "os";
 import { Filename, PortablePath, npath, ppath, xfs } from "@yarnpkg/fslib";
 import { getWorkspaceConfiguration, YarnBuildConfiguration } from "../config";
-import globby from "globby";
+import { globby } from "globby";
 
 import { EventEmitter } from "events";
 import PQueue from "p-queue";
-import PLimit, { Limit } from "p-limit";
+import PLimit, { LimitFunction } from "p-limit";
 import { Mutex } from "await-semaphore";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
@@ -107,7 +107,7 @@ type RunCommandCli = (
   command: string,
   cwd: PortablePath,
   runReporter: EventEmitter,
-  prefix: string
+  prefix: string,
 ) => Promise<number>;
 
 class RunSupervisor {
@@ -147,7 +147,7 @@ class RunSupervisor {
 
   concurrency: number;
 
-  limit: Limit;
+  limit: LimitFunction;
 
   queue: PQueue;
 
@@ -265,7 +265,7 @@ class RunSupervisor {
     return ppath.resolve(
       this.project.cwd,
       ".yarn" as Filename,
-      YARN_RUN_CACHE_FILENAME
+      YARN_RUN_CACHE_FILENAME,
     );
   }
 
@@ -274,7 +274,7 @@ class RunSupervisor {
 
     try {
       const runLogFile: RunLogFile = await xfs.readJsonPromise(
-        this.getRunLogPath()
+        this.getRunLogPath(),
       );
 
       if (runLogFile && runLogFile.packages) {
@@ -338,7 +338,7 @@ class RunSupervisor {
           };
           release();
         });
-      }
+      },
     );
 
     this.runReporter.on(
@@ -347,7 +347,7 @@ class RunSupervisor {
         relativeCwd: PortablePath,
         locator: Locator,
         name: string,
-        runScript: string
+        runScript: string,
       ) => {
         this.runReport.mutex.acquire().then((release: () => void) => {
           this.runReport.workspaces[relativeCwd] = {
@@ -359,7 +359,7 @@ class RunSupervisor {
           };
           release();
         });
-      }
+      },
     );
 
     this.runReporter.on(
@@ -371,7 +371,7 @@ class RunSupervisor {
           }
           release();
         });
-      }
+      },
     );
 
     this.runReporter.on(
@@ -383,7 +383,7 @@ class RunSupervisor {
           }
           release();
         });
-      }
+      },
     );
 
     this.runReporter.on(
@@ -403,14 +403,14 @@ class RunSupervisor {
             const pkg = `✅ ${relativeCwd}`.padEnd(60);
             const timing = formatTimestampDifference(
               0,
-              wrk.runtimeSeconds ?? 0
+              wrk.runtimeSeconds ?? 0,
             ).padStart(19);
 
             process.stdout.write(`${pkg}${timing}\n`);
           }
           release();
         });
-      }
+      },
     );
     this.runReporter.on(
       RunSupervisorReporterEvents.skipped,
@@ -428,7 +428,7 @@ class RunSupervisor {
             process.stdout.write(`${pkg}${timing}\n`);
           }
         });
-      }
+      },
     );
     this.runReporter.on(
       RunSupervisorReporterEvents.ignored,
@@ -451,7 +451,7 @@ class RunSupervisor {
             process.stdout.write(`${pkg}${timing}\n`);
           }
         });
-      }
+      },
     );
     this.runReporter.on(
       RunSupervisorReporterEvents.fail,
@@ -474,13 +474,13 @@ class RunSupervisor {
               l?.exitCode ? `(exit code: ${l?.exitCode})` : "→"
             } ${formatTimestampDifference(
               0,
-              wrk.runtimeSeconds ?? 0
+              wrk.runtimeSeconds ?? 0,
             )}`.padStart(29);
 
             process.stdout.write(`${pkg}${timing}\n`);
           }
         });
-      }
+      },
     );
   };
 
@@ -542,7 +542,7 @@ class RunSupervisor {
   plan = async (node: Node, workspace: Workspace): Promise<boolean> => {
     if (!node) {
       throw new Error(
-        "Internal error: lost reference to parent workspace. Please open an issue."
+        "Internal error: lost reference to parent workspace. Please open an issue.",
       );
     }
 
@@ -608,7 +608,7 @@ class RunSupervisor {
     this.runReporter.emit(
       RunSupervisorReporterEvents.pending,
       workspace.relativeCwd,
-      workspace.anchoredLocator
+      workspace.anchoredLocator,
     );
 
     if (rerunParent || hasChanges) {
@@ -621,7 +621,7 @@ class RunSupervisor {
           workspace.manifest.name?.scope
             ? `@${workspace.manifest.name?.scope}/`
             : ""
-        }${workspace.manifest.name?.name}`
+        }${workspace.manifest.name?.name}`,
       );
 
       this.runGraph.addRunCallback(node, this.createRunItem(workspace));
@@ -632,7 +632,7 @@ class RunSupervisor {
       // Use the previous log entry if we don't need to rerun.
       // This ensures we always have all our run targets in the log.
       const previousRunLog = this.runLog?.get(
-        `${workspace.relativeCwd}#${this.runCommand}`
+        `${workspace.relativeCwd}#${this.runCommand}`,
       );
 
       if (previousRunLog) {
@@ -655,7 +655,7 @@ class RunSupervisor {
 
       // determine dependencies that need a rebuild and mark their dependent projects for rerun
       const dependencyWorkspaces = Array.from(
-        workspace.getRecursiveWorkspaceDependencies()
+        workspace.getRecursiveWorkspaceDependencies(),
       ).filter((w) => this.isWorkspaceMarkedForRerun(w));
 
       for (const dependencyWorkspace of dependencyWorkspaces) {
@@ -682,7 +682,7 @@ class RunSupervisor {
     }
 
     const previousRunLog = this.runLog?.get(
-      `${workspace.relativeCwd}#${this.runCommand}`
+      `${workspace.relativeCwd}#${this.runCommand}`,
     );
 
     // This ensures we always have all our run targets in the log.
@@ -703,7 +703,7 @@ class RunSupervisor {
     }
 
     const previousRunLog = this.runLog?.get(
-      `${workspace.relativeCwd}#${this.runCommand}`
+      `${workspace.relativeCwd}#${this.runCommand}`,
     );
 
     return previousRunLog?.rerun ?? false;
@@ -737,7 +737,7 @@ class RunSupervisor {
 
     // if this workspace is already marked for rerun
     const previousRunLog = this.runLog?.get(
-      `${workspace.relativeCwd}#${this.runCommand}`
+      `${workspace.relativeCwd}#${this.runCommand}`,
     );
 
     if (previousRunLog?.rerun) {
@@ -753,7 +753,7 @@ class RunSupervisor {
     }
 
     const workspaceConfiguration = getWorkspaceConfiguration(
-      workspace.manifest.raw
+      workspace.manifest.raw,
     );
     const useExplicitInputPaths = workspaceConfiguration?.input != null;
     const useExplicitOutputPaths =
@@ -763,12 +763,12 @@ class RunSupervisor {
       workspaceConfiguration.input ?? this.pluginConfiguration.folders.input;
     const ignoredInputPaths = new Set<string>();
     const inputPaths = new Set<string>(
-      Array.isArray(baseInputPaths) ? baseInputPaths : [baseInputPaths]
+      Array.isArray(baseInputPaths) ? baseInputPaths : [baseInputPaths],
     );
 
     const baseOutputPaths = workspaceConfiguration.output ?? [];
     const outputPaths = new Set<string>(
-      Array.isArray(baseOutputPaths) ? baseOutputPaths : [baseOutputPaths]
+      Array.isArray(baseOutputPaths) ? baseOutputPaths : [baseOutputPaths],
     );
 
     if (!useExplicitOutputPaths) {
@@ -794,14 +794,14 @@ class RunSupervisor {
         const tsconfigFile = workspaceConfiguration.tsconfig ?? "tsconfig.json";
         const tsconfigAbsolutePath = xfs.pathUtils.join(
           workspace.cwd,
-          npath.toPortablePath(tsconfigFile)
+          npath.toPortablePath(tsconfigFile),
         );
         const tsconfigExists = await xfs.existsPromise(tsconfigAbsolutePath);
 
         if (tsconfigExists) {
           // parse tsconfig for output, input
           const tsconfig = parseTsconfig(
-            npath.fromPortablePath(tsconfigAbsolutePath)
+            npath.fromPortablePath(tsconfigAbsolutePath),
           );
           const tsConfigAbsoluteDirPath = ppath.dirname(tsconfigAbsolutePath);
 
@@ -812,15 +812,15 @@ class RunSupervisor {
                 tsconfig.compilerOptions.tsBuildInfoFile ??
                 `${ppath.basename(
                   tsconfigAbsolutePath,
-                  ppath.extname(tsconfigAbsolutePath)
+                  ppath.extname(tsconfigAbsolutePath),
                 )}.tsbuildinfo`;
               const tsBuildInfoAbsoluteFilePath = ppath.join(
                 tsConfigAbsoluteDirPath,
-                npath.toPortablePath(tsBuildInfoFile)
+                npath.toPortablePath(tsBuildInfoFile),
               );
               const tsBuildInfoRelativeFilePath = ppath.relative(
                 workspace.cwd,
-                tsBuildInfoAbsoluteFilePath
+                tsBuildInfoAbsoluteFilePath,
               );
 
               ignoredInputPaths.add(tsBuildInfoRelativeFilePath);
@@ -830,11 +830,11 @@ class RunSupervisor {
               // include contains relative file paths which needs to be resolved from tsconfig
               const absoluteFilePath = ppath.join(
                 tsConfigAbsoluteDirPath,
-                npath.toPortablePath(file)
+                npath.toPortablePath(file),
               );
               const realtiveFilePath = ppath.relative(
                 workspace.cwd,
-                absoluteFilePath
+                absoluteFilePath,
               );
 
               inputPaths.add(realtiveFilePath);
@@ -845,11 +845,11 @@ class RunSupervisor {
               // this paths will reduce the paths from include
               const absoluteFilePath = ppath.join(
                 tsConfigAbsoluteDirPath,
-                npath.toPortablePath(file)
+                npath.toPortablePath(file),
               );
               const realtiveFilePath = ppath.relative(
                 workspace.cwd,
-                absoluteFilePath
+                absoluteFilePath,
               );
 
               ignoredInputPaths.add(realtiveFilePath);
@@ -864,12 +864,12 @@ class RunSupervisor {
             const absoluteFilePath = ppath.join(
               tsConfigAbsoluteDirPath,
               npath.toPortablePath(
-                npath.toPortablePath(tsconfig.compilerOptions.outDir)
-              )
+                npath.toPortablePath(tsconfig.compilerOptions.outDir),
+              ),
             );
             const relativeFilePath = ppath.relative(
               workspace.cwd,
-              absoluteFilePath
+              absoluteFilePath,
             );
 
             outputPaths.add(relativeFilePath);
@@ -884,7 +884,7 @@ class RunSupervisor {
     if (outputPaths.size === 0) {
       Array.isArray(this.pluginConfiguration.folders.output)
         ? this.pluginConfiguration.folders.output.forEach(
-            (p) => p && outputPaths.add(p)
+            (p) => p && outputPaths.add(p),
           )
         : typeof this.pluginConfiguration.folders.output === `string` &&
           outputPaths.add(this.pluginConfiguration.folders.output);
@@ -903,7 +903,7 @@ class RunSupervisor {
         const currentHash = await getHashForPaths(
           workspace.cwd,
           srcPaths,
-          ignorePaths
+          ignorePaths,
         );
 
         if (previousRunLog?.checksum !== currentHash) {
@@ -927,7 +927,7 @@ class RunSupervisor {
               } catch {
                 return false;
               }
-            })
+            }),
           );
 
           if (outputPatternsCheck.some((v) => v === true)) {
@@ -944,8 +944,8 @@ class RunSupervisor {
       } catch (e) {
         this.runReport.workspaces[workspace.relativeCwd]?.stderr.push(
           new Error(
-            `${workspace.relativeCwd}: failed to get lastModified (${e})`
-          )
+            `${workspace.relativeCwd}: failed to get lastModified (${e})`,
+          ),
         );
       } finally {
         release();
@@ -984,7 +984,7 @@ class RunSupervisor {
           depth: number,
           msg: string,
           lastLevel: boolean,
-          final: boolean
+          final: boolean,
         ): string => {
           const joiner = lastLevel ? "└─" : final && lastLevel ? "└─┬─" : "├─";
           const indent = depth == 0 ? "" : "  ".repeat(depth);
@@ -1018,7 +1018,7 @@ class RunSupervisor {
         this.concurrency = originalConcurrency;
 
         return output;
-      }
+      },
     );
 
   run = async (ctx: Context): Promise<boolean> =>
@@ -1029,7 +1029,7 @@ class RunSupervisor {
 
         if (this.hasSetup === false) {
           throw new Error(
-            "RunSupervisor is not setup, you need to call await supervisor.setup()"
+            "RunSupervisor is not setup, you need to call await supervisor.setup()",
           );
         }
 
@@ -1044,7 +1044,7 @@ class RunSupervisor {
               this.formatHeader(
                 `Dry Run / Command: ${this.runCommand} / Total: ${this.runGraph.runSize}`,
                 0,
-                true
+                true,
               ) + "\n"
             }`;
           }
@@ -1067,9 +1067,9 @@ class RunSupervisor {
               this.formatHeader(
                 `Run / Command: ${this.runCommand} / Concurrency: ${this.concurrency}`,
                 0,
-                false
+                false,
               ) + "\n"
-            }`
+            }`,
           );
         }
 
@@ -1107,7 +1107,7 @@ class RunSupervisor {
         await this.saveRunLog();
 
         return this.runReport.failCount === 0;
-      }
+      },
     );
 
   // This is a very simple requestAnimationFrame polyfil
@@ -1131,8 +1131,8 @@ class RunSupervisor {
       Hansi.cursorUp(
         Hansi.linesRequired(
           this.runReport.previousOutput,
-          process.stdout.columns
-        )
+          process.stdout.columns,
+        ),
       );
       Hansi.clearScreenDown();
     }
@@ -1172,11 +1172,11 @@ class RunSupervisor {
     return `${formatUtils.pretty(
       this.configuration,
       `${this.runCommand}`,
-      FormatType.CODE
+      FormatType.CODE,
     )} for ${formatUtils.pretty(
       this.configuration,
       this.currentRunTarget ? this.currentRunTarget : "",
-      FormatType.SCOPE
+      FormatType.SCOPE,
     )}${
       this.dryRun
         ? formatUtils.pretty(this.configuration, ` --dry-run`, FormatType.NAME)
@@ -1225,20 +1225,20 @@ class RunSupervisor {
       const pathString = formatUtils.pretty(
         this.configuration,
         relativePath,
-        FormatType.PATH
+        FormatType.PATH,
       );
 
       const runScriptString = formatUtils.pretty(
         this.configuration,
         `(${thread.runScript})`,
-        FormatType.REFERENCE
+        FormatType.REFERENCE,
       );
 
       const timeString = thread.start
         ? formatUtils.pretty(
             this.configuration,
             formatTimestampDifference(thread.start, timestamp),
-            FormatType.RANGE
+            FormatType.RANGE,
           )
         : "";
       const indexString = generateIndexString(i++);
@@ -1246,13 +1246,13 @@ class RunSupervisor {
       const referenceString = formatUtils.pretty(
         this.configuration,
         thread.name,
-        FormatType.NAME
+        FormatType.NAME,
       );
 
       let outputString = `${indexString} ${referenceString}${formatUtils.pretty(
         this.configuration,
         "@",
-        "grey"
+        "grey",
       )}${pathString} ${runScriptString} ${timeString}\n`;
 
       // If output width is more than the available width then we will use multiple lines.
@@ -1268,17 +1268,17 @@ class RunSupervisor {
           outputSegment1 = sliceAnsi(
             `${indexString} ${pathString}\n`,
             0,
-            process.stdout.columns
+            process.stdout.columns,
           );
           outputSegment2 = sliceAnsi(
             `${indexSpacer} ${referenceString}\n`,
             0,
-            process.stdout.columns
+            process.stdout.columns,
           );
           outputSegment3 = sliceAnsi(
             `${indexSpacer} ${runScriptString} ${timeString}\n`,
             0,
-            process.stdout.columns
+            process.stdout.columns,
           );
         }
         outputString = outputSegment1 + outputSegment2 + outputSegment3;
@@ -1305,27 +1305,27 @@ class RunSupervisor {
       const successString = formatUtils.pretty(
         this.configuration,
         `${this.runReport.successCount}`,
-        "green"
+        "green",
       );
       const failedString = formatUtils.pretty(
         this.configuration,
         `${this.runReport.failCount}`,
-        "red"
+        "red",
       );
       const totalString = formatUtils.pretty(
         this.configuration,
         `${this.runGraph.runSize}`,
-        "white"
+        "white",
       );
 
       output +=
         this.formatHeader(
           `${successString}:${failedString}/${totalString} ${formatTimestampDifference(
             this.runReport.runStart,
-            timestamp
+            timestamp,
           )}`,
           0,
-          true
+          true,
         ) + `\n`;
     }
 
@@ -1338,8 +1338,8 @@ class RunSupervisor {
       Hansi.cursorUp(
         Hansi.linesRequired(
           this.runReport.previousOutput,
-          process.stdout.columns
-        )
+          process.stdout.columns,
+        ),
       );
       Hansi.clearScreenDown();
     }
@@ -1382,9 +1382,9 @@ class RunSupervisor {
             `Output: ${formatUtils.pretty(
               this.configuration,
               relativePath,
-              FormatType.PATH
+              FormatType.PATH,
             )}`,
-            2
+            2,
           );
 
           output += `\n${lineHeader + "\n"}`;
@@ -1425,7 +1425,7 @@ class RunSupervisor {
       if (packagesWithErrors.length >= 2) {
         output += `${this.grey(DIVIDER) + "\n"}`;
         const errorHeader = this.grey(
-          `ERROR for script ${this.header}\nThe following packages returned an error.\n`
+          `ERROR for script ${this.header}\nThe following packages returned an error.\n`,
         );
 
         output += `${errorHeader}`;
@@ -1434,7 +1434,7 @@ class RunSupervisor {
           const lineTail = `- ${formatUtils.pretty(
             this.configuration,
             relativePath,
-            FormatType.PATH
+            FormatType.PATH,
           )}`;
 
           output += `${lineTail + "\n"}`;
@@ -1447,18 +1447,18 @@ class RunSupervisor {
         `${formatUtils.pretty(
           this.configuration,
           `${this.runCommand} finished`,
-          this.runReport.failCount === 0 ? "green" : "red"
+          this.runReport.failCount === 0 ? "green" : "red",
         )}${
           this.runReport.failCount != 0
             ? formatUtils.pretty(
                 this.configuration,
                 ` with ${this.runReport.failCount} errors`,
-                "red"
+                "red",
               )
             : ""
         }`,
         0,
-        true
+        true,
       ) + "\n";
 
     output += "\n" + this.formatHeader("Summary") + "\n";
@@ -1474,33 +1474,33 @@ class RunSupervisor {
       const successString = formatUtils.pretty(
         this.configuration,
         `Success: ${successCount}`,
-        "green"
+        "green",
       );
       const failedString = formatUtils.pretty(
         this.configuration,
         `Fail: ${failCount}`,
-        "red"
+        "red",
       );
       const skippedString = formatUtils.pretty(
         this.configuration,
         `Skipped: ${skipCount}`,
-        "white"
+        "white",
       );
       const excludedString = formatUtils.pretty(
         this.configuration,
         `Excluded: ${this.excluded.size}`,
-        "white"
+        "white",
       );
       const upToDateString = formatUtils.pretty(
         this.configuration,
         `Up to date: ${upToDate}`,
-        "white"
+        "white",
       );
 
       const totalString = formatUtils.pretty(
         this.configuration,
         `Total: ${total}`,
-        "white"
+        "white",
       );
 
       output += successString + "\n";
@@ -1516,7 +1516,7 @@ class RunSupervisor {
             output += ` - ${formatUtils.pretty(
               this.configuration,
               k,
-              "grey"
+              "grey",
             )}${formatUtils.pretty(this.configuration, w.locator, "IDENT")}\n`;
           }
         });
@@ -1530,7 +1530,7 @@ class RunSupervisor {
             output += ` - ${formatUtils.pretty(
               this.configuration,
               k,
-              "grey"
+              "grey",
             )}${formatUtils.pretty(this.configuration, w.locator, "IDENT")}\n`;
           }
         });
@@ -1542,8 +1542,12 @@ class RunSupervisor {
           output += ` - ${formatUtils.pretty(
             this.configuration,
             w.relativeCwd,
-            "grey"
-          )}${formatUtils.pretty(this.configuration, w.anchoredLocator, "IDENT")}\n`;
+            "grey",
+          )}${formatUtils.pretty(
+            this.configuration,
+            w.anchoredLocator,
+            "IDENT",
+          )}\n`;
         }
       }
 
@@ -1603,7 +1607,8 @@ class RunSupervisor {
               };
 
               if (typeof workspace.anchoredLocator.scope === "string") {
-                attr[Attribute.PACKAGE_SCOPE] = `@${workspace.anchoredLocator.scope}`;
+                attr[Attribute.PACKAGE_SCOPE] =
+                  `@${workspace.anchoredLocator.scope}`;
               }
 
               const command = workspace.manifest.scripts.get(this.runCommand);
@@ -1613,7 +1618,7 @@ class RunSupervisor {
               }
 
               const currentRunLog = this.runLog?.get(
-                `${workspace.relativeCwd}#${this.runCommand}`
+                `${workspace.relativeCwd}#${this.runCommand}`,
               );
 
               this.runReporter.emit(
@@ -1625,7 +1630,7 @@ class RunSupervisor {
                     ? `@${workspace.manifest.name?.scope}/`
                     : ""
                 }${workspace.manifest.name?.name}`,
-                command
+                command,
               );
               span.addEvent("start");
 
@@ -1636,13 +1641,13 @@ class RunSupervisor {
                   this.runReporter.emit(
                     RunSupervisorReporterEvents.info,
                     workspace.relativeCwd,
-                    `[skip] No \`${this.runCommand}\` script in manifest.`
+                    `[skip] No \`${this.runCommand}\` script in manifest.`,
                   );
                 }
 
                 this.runReporter.emit(
                   RunSupervisorReporterEvents.ignored,
-                  workspace.relativeCwd
+                  workspace.relativeCwd,
                 );
                 span.addEvent("ignored");
 
@@ -1654,7 +1659,7 @@ class RunSupervisor {
                   // We have bailed skip all!
                   this.runReporter.emit(
                     RunSupervisorReporterEvents.skipped,
-                    workspace.relativeCwd
+                    workspace.relativeCwd,
                   );
                   span.addEvent("skipped");
 
@@ -1665,7 +1670,7 @@ class RunSupervisor {
                       status: RunStatus.skipped,
                       rerun: false,
                       command: this.runCommand,
-                    }
+                    },
                   );
                   span.addEvent("runReport failcount is not 0, exiting early");
 
@@ -1679,18 +1684,18 @@ class RunSupervisor {
                   this.runCommand,
                   workspace.cwd,
                   this.runReporter,
-                  prefix
+                  prefix,
                 );
 
                 span.setAttribute(
                   Attribute.YARN_BUILD_PACKAGE_RUN_COMMAND_EXIT,
-                  exitCode
+                  exitCode,
                 );
 
                 if (exitCode !== 0) {
                   this.runReporter.emit(
                     RunSupervisorReporterEvents.fail,
-                    workspace.relativeCwd
+                    workspace.relativeCwd,
                   );
 
                   this.runLog?.set(
@@ -1701,13 +1706,13 @@ class RunSupervisor {
                       rerun: true,
                       command: this.runCommand,
                       exitCode: `${exitCode}`,
-                    }
+                    },
                   );
 
                   if (this.failFast === true) {
                     if (isCI) {
                       process.stdout.write(
-                        "--fail-fast is set, terminating all processes\n"
+                        "--fail-fast is set, terminating all processes\n",
                       );
                     }
                     void terminateAllChildProcesses();
@@ -1724,18 +1729,18 @@ class RunSupervisor {
                     status: RunStatus.succeeded,
                     rerun: false,
                     command: this.runCommand,
-                  }
+                  },
                 );
 
                 this.runReporter.emit(
                   RunSupervisorReporterEvents.success,
-                  workspace.relativeCwd
+                  workspace.relativeCwd,
                 );
               } catch (err) {
                 this.runReporter.emit(
                   RunSupervisorReporterEvents.fail,
                   workspace.relativeCwd,
-                  err
+                  err,
                 );
 
                 this.runLog?.set(
@@ -1745,7 +1750,7 @@ class RunSupervisor {
                     status: RunStatus.failed,
                     rerun: true,
                     command: this.runCommand,
-                  }
+                  },
                 );
                 if (typeof err === "string" || err instanceof Error) {
                   span.recordException(err);
@@ -1766,8 +1771,8 @@ class RunSupervisor {
               }
 
               return false;
-            }
-          )
+            },
+          ),
       );
   };
 }
@@ -1775,7 +1780,7 @@ class RunSupervisor {
 const getHashForPaths = async (
   cwd: PortablePath,
   paths: PortablePath[],
-  ignored: PortablePath[] | undefined
+  ignored: PortablePath[] | undefined,
 ): Promise<string> => {
   const allFilePaths = await globby(paths, {
     cwd: npath.fromPortablePath(cwd),
@@ -1797,7 +1802,7 @@ const getHashForPaths = async (
         size: stat.isFile() ? stat.size : 0,
         lastModified: stat.isFile() ? stat.mtimeMs : 0,
       };
-    })
+    }),
   );
 
   return objectHash(fileDetails);

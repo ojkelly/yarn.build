@@ -38,7 +38,7 @@ export class Tracer {
   //  })
   //
   async startSpan<
-    F extends ({ span, ctx }: { span: Span; ctx: Context }) => ReturnType<F>
+    F extends ({ span, ctx }: { span: Span; ctx: Context }) => ReturnType<F>,
   >(
     opts: {
       name: string;
@@ -47,7 +47,7 @@ export class Tracer {
       spanOptions?: SpanOptions;
       propegateFromEnv?: boolean;
     },
-    fn: F
+    fn: F,
   ): Promise<Awaited<ReturnType<F>> | ReturnType<F>> {
     // Get the current active context, or use the one passed in
     let ctx: Context;
@@ -126,7 +126,7 @@ export class Tracer {
     },
     cb: F,
     ...args: any[]
-  ): Promise<Awaited<ReturnType<F>>> {
+  ): Promise<ReturnType<F> | Awaited<ReturnType<F>>> {
     let ctx: Context;
 
     if (typeof opts.ctx === "undefined") {
@@ -135,10 +135,10 @@ export class Tracer {
       ctx = opts.ctx;
     }
 
-    const c = async (): Promise<Awaited<ReturnType<F>>> =>
+    const c = async (): Promise<ReturnType<F> | Awaited<ReturnType<F>>> =>
       await this.startSpan(
         { name: opts.name, ctx },
-        async () => await cb(...args)
+        async () => await cb(...args),
       );
 
     return await c();

@@ -193,7 +193,9 @@ export default class Build extends BaseCommand {
         }
 
         if (!!this.excludeCurrent) {
-          this.exclude.push(structUtils.stringifyIdent(cwdWorkspace.anchoredLocator));
+          this.exclude.push(
+            structUtils.stringifyIdent(cwdWorkspace.anchoredLocator)
+          );
         }
 
         if (!isRoot && this.onlyCurrent) {

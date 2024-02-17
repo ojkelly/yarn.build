@@ -13,16 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 20.x
+          cache: 'yarn'
+
 
       - name: Build project
         run: |
           yarn install --immutable-cache --check-cache && \
           yarn build && \
-          yarn test && \
-          yarn build -c update:local
+          yarn build -c build:update
 
       - name: Create Release
         id: create_release

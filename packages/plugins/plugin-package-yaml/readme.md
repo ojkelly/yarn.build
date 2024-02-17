@@ -9,7 +9,7 @@ To update the plugin run `yarn update` in `packages/plugins/plugin-build`.
 ## Notes
 
 - `yarn update:patch-name` will not work with macOS sed. However it's only used
-  in the release script. To get around this developing on a mac you can use `yarn update:local`.
+  in the release script. To get around this developing on a mac you can use `yarn build:update`.
 
 ## Releases
 

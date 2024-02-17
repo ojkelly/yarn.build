@@ -132,7 +132,7 @@ describe("Simple dependency graph", () => {
         runOrder.push(id);
 
         return true;
-      })
+      }),
     );
 
     const [

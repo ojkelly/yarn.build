@@ -4,7 +4,7 @@ dist
 .cache
 build
 **/build
-
+scratch
 yarn-error.log
 
 # Yarn plug n play

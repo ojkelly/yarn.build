@@ -6,11 +6,17 @@
     "baseUrl": ".",
     "strict": true,
     "target": "ES6",
-    "moduleResolution": "node",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "build",
     "declaration": true,
-    "lib": ["dom", "es2017", "esnext", "esnext.asynciterable"]
+    "lib": [
+      "dom",
+      "es2017",
+      "esnext",
+      "esnext.asynciterable"
+    ]
   }
 }

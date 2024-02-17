@@ -5,7 +5,7 @@ import { getPlatform } from "./get-platform";
 const execute = promisify(exec);
 
 export const getAllChildProccess = async (
-  pid: number | string
+  pid: number | string,
 ): Promise<number[]> => {
   const platform = getPlatform();
   const command = (({

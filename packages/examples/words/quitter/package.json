@@ -11,6 +11,6 @@
     "output": null
   },
   "dependencies": {
-    "typescript": "^4"
+    "typescript": "^5.3.3"
   }
 }

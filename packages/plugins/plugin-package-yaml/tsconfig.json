@@ -1,22 +1,14 @@
 {
+  "extends": "../../../tsconfig.plugin.json",
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "forceConsistentCasingInFileNames": true,
-    "jsx": "react",
-    "lib": [
-      "esnext",
-      "esnext.asynciterable"
-    ],
-    "module": "commonjs",
-    "noImplicitReturns": true,
-    "strict": true,
-    "target": "ES2018",
-    "declaration": true,
-    "importHelpers": true,
-    "isolatedModules": true,
-    "skipLibCheck": true
-  }
+    "outDir": "dist",
+    "baseUrl": "./.",
+    "types": [
+      "jest"
+    ]
+  },
+  "exclude": [
+    "packages/*/lib",
+    "packages/yarnpkg-doctor/fixtures"
+  ]
 }
