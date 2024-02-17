@@ -7,7 +7,7 @@ import {
   StreamReport,
   Workspace,
 } from "@yarnpkg/core";
-import { getLibzipPromise, ZipFS } from "@yarnpkg/libzip";
+import { ZipFS } from "@yarnpkg/libzip";
 import {
   Filename,
   NodeFS,
