@@ -3,4 +3,4 @@ export const PackageFiles = [
   "package.yaml",
   "package.yml",
 ] as const;
-export type PackageFile = typeof PackageFiles[number];
+export type PackageFile = (typeof PackageFiles)[number];

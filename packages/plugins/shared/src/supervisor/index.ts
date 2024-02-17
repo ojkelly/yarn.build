@@ -1543,7 +1543,11 @@ class RunSupervisor {
             this.configuration,
             w.relativeCwd,
             "grey"
-          )}${formatUtils.pretty(this.configuration, w.anchoredLocator, "IDENT")}\n`;
+          )}${formatUtils.pretty(
+            this.configuration,
+            w.anchoredLocator,
+            "IDENT"
+          )}\n`;
         }
       }
 
@@ -1603,7 +1607,9 @@ class RunSupervisor {
               };
 
               if (typeof workspace.anchoredLocator.scope === "string") {
-                attr[Attribute.PACKAGE_SCOPE] = `@${workspace.anchoredLocator.scope}`;
+                attr[
+                  Attribute.PACKAGE_SCOPE
+                ] = `@${workspace.anchoredLocator.scope}`;
               }
 
               const command = workspace.manifest.scripts.get(this.runCommand);

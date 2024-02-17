@@ -58,7 +58,7 @@ export abstract class BasePortableFakeFS extends FakeFS<PortablePath> {
 
 const ManifestFiles = ["package.json", "package.yaml", "package.yml"] as const;
 
-type ManifestFilename = typeof ManifestFiles[number];
+type ManifestFilename = (typeof ManifestFiles)[number];
 
 export class PortablePackageYamlFS extends BasePortableFakeFS {
   private readonly realFs: typeof fs;
