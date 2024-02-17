@@ -4,7 +4,7 @@ Clone this repo, and install the dependencies `yarn install`
 
 To test run `yarn build` to build everything in the `packages/example` folder.
 
-To update the plugin run `yarn build -c update:local` in the root directory.
+To update the plugin run `yarn build -c build:update` in the root directory.
 
 ## Releases
 
