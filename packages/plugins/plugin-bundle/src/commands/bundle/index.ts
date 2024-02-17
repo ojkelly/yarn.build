@@ -7,7 +7,7 @@ import {
   StreamReport,
   Workspace,
 } from "@yarnpkg/core";
-import { getLibzipPromise } from "@yarnpkg/libzip";
+import { getLibzipPromise, ZipFS } from "@yarnpkg/libzip";
 import {
   Filename,
   NodeFS,
@@ -15,7 +15,6 @@ import {
   npath,
   ppath,
   xfs,
-  ZipFS,
 } from "@yarnpkg/fslib";
 
 import { Command, Option, Usage } from "clipanion";
@@ -646,13 +645,11 @@ export default class Bundler extends BaseCommand {
                           { outputPath, tmpDir }
                         );
                       } else {
-                        const libzip = await getLibzipPromise();
 
                         report.reportInfo(null, "Creating archive");
 
                         const zipFs = new ZipFS(outputArchive, {
                           create: true,
-                          libzip,
                         });
 
                         report.reportInfo(null, "Copying files to archive");

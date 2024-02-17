@@ -126,7 +126,7 @@ export class Tracer {
     },
     cb: F,
     ...args: any[]
-  ): Promise<Awaited<ReturnType<F>>> {
+  ): Promise<ReturnType<F> | Awaited<ReturnType<F>>> {
     let ctx: Context;
 
     if (typeof opts.ctx === "undefined") {
@@ -135,7 +135,7 @@ export class Tracer {
       ctx = opts.ctx;
     }
 
-    const c = async (): Promise<Awaited<ReturnType<F>>> =>
+    const c = async (): Promise<ReturnType<F> | Awaited<ReturnType<F>>> =>
       await this.startSpan(
         { name: opts.name, ctx },
         async () => await cb(...args)
