@@ -63,6 +63,7 @@
     "build:plugin-stage": "builder build plugin",
     "update:workspace": "shx mkdir -p ../../../.yarn/plugins/@ojkelly && shx cp ./bundles/@yarnpkg/plugin-build.js ../../../.yarn/plugins/@ojkelly/plugin-build.cjs",
     "update:patch-name": "replace '@yarnpkg/plugin-build' '@ojkelly/plugin-build' ./bundles/@yarnpkg/plugin-build.js",
+    "update:patch-node": "replace 'node:' '' ./bundles/@yarnpkg/plugin-build.js",
     "update": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "update:local": "yarn build:plugin-stage && yarn update:patch-name && yarn update:workspace",
     "clean": "shx rm -fr build bundles",

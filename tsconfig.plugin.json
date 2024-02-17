@@ -6,12 +6,12 @@
     "forceConsistentCasingInFileNames": true,
     "lib": [
       "esnext",
-      "esnext.asynciterable"
+      "esnext.asynciterable",
     ],
-    "module": "ESNext",
     "strict": true,
-    "target": "ESNext",
-    "moduleResolution": "Bundler",
+    // "target": "ES6",
+    // "module": "NodeNext",
+    // "moduleResolution": "NodeNext",
     "declaration": true,
     "downlevelIteration": true,
     "importHelpers": true,

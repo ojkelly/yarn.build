@@ -1,0 +1,20 @@
+{
+  "name": "@tools/do",
+  "version": "1.0.0",
+  "description": "monorepo tools",
+  "bin": "./bin/script.js",
+  "scripts": {
+    "lint": "eslint --ext .js --ext .jsx scripts/"
+  },
+  "dependencies": {
+    "cross-spawn": "^7.0.3",
+    "dotenv": "*",
+    "esprima": "*",
+    "fs-extra": "^10.0.0",
+    "replace": "^1.2.2",
+    "simple-git": "^2.48.0"
+  },
+  "devDependencies": {
+    "eslint": "*"
+  }
+}

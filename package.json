@@ -6,6 +6,7 @@
   "packageManager": "yarn@4.1.0",
   "workspaces": {
     "packages": [
+      "packages/tools/*",
       "packages/plugins/*",
       "packages/examples/*",
       "packages/examples/words/*",

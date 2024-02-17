@@ -1,5 +1,5 @@
 {
-  "name": "@ojkelly/yarn-plugin-package-yaml",
+  "name": "@ojkelly/plugin-package-yaml",
   "version": "0.9.1",
   "homepage": "https://yarn.build",
   "license": "MIT",

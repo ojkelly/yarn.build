@@ -1599,6 +1599,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@kwsites/file-exists@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@kwsites/file-exists@npm:1.1.1"
+  dependencies:
+    debug: "npm:^4.1.1"
+  checksum: 10c0/39e693239a72ccd8408bb618a0200e4a8d61682057ca7ae2c87668d7e69196e8d7e2c9cde73db6b23b3b0230169a15e5f1bfe086539f4be43e767b2db68e8ee4
+  languageName: node
+  linkType: hard
+
+"@kwsites/promise-deferred@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@kwsites/promise-deferred@npm:1.1.1"
+  checksum: 10c0/ef1ad3f1f50991e3bed352b175986d8b4bc684521698514a2ed63c1d1fc9848843da4f2bc2df961c9b148c94e1c34bf33f0da8a90ba2234e452481f2cc9937b1
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -1647,6 +1663,49 @@ __metadata:
   checksum: 10c0/162b4a0b8705cd6f5c2470b851d1dc6cd228c86d2170e1769d738c1fbb69a87160901411c3c035331e9e99db72f1f1099a8b734bf1637cc32b9a5be1660e4e1e
   languageName: node
   linkType: hard
+
+"@ojkelly/plugin-package-yaml@workspace:packages/plugins/plugin-package-yaml":
+  version: 0.0.0-use.local
+  resolution: "@ojkelly/plugin-package-yaml@workspace:packages/plugins/plugin-package-yaml"
+  dependencies:
+    "@types/is-ci": "npm:^3.0.4"
+    "@types/jest": "npm:^26.0.24"
+    "@types/js-yaml": "npm:^3.12.10"
+    "@types/slice-ansi": "npm:^7.1.0"
+    "@types/yawn-yaml": "npm:^1.4.2"
+    "@types/yup": "npm:0.32.0"
+    "@yarnpkg/builder": "npm:*"
+    "@yarnpkg/cli": "npm:*"
+    "@yarnpkg/core": "npm:*"
+    "@yarnpkg/fslib": "npm:*"
+    "@yarnpkg/libzip": "npm:*"
+    "@yarnpkg/parsers": "npm:*"
+    "@yarnpkg/plugin-pack": "npm:*"
+    "@yarnpkg/plugin-pnp": "npm:*"
+    "@yarnpkg/pnp": "npm:*"
+    "@yarnpkg/pnpify": "npm:*"
+    await-semaphore: "npm:0.1.3"
+    clipanion: "npm:^4.0.0-rc.3"
+    date-fns: "npm:^3.3.1"
+    esprima: "npm:^4.0.1"
+    is-ci: "npm:^3.0.1"
+    jest: "npm:^26.6.3"
+    jest-pnp-resolver: "npm:^1.2.3"
+    js-yaml: "npm:^4.1.0"
+    p-limit: "npm:^5.0.0"
+    p-queue: "npm:^8.0.1"
+    replace: "npm:^1.2.2"
+    shx: "npm:^0.3.4"
+    slice-ansi: "npm:^7.1.0"
+    strip-ansi: "npm:^7.1.0"
+    ts-jest: "npm:^29.1.2"
+    tslib: "npm:^2.6.2"
+    typanion: "npm:^3.14.0"
+    typescript: "npm:^5.3.3"
+    yaml: "npm:2.3.4"
+    yawn-yaml: "npm:^1.5.0"
+  languageName: unknown
+  linkType: soft
 
 "@ojkelly/yarn-build-shared@workspace:*, @ojkelly/yarn-build-shared@workspace:packages/plugins/shared":
   version: 0.0.0-use.local
@@ -1850,49 +1909,6 @@ __metadata:
     tslib: "npm:^2.6.2"
     typanion: "npm:^3.14.0"
     typescript: "npm:^5.3.3"
-  languageName: unknown
-  linkType: soft
-
-"@ojkelly/yarn-plugin-package-yaml@workspace:packages/plugins/plugin-package-yaml":
-  version: 0.0.0-use.local
-  resolution: "@ojkelly/yarn-plugin-package-yaml@workspace:packages/plugins/plugin-package-yaml"
-  dependencies:
-    "@types/is-ci": "npm:^3.0.4"
-    "@types/jest": "npm:^26.0.24"
-    "@types/js-yaml": "npm:^3.12.10"
-    "@types/slice-ansi": "npm:^7.1.0"
-    "@types/yawn-yaml": "npm:^1.4.2"
-    "@types/yup": "npm:0.32.0"
-    "@yarnpkg/builder": "npm:*"
-    "@yarnpkg/cli": "npm:*"
-    "@yarnpkg/core": "npm:*"
-    "@yarnpkg/fslib": "npm:*"
-    "@yarnpkg/libzip": "npm:*"
-    "@yarnpkg/parsers": "npm:*"
-    "@yarnpkg/plugin-pack": "npm:*"
-    "@yarnpkg/plugin-pnp": "npm:*"
-    "@yarnpkg/pnp": "npm:*"
-    "@yarnpkg/pnpify": "npm:*"
-    await-semaphore: "npm:0.1.3"
-    clipanion: "npm:^4.0.0-rc.3"
-    date-fns: "npm:^3.3.1"
-    esprima: "npm:^4.0.1"
-    is-ci: "npm:^3.0.1"
-    jest: "npm:^26.6.3"
-    jest-pnp-resolver: "npm:^1.2.3"
-    js-yaml: "npm:^4.1.0"
-    p-limit: "npm:^5.0.0"
-    p-queue: "npm:^8.0.1"
-    replace: "npm:^1.2.2"
-    shx: "npm:^0.3.4"
-    slice-ansi: "npm:^7.1.0"
-    strip-ansi: "npm:^7.1.0"
-    ts-jest: "npm:^29.1.2"
-    tslib: "npm:^2.6.2"
-    typanion: "npm:^3.14.0"
-    typescript: "npm:^5.3.3"
-    yaml: "npm:2.3.4"
-    yawn-yaml: "npm:^1.5.0"
   languageName: unknown
   linkType: soft
 
@@ -2885,6 +2901,22 @@ __metadata:
   checksum: 10c0/73946918c025339db68b09abd91fa3001e87fc749c619d2e9c2003a663039d4c3cb89836c98a96598b3d47dec2481284ba85355392644911f5ecd2336536697f
   languageName: node
   linkType: hard
+
+"@tools/do@workspace:*, @tools/do@workspace:packages/tools/do":
+  version: 0.0.0-use.local
+  resolution: "@tools/do@workspace:packages/tools/do"
+  dependencies:
+    cross-spawn: "npm:^7.0.3"
+    dotenv: "npm:*"
+    eslint: "npm:*"
+    esprima: "npm:*"
+    fs-extra: "npm:^10.0.0"
+    replace: "npm:^1.2.2"
+    simple-git: "npm:^2.48.0"
+  bin:
+    do: ./bin/script.js
+  languageName: unknown
+  linkType: soft
 
 "@tootallnate/once@npm:1":
   version: 1.1.2
@@ -5873,7 +5905,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.3.1":
+"dotenv@npm:*, dotenv@npm:^16.3.1":
   version: 16.4.4
   resolution: "dotenv@npm:16.4.4"
   checksum: 10c0/f66ad105144c9106a868c8e244ace6097a0318f63284894e6c7b298c7e096911958837117d936d3c341db550e2fcb21a7a5ad396437638f605460e82b1dd30ee
@@ -6361,7 +6393,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^8.56.0":
+"eslint@npm:*, eslint@npm:^8.56.0":
   version: 8.56.0
   resolution: "eslint@npm:8.56.0"
   dependencies:
@@ -6420,7 +6452,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esprima@npm:^4.0.0, esprima@npm:^4.0.1":
+"esprima@npm:*, esprima@npm:^4.0.0, esprima@npm:^4.0.1":
   version: 4.0.1
   resolution: "esprima@npm:4.0.1"
   bin:
@@ -6900,6 +6932,17 @@ __metadata:
   version: 1.0.0
   resolution: "fs-constants@npm:1.0.0"
   checksum: 10c0/a0cde99085f0872f4d244e83e03a46aa387b74f5a5af750896c6b05e9077fac00e9932fdf5aef84f2f16634cd473c63037d7a512576da7d5c2b9163d1909f3a8
+  languageName: node
+  linkType: hard
+
+"fs-extra@npm:^10.0.0":
+  version: 10.1.0
+  resolution: "fs-extra@npm:10.1.0"
+  dependencies:
+    graceful-fs: "npm:^4.2.0"
+    jsonfile: "npm:^6.0.1"
+    universalify: "npm:^2.0.0"
+  checksum: 10c0/5f579466e7109719d162a9249abbeffe7f426eb133ea486e020b89bc6d67a741134076bf439983f2eb79276ceaf6bd7b7c1e43c3fd67fe889863e69072fb0a5e
   languageName: node
   linkType: hard
 
@@ -11505,6 +11548,17 @@ __metadata:
   version: 4.1.0
   resolution: "signal-exit@npm:4.1.0"
   checksum: 10c0/41602dce540e46d599edba9d9860193398d135f7ff72cab629db5171516cfae628d21e7bfccde1bbfdf11c48726bc2a6d1a8fb8701125852fbfda7cf19c6aa83
+  languageName: node
+  linkType: hard
+
+"simple-git@npm:^2.48.0":
+  version: 2.48.0
+  resolution: "simple-git@npm:2.48.0"
+  dependencies:
+    "@kwsites/file-exists": "npm:^1.1.1"
+    "@kwsites/promise-deferred": "npm:^1.1.1"
+    debug: "npm:^4.3.2"
+  checksum: 10c0/d2904b2a1bbcb27bdc57c71f3c95fc1be0961abebfce06917dd10cabded932c6f4190def9235e89f42d1ca3bbbbfe0ea6e7e8627795f0ac5a9a93d2179d647b3
   languageName: node
   linkType: hard
 
