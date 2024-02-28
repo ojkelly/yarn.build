@@ -1,6 +1,6 @@
 import { Command, Option, Usage } from "clipanion";
 
-import Build from "@ojkelly/yarn-plugin-build/src/commands/build";
+import Build from "@yarn.build/yarn-plugin-build/src/commands/build";
 
 export default class Test extends Build {
   static paths = [[`test`]];

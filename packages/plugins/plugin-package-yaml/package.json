@@ -1,9 +1,10 @@
 {
-  "name": "@ojkelly/yarn-plugin-package-yaml",
+  "name": "@yarn.build/yarn-plugin-package-yaml",
   "version": "0.9.1",
   "homepage": "https://yarn.build",
   "license": "MIT",
   "devDependencies": {
+    "@tools/do": "workspace:*",
     "@types/is-ci": "^3.0.4",
     "@types/jest": "^26.0.24",
     "@types/js-yaml": "^3.12.10",
@@ -57,7 +58,7 @@
     "url": "ssh://git@github.com/ojkelly/yarn.build.git"
   },
   "publishConfig": {
-    "main": "./bundles/@ojkelly/plugin-package-yaml.js"
+    "main": "./bundles/@yarn.build/plugin-package-yaml.js"
   },
   "files": [
     "bundles/**/*"

@@ -1,5 +1,5 @@
 {
-  "name": "@ojkelly/yarn-plugin-test",
+  "name": "@yarn.build/yarn-plugin-test",
   "version": "0.9.1",
   "main": "./src/index.ts",
   "homepage": "https://yarn.build",
@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "@ojkelly/yarn-build-shared": "workspace:*",
-    "@ojkelly/yarn-plugin-build": "workspace:*",
     "@types/slice-ansi": "^7.1.0",
+    "@yarn.build/yarn-plugin-build": "workspace:*",
     "@yarnpkg/fslib": "*",
     "@yarnpkg/libzip": "*",
     "@yarnpkg/parsers": "*",
@@ -59,7 +59,7 @@
     "url": "ssh://git@github.com/ojkelly/yarn.build.git"
   },
   "publishConfig": {
-    "main": "./bundles/@ojkelly/plugin-test.js"
+    "main": "./bundles/@yarn.build/plugin-test.js"
   },
   "files": [
     "/bundles/**/*"

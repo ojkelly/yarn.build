@@ -3,11 +3,6 @@ import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
-
-if (!!process.env["DEBUG"]) {
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-}
 
 export class TraceProvider {
   // this is setup as a singleton so that it can only be instantiated once,
@@ -39,33 +34,15 @@ export class TraceProvider {
     async function exitHandler(evtOrExitCodeOrError: number | string | Error) {
       try {
         await provider.shutdown();
-        if (!!process.env["DEBUG"]) {
-          console.info("gracefullty exited trace provider");
-        }
       } finally {
         process.exit(isNaN(+evtOrExitCodeOrError) ? 1 : +evtOrExitCodeOrError);
       }
     }
 
     // Handle all the exit codes so that we can shutdown and flush the traces
-    [
-      "beforeExit",
-      "exit",
-      "uncaughtException",
-      "unhandledRejection",
-      "SIGHUP",
-      "SIGINT",
-      "SIGQUIT",
-      "SIGILL",
-      "SIGTRAP",
-      "SIGABRT",
-      "SIGBUS",
-      "SIGFPE",
-      "SIGUSR1",
-      "SIGSEGV",
-      "SIGUSR2",
-      "SIGTERM",
-    ].forEach((evt) => process.on(evt, exitHandler));
+    ["beforeExit", "uncaughtException", "SIGINT", "SIGTERM"].forEach((evt) =>
+      process.on(evt, exitHandler),
+    );
 
     return provider;
   }

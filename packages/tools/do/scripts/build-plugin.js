@@ -20,7 +20,7 @@ function buildPlugin() {
     // we need to replace it with the actual name of the plugin
     run("replace", [
       `@yarnpkg/${env.pkg.name}`,
-      env.pkg.raw_name,
+      `@yarn.build/${env.pkg.name}`,
       bundlePath,
     ]);
 

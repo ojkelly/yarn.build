@@ -1,5 +1,5 @@
 {
-  "name": "@ojkelly/yarn-plugin-all",
+  "name": "@yarn.build/yarn-plugin-all",
   "version": "0.9.1",
   "main": "./src/index.ts",
   "homepage": "https://yarn.build",
@@ -27,10 +27,10 @@
   },
   "dependencies": {
     "@ojkelly/yarn-build-shared": "workspace:*",
-    "@ojkelly/yarn-plugin-build": "workspace:*",
-    "@ojkelly/yarn-plugin-bundle": "workspace:*",
-    "@ojkelly/yarn-plugin-test": "workspace:*",
     "@types/slice-ansi": "^7.1.0",
+    "@yarn.build/yarn-plugin-build": "workspace:*",
+    "@yarn.build/yarn-plugin-bundle": "workspace:*",
+    "@yarn.build/yarn-plugin-test": "workspace:*",
     "@yarnpkg/fslib": "*",
     "@yarnpkg/libzip": "*",
     "@yarnpkg/parsers": "*",

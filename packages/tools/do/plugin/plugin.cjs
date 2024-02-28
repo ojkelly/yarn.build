@@ -1,19 +1,14 @@
-const spawn = require('child_process').spawnSync;
-
-const help = {
-  message: ''
-};
 
 // This is a yarn plugin that has been registered with this repo in `./.yarnrc.yml`
 module.exports = {
   name: `plugin-do`,
   factory: (require) => {
-    const { Hooks, Plugin, structUtils } = require('@yarnpkg/core');
+    const {   structUtils } = require('@yarnpkg/core');
 
     return {
       hooks: {
         // https://yarnpkg.com/advanced/plugin-tutorial#hook-setupScriptEnvironment
-        setupScriptEnvironment: async (project, scriptEnv, makePathWrapper) => {
+        setupScriptEnvironment: async (project, scriptEnv) => {
           const pe = populateEnv(scriptEnv);
 
           Object.keys(pe.env).forEach((k) => {
@@ -26,7 +21,7 @@ module.exports = {
           // depend on the `@tools/do` package. This makes `do` available
           // in every local package.
           const { Project } = require('@yarnpkg/core');
-          const { project, workspace: rootWorkspace } = await Project.find(configuration, configuration.projectCwd);
+          const { workspace: rootWorkspace } = await Project.find(configuration, configuration.projectCwd);
           const workspaces = rootWorkspace.getRecursiveWorkspaceChildren();
 
           workspaces.forEach((w) => {

@@ -2,7 +2,7 @@ import { Project, Workspace } from "@yarnpkg/core";
 import {
   getInternalDependencies,
   getName,
-} from "@ojkelly/yarn-plugin-build/src/commands/buildQuery/utils";
+} from "@yarn.build/yarn-plugin-build/src/commands/buildQuery/utils";
 import { Maybe } from "@ojkelly/yarn-build-shared/dist/types";
 import { displayDependency } from "./displayDependency";
 import { DisplayFormatType } from "../..";

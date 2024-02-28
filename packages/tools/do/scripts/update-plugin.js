@@ -9,7 +9,7 @@ const fs = require("fs-extra");
 // build the plugin and update it in the workspace
 
 const {bundlePath, buildPlugin} = require("./build-plugin");
-const pluginFolder = `${env.repo.root}/.yarn/plugins/@${env.pkg.scope}`;
+const pluginFolder = `${env.repo.root}/.yarn/plugins/@yarn.build`;
 
 buildPlugin();
 

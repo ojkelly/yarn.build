@@ -1,5 +1,5 @@
 import { SpanStatusCode, SpanOptions } from "@opentelemetry/api";
-import { parseTraceParent } from "@opentelemetry/core/build/src/trace/W3CTraceContextPropagator";
+import { parseTraceParent } from "@opentelemetry/core";
 import { TraceProvider } from "./provider";
 import {
   Span,

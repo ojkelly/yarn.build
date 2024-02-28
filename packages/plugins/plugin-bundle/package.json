@@ -1,5 +1,5 @@
 {
-  "name": "@ojkelly/yarn-plugin-bundle",
+  "name": "@yarn.build/yarn-plugin-bundle",
   "version": "0.9.1",
   "main": "./src/index.ts",
   "homepage": "https://yarn.build",
@@ -64,7 +64,7 @@
     "url": "ssh://git@github.com/ojkelly/yarn.build.git"
   },
   "publishConfig": {
-    "main": "./bundles/@ojkelly/plugin-bundle.js"
+    "main": "./bundles/@yarn.build/plugin-bundle.js"
   },
   "files": [
     "/bundles/**/*"
