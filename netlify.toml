@@ -1,43 +1,43 @@
 # yarn.build plugin-all
 [[redirects]]
 from = "/latest"
-to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-all.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/yarn-plugin-all.cjs"
 status = 200
 force = true
 
 [[redirects]]
 from = "/latest/build"
-to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-build.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/yarn-plugin-build.cjs"
 status = 200
 force = true
 
 [[redirects]]
 from = "/release/*/build"
-to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-build.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/yarn-plugin-build.cjs"
 status = 200
 force = true
 
 [[redirects]]
 from = "/latest/bundle"
-to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-bundle.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/yarn-plugin-bundle.cjs"
 status = 200
 force = true
 
 [[redirects]]
 from = "/release/*/bundle"
-to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-bundle.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/yarn-plugin-bundle.cjs"
 status = 200
 force = true
 
 [[redirects]]
 from = "/latest/test"
-to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-test.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/yarn-plugin-test.cjs"
 status = 200
 force = true
 
 [[redirects]]
 from = "/release/*/test"
-to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-test.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/yarn-plugin-test.cjs"
 status = 200
 force = true
 
@@ -45,13 +45,13 @@ force = true
 # plugin-package-yaml
 [[redirects]]
 from = "/yaml"
-to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-package-yaml.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/yarn-plugin-package-yaml.cjs"
 status = 200
 force = true
 
 [[redirects]]
 from = "/release/*/yaml"
-to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-package-yaml.cjs"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/yarn-plugin-package-yaml.cjs"
 status = 200
 force = true
 
@@ -59,6 +59,6 @@ force = true
 # yarn 2
 [[redirects]]
 from = "/v2"
-to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/plugin-build.js"
+to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/yarn-plugin-build.js"
 status = 200
 force = true
