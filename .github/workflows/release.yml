@@ -40,7 +40,7 @@ jobs:
           prerelease: false
 
       - name: Upload plugin-all
-        id: upload-release-asset-yarn-plugin-all
+        id: upload-release-asset-plugin-all
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -51,7 +51,7 @@ jobs:
           asset_content_type: text/javascript
 
       - name: Upload plugin-build
-        id: upload-release-asset-yarn-plugin-build
+        id: upload-release-asset-plugin-build
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +62,7 @@ jobs:
           asset_content_type: text/javascript
 
       - name: Upload plugin-bundle
-        id: upload-release-asset-yarn-plugin-bundle
+        id: upload-release-asset-plugin-bundle
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
           asset_content_type: text/javascript
 
       - name: Upload plugin-test
-        id: upload-release-asset-yarn-plugin-test
+        id: upload-release-asset-plugin-test
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

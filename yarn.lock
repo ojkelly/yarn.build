@@ -10382,6 +10382,7 @@ __metadata:
     jest-pnp-resolver: "npm:^1.2.3"
     node-stream-zip: "npm:^1.15.0"
     prettier: "npm:^3.2.5"
+    replace: "npm:^1.2.2"
     rimraf: "npm:^5.0.5"
     shx: "npm:^0.3.4"
     ts-jest: "npm:^29.1.2"

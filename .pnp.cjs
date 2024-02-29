@@ -140,6 +140,7 @@ const RAW_RUNTIME_STATE =
           ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.3"],\
           ["node-stream-zip", "npm:1.15.0"],\
           ["prettier", "npm:3.2.5"],\
+          ["replace", "npm:1.2.2"],\
           ["rimraf", "npm:5.0.5"],\
           ["shx", "npm:0.3.4"],\
           ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:29.1.2"],\
@@ -13657,6 +13658,7 @@ const RAW_RUNTIME_STATE =
           ["jest-pnp-resolver", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:1.2.3"],\
           ["node-stream-zip", "npm:1.15.0"],\
           ["prettier", "npm:3.2.5"],\
+          ["replace", "npm:1.2.2"],\
           ["rimraf", "npm:5.0.5"],\
           ["shx", "npm:0.3.4"],\
           ["ts-jest", "virtual:2b6ab7c4d5c3b654ec751a2ceb16bd5e688f293fc6621cc055eec86f5e137249c52ed4207438f04e5b70e5aa8b981d7c9bf8fd489db9d6cd4b6b9ef1c9f8143e#npm:29.1.2"],\

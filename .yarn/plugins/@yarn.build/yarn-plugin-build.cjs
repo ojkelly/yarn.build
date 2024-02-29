@@ -12126,7 +12126,7 @@ var plugin = (() => {
       var Span_1 = require_Span();
       var utility_1 = require_utility();
       var platform_1 = require_platform3();
-      var Tracer2 = class {
+      var Tracer3 = class {
         /**
          * Constructs a new Tracer instance.
          */
@@ -12221,7 +12221,7 @@ var plugin = (() => {
           return this._tracerProvider.getActiveSpanProcessor();
         }
       };
-      exports.Tracer = Tracer2;
+      exports.Tracer = Tracer3;
     }
   });
 
@@ -22953,6 +22953,8 @@ var plugin = (() => {
 
   // ../shared/src/tracing/attributes.ts
   var Attribute = {
+    SERVICE_NAME: "service.name",
+    SERVICE_VERSION: "service.version",
     PACKAGE_NAME: "package.name",
     PACKAGE_SCOPE: "package.scope",
     PACKAGE_DIRECTORY: "package.directory",
@@ -23010,28 +23012,31 @@ var plugin = (() => {
   var import_semantic_conventions = __toESM(require_src2());
   var import_exporter_trace_otlp_http = __toESM(require_src9());
   var import_sdk_trace_base2 = __toESM(require_src5());
-  var TraceProvider = class {
+  var TraceProvider = class _TraceProvider {
     // this is setup as a singleton so that it can only be instantiated once,
     // as it's called on many times, but never registed globally.
     // Because it's a plugin, the code might be evaluated but not needed to run.
     static _instance;
-    static getInstance() {
-      return this._instance || (this._instance = new this().start());
+    static haveRegisterdExitHandler = false;
+    // Each package will have it's own provider, so that we can have different
+    // resource associated with it. The command itself may produice telemetry,
+    // and even if it doesnt the span represents work done by the command, not
+    // by yarn.build. So we setup a map of providers, to ensure we can shutdown
+    // and flush the traces on exit.
+    static providers = /* @__PURE__ */ new Map();
+    static get(name, version) {
+      if (!this.haveRegisterdExitHandler) {
+        _TraceProvider.registerExitHandler();
+      }
+      return this.getTraceProvider(name, version).getTracer(name, version);
     }
-    static provider() {
-      return this._instance || (this._instance = new this().start());
-    }
-    start() {
-      const exporter = new import_exporter_trace_otlp_http.OTLPTraceExporter();
-      const provider = new import_sdk_trace_base.BasicTracerProvider({
-        resource: new import_resources.Resource({
-          [import_semantic_conventions.SemanticResourceAttributes.SERVICE_NAME]: "yarn.build"
-        })
-      });
-      provider.addSpanProcessor(new import_sdk_trace_base2.BatchSpanProcessor(exporter));
+    static registerExitHandler() {
+      if (_TraceProvider.haveRegisterdExitHandler) {
+        return;
+      }
       async function exitHandler(evtOrExitCodeOrError) {
         try {
-          await provider.shutdown();
+          await Promise.all(Array.from(_TraceProvider.providers.values()).map((provider) => provider.shutdown()));
         } finally {
           process.exit(isNaN(+evtOrExitCodeOrError) ? 1 : +evtOrExitCodeOrError);
         }
@@ -23039,18 +23044,40 @@ var plugin = (() => {
       ["beforeExit", "uncaughtException", "SIGINT", "SIGTERM"].forEach(
         (evt) => process.on(evt, exitHandler)
       );
+      _TraceProvider.haveRegisterdExitHandler = true;
+    }
+    static getTraceProvider(name, version) {
+      const serviceName = `${name}${version ? `@${version}` : ""}`;
+      let provider = _TraceProvider.providers.get(serviceName);
+      if (provider) {
+        return provider;
+      }
+      const resourceOpts = {
+        [import_semantic_conventions.SemanticResourceAttributes.SERVICE_NAME]: name
+      };
+      if (version) {
+        resourceOpts[import_semantic_conventions.SemanticResourceAttributes.SERVICE_VERSION] = version;
+      }
+      provider = new import_sdk_trace_base.BasicTracerProvider({
+        resource: new import_resources.Resource(resourceOpts)
+      });
+      const exporter = new import_exporter_trace_otlp_http.OTLPTraceExporter();
+      provider.addSpanProcessor(new import_sdk_trace_base2.BatchSpanProcessor(exporter));
+      _TraceProvider.providers.set(name, provider);
       return provider;
     }
   };
 
   // ../shared/src/tracing/tracer.ts
   var import_api2 = __toESM(require_src());
-  var Tracer = class {
+  var Tracer2 = class {
     name;
+    version;
     _tracer;
-    constructor(name) {
+    constructor(name, version) {
       this.name = name;
-      this._tracer = TraceProvider.getInstance().getTracer(name);
+      this.version = version;
+      this._tracer = TraceProvider.get(name, version);
     }
     recordException(span, err) {
       if (typeof typeof err === "string" || err instanceof Error) {
@@ -23135,7 +23162,7 @@ var plugin = (() => {
 
   // ../shared/src/supervisor/graph.ts
   var Graph = class _Graph {
-    tracer = new Tracer("yarn.build");
+    tracer = new Tracer2("yarn.build");
     nodes = {};
     size = 0;
     runSize = 0;
@@ -24154,7 +24181,7 @@ var plugin = (() => {
   var DIVIDER_LENGTH = 80;
   var DIVIDER = "-".repeat(DIVIDER_LENGTH);
   var RunSupervisor = class {
-    tracer = new Tracer("yarn.build");
+    tracer = new Tracer2("yarn.build");
     project;
     configuration;
     pluginConfiguration;
@@ -24766,7 +24793,7 @@ var plugin = (() => {
       return needsRun;
     }
     performDryRun = async (ctx) => await this.tracer.startSpan(
-      { name: "performDryRun", ctx },
+      { name: "dry run", ctx },
       async ({ ctx: ctx2 }) => {
         const originalConcurrency = this.concurrency;
         this.concurrency = 1;
@@ -24806,7 +24833,7 @@ var plugin = (() => {
       }
     );
     run = async (ctx) => await this.tracer.startSpan(
-      { name: "command supervisor run", ctx },
+      { name: `run ${this.runCommand}`, ctx },
       async ({ ctx: ctx2 }) => {
         let output = "";
         if (this.hasSetup === false) {
@@ -25253,17 +25280,20 @@ The following packages returned an error.
     };
     // Setup a run item, that will execute the run command when it's time comes
     createRunItem = (workspace) => {
+      const prefix = workspace.relativeCwd;
+      const scopedPackageName = `${workspace.manifest.name?.scope ? `@${workspace.manifest.name?.scope}/` : ""}${workspace.manifest.name?.name}`;
+      const tracer = new Tracer2(scopedPackageName, workspace.manifest.version ?? void 0);
       return async (ctx, cancelDependentJobs) => (
         // limit to max concurrency
         await this.limit(
           // pass an async callback that will execute the run command
           async () => (
             // wrap our callback in an otel span
-            this.tracer.startSpan(
-              { name: "command", ctx },
+            tracer.startSpan(
+              // NOTE: we update the span name below when we have access to the command
+              { name: this.runCommand, ctx },
               // pass one more async callback to the span, this one runs the command
               async ({ span, ctx: ctx2 }) => {
-                const prefix = workspace.relativeCwd;
                 const attr = {
                   [Attribute.PACKAGE_NAME]: workspace.anchoredLocator.name,
                   [Attribute.PACKAGE_DIRECTORY]: workspace.relativeCwd,
@@ -25283,10 +25313,9 @@ The following packages returned an error.
                   "start" /* start */,
                   workspace.relativeCwd,
                   workspace.anchoredLocator,
-                  `${workspace.manifest.name?.scope ? `@${workspace.manifest.name?.scope}/` : ""}${workspace.manifest.name?.name}`,
+                  scopedPackageName,
                   command
                 );
-                span.addEvent("start");
                 span.setAttributes(attr);
                 if (!command) {
                   if (this.verbose) {
@@ -25303,6 +25332,7 @@ The following packages returned an error.
                   span.addEvent("ignored");
                   return true;
                 }
+                span.updateName(command);
                 try {
                   if (this.runReport.failCount !== 0 && !this.continueOnError) {
                     this.runReporter.emit(
@@ -25658,9 +25688,11 @@ that both packages can depend on.
     forceQuit = false;
     commandType = "build";
     async execute() {
-      const tracer = new Tracer("yarn.build");
+      const tracer = new Tracer2("yarn.build", "v4.1.0");
+      const commandArgIndex = process.argv.findIndex((val) => val === this.commandType);
+      const commandArgs = process.argv.slice(commandArgIndex);
       return await tracer.startSpan(
-        { name: `yarn ${this.commandType}`, propegateFromEnv: true },
+        { name: `yarn ${commandArgs.join(" ")}`, propegateFromEnv: true },
         async ({ span: rootSpan, ctx }) => {
           rootSpan.setAttributes({
             [Attribute.YARN_BUILD_FLAGS_OUTPUT_JSON]: this.json,

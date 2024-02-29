@@ -1,7 +1,7 @@
 /* eslint-disable */
 //prettier-ignore
 module.exports = {
-name: "@yarnpkg/plugin-package-yaml",
+name: "@yarn.build/plugin-package-yaml",
 factory: function (require) {
 "use strict";
 var plugin = (() => {

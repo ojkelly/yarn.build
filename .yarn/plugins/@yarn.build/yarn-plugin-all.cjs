@@ -1,7 +1,7 @@
 /* eslint-disable */
 //prettier-ignore
 module.exports = {
-name: "@yarnpkg/plugin-all",
+name: "@yarn.build/plugin-all",
 factory: function (require) {
 "use strict";
 var plugin = (() => {
@@ -22222,10 +22222,12 @@ var plugin = (() => {
     // Because it's a plugin, the code might be evaluated but not needed to run.
     static _instance;
     static haveRegisterdExitHandler = false;
+    // Each package will have it's own provider, so that we can have different
+    // resource associated with it. The command itself may produice telemetry,
+    // and even if it doesnt the span represents work done by the command, not
+    // by yarn.build. So we setup a map of providers, to ensure we can shutdown
+    // and flush the traces on exit.
     static providers = /* @__PURE__ */ new Map();
-    // override getTracer(name: string, version?: string): Tracer {
-    // return super.getTracer(name, version, {});
-    // }
     static get(name, version) {
       if (!this.haveRegisterdExitHandler) {
         _TraceProvider.registerExitHandler();
@@ -22268,30 +22270,6 @@ var plugin = (() => {
       _TraceProvider.providers.set(name, provider);
       return provider;
     }
-    // private start(): TraceProvider {
-    //   // configure the SDK to export telemetry data to the console
-    //   // enable all auto-instrumentations from the meta package
-    //   const exporter = new OTLPTraceExporter();
-    //   const provider = new BasicTracerProvider({
-    //     resource: new Resource({
-    //       [SemanticResourceAttributes.SERVICE_NAME]: "yarn.build",
-    //     }),
-    //   });
-    //   provider.addSpanProcessor(new BatchSpanProcessor(exporter));
-    //   // async function exitHandler(evtOrExitCodeOrError: number | string | Error) {
-    //   //   try {
-    //   //     await provider.shutdown();
-    //   //   } finally {
-    //   //     process.exit(isNaN(+evtOrExitCodeOrError) ? 1 : +evtOrExitCodeOrError);
-    //   //   }
-    //   // }
-    //   // // Handle all the exit codes so that we can shutdown and flush the traces
-    //   // ["beforeExit", "uncaughtException", "SIGINT", "SIGTERM"].forEach((evt) =>
-    //   //   process.on(evt, exitHandler),
-    //   // );
-    //   TraceProvider.haveRegisterdExitHandler = true;
-    //   // return provider;
-    // }
   };
 
   // ../shared/src/tracing/tracer.ts
@@ -22299,38 +22277,12 @@ var plugin = (() => {
   var Tracer2 = class {
     name;
     version;
-    // _traceProvider: BasicTracerProvider;
     _tracer;
     constructor(name, version) {
       this.name = name;
       this.version = version;
       this._tracer = TraceProvider.get(name, version);
     }
-    // private static createTraceProvider(name: string, version?: string): BasicTracerProvider {
-    //   const exporter = new OTLPTraceExporter();
-    //       const resourceOpts: Attributes = {
-    //     [SemanticResourceAttributes.SERVICE_NAME]: name,
-    //   };
-    //   if (version) {
-    //     resourceOpts[SemanticResourceAttributes.SERVICE_VERSION] = version;
-    //   }
-    //   const provider = new BasicTracerProvider({
-    //     resource: new Resource(resourceOpts),
-    //   });
-    //   provider.addSpanProcessor(new BatchSpanProcessor(exporter));
-    //   async function exitHandler(evtOrExitCodeOrError: number | string | Error) {
-    //     try {
-    //       await provider.shutdown();
-    //     } finally {
-    //       process.exit(isNaN(+evtOrExitCodeOrError) ? 1 : +evtOrExitCodeOrError);
-    //     }
-    //   }
-    //   // Handle all the exit codes so that we can shutdown and flush the traces
-    //   ["beforeExit", "uncaughtException", "SIGINT", "SIGTERM"].forEach((evt) =>
-    //     process.on(evt, exitHandler),
-    //   );
-    //   return provider;
-    // }
     recordException(span, err) {
       if (typeof typeof err === "string" || err instanceof Error) {
         span.recordException(err);
