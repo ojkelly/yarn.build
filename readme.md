@@ -1,17 +1,5 @@
 # yarn.build
 
-> **Note** gold.build — a next-gen build tool and CICD platform on a serverless supercomputer
-> 
-> **I'm working on [Gold](https://gold.build) the successor to yarn.build**. It builds on the features of yarn.build, including zero-config for common setups, polyglot language support, and massive parralelisation of the build via a CICD platform designed from the ground up around a next-generation build tool. 
-> 
-> **I'm looking for early users to help test and refine it**, if that's you [sign up to the waitlist](https://gold.build) and I'll let you know when the first release is ready.
-> 
-> After too much frusteration of trying to fit a build tool into a CICD pipeline, I've decided to try to fix the problem properly.
-> 
-> I'm still accepting patches for yarn.build. 
-
-
-
 [![Netlify Status](https://api.netlify.com/api/v1/badges/6b14fc77-846f-4035-944a-ff1c7843b70d/deploy-status)](https://app.netlify.com/sites/loving-wing-5cc62e/deploys)
 
 yarn.BUILD is a plugin for [Yarn 4 (berry)](https://github.com/yarnpkg/berry). It uses your dependency graph to build just whats needed, when it's needed. You can setup a monorepo with a few backend packages, a server package, maybe a graphQL schema package, and a frontend package. And build it all, in the order it's needed. Then, only rebuild when something changes.
