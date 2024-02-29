@@ -1,64 +1,64 @@
 # yarn.build plugin-all
 [[redirects]]
- from = "/latest"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-all.cjs"
- status = 200
- force = true
+from = "/latest"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-all.cjs"
+status = 200
+force = true
 
 [[redirects]]
- from = "/latest/build"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-build.cjs"
- status = 200
- force = true
+from = "/latest/build"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-build.cjs"
+status = 200
+force = true
 
 [[redirects]]
- from = "/release/*/build"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-build.cjs"
- status = 200
- force = true
+from = "/release/*/build"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-build.cjs"
+status = 200
+force = true
 
 [[redirects]]
- from = "/latest/bundle"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-bundle.cjs"
- status = 200
- force = true
+from = "/latest/bundle"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-bundle.cjs"
+status = 200
+force = true
 
 [[redirects]]
- from = "/release/*/bundle"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-bundle.cjs"
- status = 200
- force = true
+from = "/release/*/bundle"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-bundle.cjs"
+status = 200
+force = true
 
 [[redirects]]
- from = "/latest/test"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-test.cjs"
- status = 200
- force = true
+from = "/latest/test"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-test.cjs"
+status = 200
+force = true
 
 [[redirects]]
- from = "/release/*/test"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-test.cjs"
- status = 200
- force = true
+from = "/release/*/test"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-test.cjs"
+status = 200
+force = true
 
 
 # plugin-package-yaml
 [[redirects]]
- from = "/yaml"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v3.2.5/plugin-package-yaml.cjs"
- status = 200
- force = true
+from = "/yaml"
+to = "https://github.com/ojkelly/yarn.build/releases/download/latest/plugin-package-yaml.cjs"
+status = 200
+force = true
 
- [[redirects]]
- from = "/release/*/yaml"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v4.1.0-rc2/plugin-package-yaml.cjs"
- status = 200
- force = true
+[[redirects]]
+from = "/release/*/yaml"
+to = "https://github.com/ojkelly/yarn.build/releases/download/*/plugin-package-yaml.cjs"
+status = 200
+force = true
 
 
 # yarn 2
 [[redirects]]
- from = "/v2"
- to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/plugin-build.js"
- status = 200
- force = true
+from = "/v2"
+to = "https://github.com/ojkelly/yarn.build/releases/download/v0.9.56/plugin-build.js"
+status = 200
+force = true

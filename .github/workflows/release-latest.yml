@@ -1,9 +1,9 @@
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
 
-name: Upload Release Asset
+name: Latest Release Workflow
 
 jobs:
   build:
@@ -30,17 +30,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
+          automatic_release_tag: "latest"
+          prerelease: true
           files: |
             .yarn/plugins/@yarn.build/*
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
