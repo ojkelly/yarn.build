@@ -26,7 +26,7 @@ import { GetChangedWorkspaces } from "@ojkelly/yarn-build-shared/src/changes";
 import { addTargets } from "@ojkelly/yarn-build-shared/src/supervisor/workspace";
 import { terminateProcess } from "@ojkelly/yarn-build-shared/src/supervisor/terminate";
 
-import { SpanStatusCode, Context, trace } from "@opentelemetry/api";
+import { SpanStatusCode, Context, trace, Attributes } from "@opentelemetry/api";
 
 import { Tracer, Attribute } from "@ojkelly/yarn-build-shared/src/tracing";
 
@@ -121,10 +121,13 @@ export default class Build extends BaseCommand {
   commandType: "build" | "test" = "build";
 
   async execute(): Promise<0 | 1> {
-    const tracer = new Tracer("yarn.build");
+    const tracer = new Tracer("yarn.build", "v4.1.0");
+
+    const commandArgIndex = process.argv.findIndex(val => val === this.commandType);
+    const commandArgs = process.argv.slice(commandArgIndex);
 
     return await tracer.startSpan(
-      { name: `yarn ${this.commandType}`, propegateFromEnv: true },
+      { name: `yarn ${commandArgs.join(" ")}`, propegateFromEnv: true },
       async ({ span: rootSpan, ctx }) => {
         rootSpan.setAttributes({
           [Attribute.YARN_BUILD_FLAGS_OUTPUT_JSON]: this.json,
@@ -274,7 +277,7 @@ export default class Build extends BaseCommand {
           [Attribute.YARN_BUILD_CONFIG_MAX_CONCURRENCY]: maxConcurrency,
           [Attribute.YARN_BUILD_FLAGS_IGNORE_DEPENDENCIES]:
             this.ignoreDependencies,
-        });
+        } as Attributes);
 
         const report = await StreamReport.start(
           {

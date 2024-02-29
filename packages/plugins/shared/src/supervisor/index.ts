@@ -959,7 +959,7 @@ class RunSupervisor {
 
   performDryRun = async (ctx: Context): Promise<string> =>
     await this.tracer.startSpan(
-      { name: "performDryRun", ctx },
+      { name: "dry run", ctx },
       async ({ ctx }) => {
         const originalConcurrency = this.concurrency;
 
@@ -1023,7 +1023,7 @@ class RunSupervisor {
 
   run = async (ctx: Context): Promise<boolean> =>
     await this.tracer.startSpan(
-      { name: "command supervisor run", ctx },
+      { name: `run ${this.runCommand}`, ctx },
       async ({ ctx }) => {
         let output = "";
 
@@ -1587,18 +1587,28 @@ class RunSupervisor {
 
   // Setup a run item, that will execute the run command when it's time comes
   createRunItem = (workspace: Workspace): RunCallback => {
+    const prefix = workspace.relativeCwd;
+
+    const scopedPackageName = `${workspace.manifest.name?.scope
+      ? `@${workspace.manifest.name?.scope}/`
+      : ""
+      }${workspace.manifest.name?.name}`;
+
+    const tracer = new Tracer(scopedPackageName, workspace.manifest.version ?? undefined);
+
     // return a PQueue item
     return async (ctx: Context, cancelDependentJobs: () => void) =>
       // limit to max concurrency
       await this.limit(
         // pass an async callback that will execute the run command
         async (): Promise<boolean> =>
+
           // wrap our callback in an otel span
-          this.tracer.startSpan(
-            { name: "command", ctx },
+          tracer.startSpan(
+           // NOTE: we update the span name below when we have access to the command
+            { name: this.runCommand, ctx },
             // pass one more async callback to the span, this one runs the command
             async ({ span, ctx }) => {
-              const prefix = workspace.relativeCwd;
 
               const attr = {
                 [Attribute.PACKAGE_NAME]: workspace.anchoredLocator.name,
@@ -1621,18 +1631,14 @@ class RunSupervisor {
                 `${workspace.relativeCwd}#${this.runCommand}`,
               );
 
+
               this.runReporter.emit(
                 RunSupervisorReporterEvents.start,
                 workspace.relativeCwd,
                 workspace.anchoredLocator,
-                `${
-                  workspace.manifest.name?.scope
-                    ? `@${workspace.manifest.name?.scope}/`
-                    : ""
-                }${workspace.manifest.name?.name}`,
+                scopedPackageName,
                 command,
               );
-              span.addEvent("start");
 
               span.setAttributes(attr);
 
@@ -1653,6 +1659,8 @@ class RunSupervisor {
 
                 return true;
               }
+
+              span.updateName(command);
 
               try {
                 if (this.runReport.failCount !== 0 && !this.continueOnError) {

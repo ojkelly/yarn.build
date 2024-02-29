@@ -1,4 +1,7 @@
 export const Attribute = {
+  SERVICE_NAME: "service.name",
+  SERVICE_VERSION: "service.version",
+
   PACKAGE_NAME: "package.name",
   PACKAGE_SCOPE: "package.scope",
   PACKAGE_DIRECTORY: "package.directory",

@@ -1,6 +1,7 @@
 import { SpanStatusCode, SpanOptions } from "@opentelemetry/api";
 import { parseTraceParent } from "@opentelemetry/core";
-import { TraceProvider } from "./provider";
+import { TraceProvider } from './provider';
+
 import {
   Span,
   Context,
@@ -12,11 +13,15 @@ import {
 export class Tracer {
   name: string;
 
+  version?: string;
+
   _tracer: OTELTracer;
 
-  constructor(name: string) {
+  constructor(name: string, version?: string) {
     this.name = name;
-    this._tracer = TraceProvider.getInstance().getTracer(name);
+    this.version = version;
+    this._tracer = TraceProvider.get(name, version);
+
   }
 
   recordException(span: Span, err: string | Error): void {
