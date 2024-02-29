@@ -11,6 +11,7 @@
 > I'm still accepting patches for yarn.build. 
 
 
+
 [![Netlify Status](https://api.netlify.com/api/v1/badges/6b14fc77-846f-4035-944a-ff1c7843b70d/deploy-status)](https://app.netlify.com/sites/loving-wing-5cc62e/deploys)
 
 yarn.BUILD is a plugin for [Yarn 4 (berry)](https://github.com/yarnpkg/berry). It uses your dependency graph to build just whats needed, when it's needed. You can setup a monorepo with a few backend packages, a server package, maybe a graphQL schema package, and a frontend package. And build it all, in the order it's needed. Then, only rebuild when something changes.
@@ -31,27 +32,20 @@ yarn plugin import https://yarn.build/latest/test
 yarn plugin import https://yarn.build/latest/bundle
 ```
 
-To install for Yarn 3:
+**If you're upgrading the plugin** the install location has changed to be under the `@yarn.build` namespace. If you have any yarn.build plugin previously installed you may need to remove the old one manually from `.yarnrc.yml`:
 
-```
-yarn plugin import https://yarn.build/v3
-```
-
-Or install any of the commands individually with
-
-```
-yarn plugin import https://yarn.build/v3/build
-yarn plugin import https://yarn.build/v3/test
-yarn plugin import https://yarn.build/v3/bundle
+```yaml
+plugins:
+  - checksum: ...                                 <-- remove this entry if both exist
+    path: .yarn/plugins/@ojkelly/plugin-all.cjs   <--  
+    spec: 'https://yarn.build/latest'             <--
+  - checksum: ...
+    path: .yarn/plugins/@yarn.build/plugin-all.cjs
+    spec: 'https://yarn.build/latest'
 ```
 
-Install for Yarn 2:
 
-```
-yarn plugin import https://yarn.build/v2
-```
-
-## NEW! OpenTelemetry Support
+## OpenTelemetry Support
 <details>
 
 yarn.build's `build`, `test` and `bundle` commands now come with optional OpenTelemetry (OTEL) instrumentation.
@@ -106,7 +100,7 @@ or workspace layout to avoid it.
 As this is fundemental to ensuring sound builds, yarn build will never cache the
 input folder if it's changed.
 
-## Exclude (NEW)
+## Exclude
 
 Pass `--exclude` or `--exclude-current` to selectively exclude packages from
 being built.
