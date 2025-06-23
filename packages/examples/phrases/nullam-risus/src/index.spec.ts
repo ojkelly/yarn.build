@@ -1,3 +1,4 @@
+import { test, expect } from 'vitest';
 import phrase from "./index";
 
 test("phrase matches expected", () => {

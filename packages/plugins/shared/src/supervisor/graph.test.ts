@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { Graph, CyclicDependencyError } from "./graph";
 import { context } from "@opentelemetry/api";
 

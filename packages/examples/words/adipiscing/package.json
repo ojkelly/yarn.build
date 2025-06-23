@@ -5,17 +5,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "build": "tsc",
-    "test": "jest --passWithNoTests",
-    "typescript": "^4",
-    "jest": "^26"
-  },
-  "jest": {
-    "preset": "ts-jest"
+    "build": "tsc"
   },
   "dependencies": {
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.8.3"
   }
 }

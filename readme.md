@@ -25,7 +25,7 @@ yarn plugin import https://yarn.build/latest/bundle
 ```yaml
 plugins:
   - checksum: ...                                 <-- remove this entry if both exist
-    path: .yarn/plugins/@ojkelly/plugin-all.cjs   <--  
+    path: .yarn/plugins/@ojkelly/plugin-all.cjs   <--
     spec: 'https://yarn.build/latest'             <--
   - checksum: ...
     path: .yarn/plugins/@yarn.build/plugin-all.cjs
@@ -188,7 +188,7 @@ By default yarn.build looks at your `package.json` and chooses some reasonable d
   "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "vitest"
   }
 }
 ```
@@ -206,7 +206,7 @@ If you want to customise the input and output folders per package you can setup 
   "private": true,
   "scripts": {
     "build": "tsc -outDir dist",
-    "test": "jest"
+    "test": "vitest"
   },
   "yarn.build": {
     "input": ".",

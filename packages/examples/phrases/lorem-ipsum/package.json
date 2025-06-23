@@ -6,25 +6,22 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "vitest"
   },
   "dependencies": {
-    "@internal/adipiscing": "workspace:*",
-    "@internal/amet": "workspace:*",
-    "@internal/consectetur": "workspace:*",
-    "@internal/dolor": "workspace:*",
-    "@internal/elit": "workspace:*",
-    "@internal/ipsum": "workspace:*",
-    "@internal/lorem": "workspace:*",
-    "@internal/phrase-in-hac": "workspace:*",
-    "@internal/phrase-nullam-risus": "workspace:*",
-    "@internal/sit": "workspace:*",
-    "@types/jest": "^29.5.12",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "@internal/adipiscing": "workspace:^",
+    "@internal/amet": "workspace:^",
+    "@internal/consectetur": "workspace:^",
+    "@internal/dolor": "workspace:^",
+    "@internal/elit": "workspace:^",
+    "@internal/ipsum": "workspace:^",
+    "@internal/lorem": "workspace:^",
+    "@internal/phrase-in-hac": "workspace:^",
+    "@internal/phrase-nullam-risus": "workspace:^",
+    "@internal/sit": "workspace:^",
+    "typescript": "^5.8.3"
   },
-  "jest": {
-    "preset": "ts-jest"
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }
