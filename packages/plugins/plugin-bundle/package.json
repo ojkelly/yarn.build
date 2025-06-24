@@ -53,8 +53,7 @@
   "scripts": {
     "build": "do build-plugin",
     "clean": "do clean-plugin",
-    "build:update": "do update-plugin",
-    "test": "vitest run --passWithNoTests"
+    "build:update": "do update-plugin"
   },
   "repository": {
     "type": "git",

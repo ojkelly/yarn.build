@@ -1,10 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react",
-    "allowSyntheticDefaultImports": true,
-    "allowJs": true,
     "baseUrl": ".",
-    "strict": true,
     "target": "ES6",
     "module": "CommonJS",
     "moduleResolution": "Node",
@@ -12,11 +8,25 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "build",
     "declaration": true,
-    "lib": [
-      "dom",
-      "es2017",
-      "esnext",
-      "esnext.asynciterable"
-    ]
+    "lib": ["dom", "es2017", "esnext", "esnext.asynciterable"],
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "disableSizeLimit": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitOverride": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedDeclarations": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "incremental": true,
+    "composite": true
   }
 }

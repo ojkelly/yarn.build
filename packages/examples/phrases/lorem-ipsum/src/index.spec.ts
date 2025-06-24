@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import phrase from "./index";
+import { phrase } from "./index";
 
 test("phrase matches expected", () => {
   expect(phrase).toBe(

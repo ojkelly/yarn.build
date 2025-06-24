@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "vitest",
+    "test": "CI=1 NODE_ENV=test vitest",
     "echo": "echo 'this is a test'"
   },
   "dependencies": {

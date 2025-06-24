@@ -4,7 +4,7 @@
   "main": "dist",
   "scripts": {
     "build": "tsc --build",
-    "test": "vitest run",
+    "test": "CI=1 NODE_ENV=test vitest",
     "dev": "vitest"
   },
   "devDependencies": {
@@ -59,7 +59,8 @@
     "p-limit": "^6.2.0",
     "p-queue": "^8.1.0",
     "slice-ansi": "^7.1.0",
-    "strip-ansi": "^7.1.0"
+    "strip-ansi": "^7.1.0",
+    "yup": "^1.6.1"
   },
   "engines": {
     "node": ">=22.2.0"

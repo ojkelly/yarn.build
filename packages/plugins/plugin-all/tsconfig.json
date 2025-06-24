@@ -2,13 +2,7 @@
   "extends": "../../../tsconfig.plugin.json",
   "compilerOptions": {
     "outDir": "dist",
-    "baseUrl": "./.",
-    "types": [
-      "jest"
-    ]
+    "baseUrl": "./."
   },
-  "exclude": [
-    "packages/*/lib",
-    "packages/yarnpkg-doctor/fixtures"
-  ]
+  "exclude": ["packages/*/lib", "packages/yarnpkg-doctor/fixtures"]
 }

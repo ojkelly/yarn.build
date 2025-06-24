@@ -32,8 +32,8 @@ plugins:
     spec: 'https://yarn.build/latest'
 ```
 
-
 ## OpenTelemetry Support
+
 <details>
 
 yarn.build's `build`, `test` and `bundle` commands now come with optional OpenTelemetry (OTEL) instrumentation.
@@ -51,6 +51,7 @@ receivers:
 And set the appropirate envar for example `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` if you are running the collector on the same host as you're running yarn.build.
 
 NOTE: yarn.build doesn't currently support the `grpc` endpoint, becuase bundling the required `.proto` files might need a rework of the yarn plugin bundler, which is out of scope of the intial yarn.build OTEL integration.
+
 </details>
 
 ## Commands
@@ -188,7 +189,7 @@ By default yarn.build looks at your `package.json` and chooses some reasonable d
   "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "vitest"
+    "test": "CI=1 NODE_ENV=test vitest"
   }
 }
 ```
@@ -206,7 +207,7 @@ If you want to customise the input and output folders per package you can setup 
   "private": true,
   "scripts": {
     "build": "tsc -outDir dist",
-    "test": "vitest"
+    "test": "CI=1 NODE_ENV=test vitest"
   },
   "yarn.build": {
     "input": ".",
@@ -216,6 +217,7 @@ If you want to customise the input and output folders per package you can setup 
 ```
 
 ## Troubleshooting
+
 <details>
 
 <summary>**The output is interlaced, or mangled, or not useful in CI**</summary>
@@ -237,6 +239,7 @@ Adapted for Docker / BuildKit, the following will set `CI` for the script, but n
 ```
 RUN env CI=true yarn build
 ```
+
 </details>
 
 ---
@@ -275,24 +278,15 @@ private: true
 # scripts comment
 scripts:
   build: tsc
-  test: jest
-  dev: ts-node ./src/index.ts
+   dev: ts-node ./src/index.ts
 
 dependencies:
   "@internal/phrase-lorem-ipsum": "workspace:*"
-  jest: "^26"
-  ts-jest: "^26.4.4"
-  typescript: ^4.3.5
+   typescript: ^4.3.5
 
 devDependencies:
   "@types/node": ^16.4.1
-  ts-node: ^10.1.0
-  "@types/jest": ^26.0.24
-
-jest:
-  preset: ts-jest
-
-# here we define our input and output
+ # here we define our input and output
 # as we defined main above, we don't need this
 # if your output directory is different or not easily definable in main
 # specify it here
@@ -339,7 +333,7 @@ yarn.build:
   input: .
   output: .build
 ```
-</details>
----
+
+## </details>
 
 For developing on this repository see [packages/plugins/readme.md](packages/plugins/readme.md)

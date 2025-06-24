@@ -9,26 +9,19 @@ license: UNLICENSED
 scripts:
   start: node dist/index.js
   build: tsc
-  test: jest src
+  test: vitest src
   dev: ts-node ./src/index.ts
 
 dependencies:
   "@internal/phrase-lorem-ipsum": "workspace:*"
-  jest: "^29.7.0"
-  ts-jest: "^29.1.2"
   typescript: ^5.3.3
 
 devDependencies:
   "@types/node": ^20.11.17
   ts-node: ^10.9.2
-  "@types/jest": ^29.5.12
-  "jest-pnp-resolver": "^1.2.3"
-
-jest:
-  preset: ts-jest
+  vitest: ^3.2.4
 
 # plugin stuff
 yarn.build:
   input: .
   output: dist
-

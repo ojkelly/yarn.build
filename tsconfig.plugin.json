@@ -4,19 +4,12 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": [
-      "esnext",
-      "esnext.asynciterable",
-    ],
+    "lib": ["esnext", "esnext.asynciterable"],
     "strict": true,
     "declaration": true,
     "allowJs": true,
     "downlevelIteration": true,
     "importHelpers": true,
-    "skipLibCheck": true,
-    "types": [
-      "jest",
-      "node"
-    ]
+    "skipLibCheck": true
   }
 }
