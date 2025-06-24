@@ -60,5 +60,8 @@
     "p-queue": "^8.1.0",
     "slice-ansi": "^7.1.0",
     "strip-ansi": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=22.2.0"
   }
 }

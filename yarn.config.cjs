@@ -1,4 +1,10 @@
 
+/** @type {import('@yarnpkg/types')} */
+const { defineConfig } = require('@yarnpkg/types');
+
+/** @type {import('@types/semver')} */
+const semver = require('semver');
+
 /**
  * @typedef {import('@yarnpkg/types').Yarn.Constraints.Context} Context
  * @typedef {import('@yarnpkg/types').Yarn.Constraints.Workspace} Workspace
@@ -67,23 +73,6 @@ function enforceWorkspaceDependenciesWhenPossible({ Yarn }) {
   }
 }
 
-
-/**
- * @param {Context} context
- */
-function enforceRequiredWorkspaceDeps({ Yarn }) {
-  for (const workspace of Yarn.workspaces()) {
-    if (LIBRARY_FOLDERS.some((folder) => workspace.cwd.includes(folder))) {
-      continue;
-    }
-    for (const [ident, range] of REQUIRED_WORKSPACE_DEPS) {
-      if (!workspace.manifest.dependencies || !workspace.manifest.dependencies[ident]) {
-        workspace.set(['dependencies', ident], range);
-      }
-    }
-  }
-}
-m
 /**
  * @param {Context} context
  * @param {Record<string, ((workspace: Workspace) => any) | string>} fields
@@ -100,7 +89,6 @@ module.exports = defineConfig({
   constraints: async (ctx) => {
     enforceRootDependencies(ctx);
     enforceWorkspaceDependenciesWhenPossible(ctx);
-    enforceRequiredWorkspaceDeps(ctx);
     enforceFieldsOnAllWorkspaces(ctx, {
       [`engines.node`]: `>=22.2.0`,
     });
