@@ -1,6 +1,6 @@
 import { SpanStatusCode, SpanOptions } from "@opentelemetry/api";
 import { parseTraceParent } from "@opentelemetry/core";
-import { TraceProvider } from './provider';
+import { TraceProvider } from "./provider";
 
 import {
   Span,
@@ -21,7 +21,6 @@ export class Tracer {
     this.name = name;
     this.version = version;
     this._tracer = TraceProvider.get(name, version);
-
   }
 
   recordException(span: Span, err: string | Error): void {

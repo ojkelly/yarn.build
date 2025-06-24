@@ -958,68 +958,65 @@ class RunSupervisor {
   }
 
   performDryRun = async (ctx: Context): Promise<string> =>
-    await this.tracer.startSpan(
-      { name: "dry run", ctx },
-      async ({ ctx }) => {
-        const originalConcurrency = this.concurrency;
+    await this.tracer.startSpan({ name: "dry run", ctx }, async ({ ctx }) => {
+      const originalConcurrency = this.concurrency;
 
-        // set concurrency to 1 to get an accurate printout
-        this.concurrency = 1;
+      // set concurrency to 1 to get an accurate printout
+      this.concurrency = 1;
 
-        let output = "";
+      let output = "";
 
-        const tree: { [depth: number]: string[] } = { 1: [] };
+      const tree: { [depth: number]: string[] } = { 1: [] };
 
-        this.runGraph.dryRunCallback = (node: Node, iteration: number) => {
-          if (!tree[iteration]) {
-            tree[iteration] = [node.id];
-          } else {
-            tree[iteration].push(node.id);
-          }
-        };
+      this.runGraph.dryRunCallback = (node: Node, iteration: number) => {
+        if (!tree[iteration]) {
+          tree[iteration] = [node.id];
+        } else {
+          tree[iteration].push(node.id);
+        }
+      };
 
-        await this.runGraph.run(ctx, Array.from(this.entrypoints), true);
+      await this.runGraph.run(ctx, Array.from(this.entrypoints), true);
 
-        const printer = (
-          depth: number,
-          msg: string,
-          lastLevel: boolean,
-          final: boolean,
-        ): string => {
-          const joiner = lastLevel ? "└─" : final && lastLevel ? "└─┬─" : "├─";
-          const indent = depth == 0 ? "" : "  ".repeat(depth);
+      const printer = (
+        depth: number,
+        msg: string,
+        lastLevel: boolean,
+        final: boolean,
+      ): string => {
+        const joiner = lastLevel ? "└─" : final && lastLevel ? "└─┬─" : "├─";
+        const indent = depth == 0 ? "" : "  ".repeat(depth);
 
-          return `${indent}${joiner}[${depth}] ${msg}`;
-        };
+        return `${indent}${joiner}[${depth}] ${msg}`;
+      };
 
-        const treekeys = Object.keys(tree);
+      const treekeys = Object.keys(tree);
 
-        treekeys.forEach((depthStr, i) => {
-          const depth = parseInt(depthStr);
-          const level = tree[depth];
+      treekeys.forEach((depthStr, i) => {
+        const depth = parseInt(depthStr);
+        const level = tree[depth];
 
-          const finalLevel = i == treekeys.length - 1;
+        const finalLevel = i == treekeys.length - 1;
 
-          level.forEach((id, i) => {
-            const wrk = this.runGraph.getNode(id);
+        level.forEach((id, i) => {
+          const wrk = this.runGraph.getNode(id);
 
-            output += printer(depth, id, i == level.length - 1, finalLevel);
+          output += printer(depth, id, i == level.length - 1, finalLevel);
 
-            if (wrk instanceof Node) {
-              if (wrk.skip) {
-                output += `(skip)`;
-              }
+          if (wrk instanceof Node) {
+            if (wrk.skip) {
+              output += `(skip)`;
             }
+          }
 
-            output += "\n";
-          });
+          output += "\n";
         });
+      });
 
-        this.concurrency = originalConcurrency;
+      this.concurrency = originalConcurrency;
 
-        return output;
-      },
-    );
+      return output;
+    });
 
   run = async (ctx: Context): Promise<boolean> =>
     await this.tracer.startSpan(
@@ -1079,7 +1076,7 @@ class RunSupervisor {
         this.currentRunTarget =
           this.runTargets.length > 1
             ? "All"
-            : this.runTargets[0]?.relativeCwd ?? "Nothing to run";
+            : (this.runTargets[0]?.relativeCwd ?? "Nothing to run");
 
         // theres an off by one error in the RunLog
         if (!isCI) {
@@ -1589,12 +1586,16 @@ class RunSupervisor {
   createRunItem = (workspace: Workspace): RunCallback => {
     const prefix = workspace.relativeCwd;
 
-    const scopedPackageName = `${workspace.manifest.name?.scope
-      ? `@${workspace.manifest.name?.scope}/`
-      : ""
-      }${workspace.manifest.name?.name}`;
+    const scopedPackageName = `${
+      workspace.manifest.name?.scope
+        ? `@${workspace.manifest.name?.scope}/`
+        : ""
+    }${workspace.manifest.name?.name}`;
 
-    const tracer = new Tracer(scopedPackageName, workspace.manifest.version ?? undefined);
+    const tracer = new Tracer(
+      scopedPackageName,
+      workspace.manifest.version ?? undefined,
+    );
 
     // return a PQueue item
     return async (ctx: Context, cancelDependentJobs: () => void) =>
@@ -1602,14 +1603,12 @@ class RunSupervisor {
       await this.limit(
         // pass an async callback that will execute the run command
         async (): Promise<boolean> =>
-
           // wrap our callback in an otel span
           tracer.startSpan(
-           // NOTE: we update the span name below when we have access to the command
+            // NOTE: we update the span name below when we have access to the command
             { name: this.runCommand, ctx },
             // pass one more async callback to the span, this one runs the command
             async ({ span, ctx }) => {
-
               const attr = {
                 [Attribute.PACKAGE_NAME]: workspace.anchoredLocator.name,
                 [Attribute.PACKAGE_DIRECTORY]: workspace.relativeCwd,
@@ -1630,7 +1629,6 @@ class RunSupervisor {
               const currentRunLog = this.runLog?.get(
                 `${workspace.relativeCwd}#${this.runCommand}`,
               );
-
 
               this.runReporter.emit(
                 RunSupervisorReporterEvents.start,
