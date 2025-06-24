@@ -1,12 +1,11 @@
 {
   "extends": "../../../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist",
     "target": "es6",
     "module": "commonjs",
+    "declaration": true,
     "pretty": true,
     "baseUrl": ".",
-    "rootDir": "src",
     "paths": {
       "@src/*": ["./src/*"]
     }

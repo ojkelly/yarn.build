@@ -1,9 +1,23 @@
 {
   "name": "@internal/dolor",
   "version": "1.0.0",
-  "main": "build/index.js",
+  "main": "build/src/index.js",
   "license": "UNLICENSED",
   "private": true,
+  "exports": {
+    ".": {
+      "types": [
+        "./build/src/index.d.ts"
+      ],
+      "default": "./build/src/index.js"
+    },
+    "./*": {
+      "types": [
+        "./build/src/*.d.ts"
+      ],
+      "default": "./build/src/*.js"
+    }
+  },
   "scripts": {
     "clean": "rm -rf build",
     "build": "tsc"

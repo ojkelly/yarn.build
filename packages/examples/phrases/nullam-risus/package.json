@@ -1,25 +1,25 @@
 {
   "name": "@internal/phrase-nullam-risus",
   "version": "1.0.0",
-  "main": "build/index.js",
+  "main": "build/src/index.js",
   "license": "UNLICENSED",
   "private": true,
   "exports": {
     ".": {
       "types": [
-        "./dist/index.d.ts"
+        "./build/src/index.d.ts"
       ],
-      "default": "./dist/index.js"
+      "default": "./build/src/index.js"
     },
     "./*": {
       "types": [
-        "./dist/*.d.ts"
+        "./build/src/*.d.ts"
       ],
-      "default": "./src/*.js"
+      "default": "./build/src/*.js"
     }
   },
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf build",
     "build": "tsc",
     "test": "CI=1 NODE_ENV=test vitest"
   },

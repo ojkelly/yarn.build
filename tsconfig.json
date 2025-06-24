@@ -6,7 +6,7 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "build",
+    "outDir": "${configDir}/build",
     "declaration": true,
     "lib": ["dom", "es2017", "esnext", "esnext.asynciterable"],
     "isolatedModules": true,
