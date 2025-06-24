@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "dist",
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "tsc --build",
     "test": "CI=1 NODE_ENV=test vitest",
     "dev": "vitest"

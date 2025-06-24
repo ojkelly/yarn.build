@@ -5,6 +5,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "clean": "rm -rf build",
     "build": "tsc"
   },
   "dependencies": {
