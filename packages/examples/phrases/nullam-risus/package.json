@@ -4,6 +4,20 @@
   "main": "build/index.js",
   "license": "UNLICENSED",
   "private": true,
+  "exports": {
+    ".": {
+      "types": [
+        "./dist/index.d.ts"
+      ],
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": [
+        "./dist/*.d.ts"
+      ],
+      "default": "./src/*.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "test": "CI=1 NODE_ENV=test vitest"
