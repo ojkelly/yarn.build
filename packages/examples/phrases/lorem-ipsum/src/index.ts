@@ -7,8 +7,8 @@ import ipsum from "@internal/ipsum";
 import lorem from "@internal/lorem";
 import sit from "@internal/sit";
 
-import nullam from "@internal/phrase-nullam-risus";
-import inHac from "@internal/phrase-in-hac";
+import { phrase as nullam } from "@internal/phrase-nullam-risus";
+import { phrase as inHac } from "@internal/phrase-in-hac";
 
 export const phrase: string =
   `${lorem} ${ipsum} ${dolor} ${sit} ${amet}, ${consectetur}` +
