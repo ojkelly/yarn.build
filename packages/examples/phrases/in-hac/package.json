@@ -21,7 +21,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc",
-    "test": "CI=1 NODE_ENV=test vitest",
+    "test": "vitest run",
     "echo": "echo 'this is a test'"
   },
   "dependencies": {

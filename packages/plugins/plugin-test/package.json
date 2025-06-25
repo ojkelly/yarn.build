@@ -49,7 +49,7 @@
     "build": "do build-plugin",
     "clean": "do clean-plugin",
     "build:update": "do update-plugin",
-    "test": "CI=1 NODE_ENV=test vitest"
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",

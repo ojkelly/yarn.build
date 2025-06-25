@@ -21,7 +21,7 @@
   "scripts": {
     "clean": "rm -rf build",
     "build": "tsc",
-    "test": "vitest src",
+    "test": "vitest run",
     "dev": "ts-node ./src/index.ts"
   },
   "dependencies": {

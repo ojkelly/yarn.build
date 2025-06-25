@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc --build",
-    "test": "CI=1 NODE_ENV=test vitest",
+    "test": "vitest run",
     "dev": "vitest"
   },
   "devDependencies": {

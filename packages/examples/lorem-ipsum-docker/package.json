@@ -22,7 +22,7 @@
     "clean": "rm -rf build",
     "start": "node build/src/index.js",
     "build": "tsc",
-    "test": "vitest src",
+    "test": "vitest run",
     "dev": "ts-node ./src/index.ts"
   },
   "dependencies": {

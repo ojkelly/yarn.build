@@ -21,7 +21,7 @@
   "scripts": {
     "clean": "rm -rf build",
     "build": "tsc",
-    "test": "CI=1 NODE_ENV=test vitest"
+    "test": "vitest run"
   },
   "dependencies": {
     "@internal/adipiscing": "workspace:^",
