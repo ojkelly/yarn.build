@@ -26,6 +26,7 @@
   "dependencies": {
     "@internal/adipiscing": "workspace:^",
     "@internal/dolor": "workspace:^",
+    "@tools/do": "workspace:*",
     "typescript": "^5.8.3"
   },
   "devDependencies": {

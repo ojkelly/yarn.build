@@ -600,6 +600,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/adipiscing@workspace:packages/examples/words/adipiscing"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
   languageName: unknown
   linkType: soft
@@ -608,6 +609,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/amet@workspace:packages/examples/words/amet"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -617,6 +619,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/consectetur@workspace:packages/examples/words/consectetur"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -626,6 +629,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/dolor@workspace:packages/examples/words/dolor"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -635,6 +639,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/elit@workspace:packages/examples/words/elit"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -644,7 +649,33 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/ipsum@workspace:packages/examples/words/ipsum"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
+    vitest: "npm:^3.2.4"
+  languageName: unknown
+  linkType: soft
+
+"@internal/lorem-ipsum-docker@workspace:packages/examples/lorem-ipsum-docker":
+  version: 0.0.0-use.local
+  resolution: "@internal/lorem-ipsum-docker@workspace:packages/examples/lorem-ipsum-docker"
+  dependencies:
+    "@internal/phrase-lorem-ipsum": "workspace:*"
+    "@types/node": "npm:^20.11.17"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.3.3"
+    vitest: "npm:^3.2.4"
+  languageName: unknown
+  linkType: soft
+
+"@internal/lorem-ipsum@workspace:packages/examples/lorem-ipsum":
+  version: 0.0.0-use.local
+  resolution: "@internal/lorem-ipsum@workspace:packages/examples/lorem-ipsum"
+  dependencies:
+    "@internal/phrase-lorem-ipsum": "workspace:*"
+    "@types/node": "npm:^20.11.17"
+    react: "npm:^18.2.0"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.3.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
   linkType: soft
@@ -653,6 +684,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/lorem@workspace:packages/examples/words/lorem"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -664,12 +696,13 @@ __metadata:
   dependencies:
     "@internal/consectetur": "workspace:^"
     "@internal/elit": "workspace:^"
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
   linkType: soft
 
-"@internal/phrase-lorem-ipsum@workspace:packages/examples/phrases/lorem-ipsum":
+"@internal/phrase-lorem-ipsum@workspace:*, @internal/phrase-lorem-ipsum@workspace:packages/examples/phrases/lorem-ipsum":
   version: 0.0.0-use.local
   resolution: "@internal/phrase-lorem-ipsum@workspace:packages/examples/phrases/lorem-ipsum"
   dependencies:
@@ -683,6 +716,7 @@ __metadata:
     "@internal/phrase-in-hac": "workspace:^"
     "@internal/phrase-nullam-risus": "workspace:^"
     "@internal/sit": "workspace:^"
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -694,6 +728,7 @@ __metadata:
   dependencies:
     "@internal/adipiscing": "workspace:^"
     "@internal/dolor": "workspace:^"
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -703,6 +738,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/quitter@workspace:packages/examples/words/quitter"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -712,6 +748,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/sit@workspace:packages/examples/words/sit"
   dependencies:
+    "@tools/do": "workspace:*"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
   languageName: unknown
@@ -857,6 +894,7 @@ __metadata:
     "@opentelemetry/sdk-trace-base": "npm:^2.0.1"
     "@opentelemetry/sdk-trace-node": "npm:^2.0.1"
     "@opentelemetry/semantic-conventions": "npm:^1.34.0"
+    "@tools/do": "workspace:*"
     "@types/is-ci": "npm:^3.0.4"
     "@types/js-yaml": "npm:^4.0.9"
     "@types/node": "npm:^24.0.3"
@@ -2521,6 +2559,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^20.11.17":
+  version: 20.19.1
+  resolution: "@types/node@npm:20.19.1"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10c0/4f1c3c8ec24c79af6802b376fa307904abf19accb9ac291de0bfc02220494c8b027d3ef733dbf64cc09b37594f22f679a15eabb30f3785bcfcc13bd9bbd8c0e2
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^24.0.3":
   version: 24.0.3
   resolution: "@types/node@npm:24.0.3"
@@ -2905,6 +2952,7 @@ __metadata:
   resolution: "@yarn.build/yarn-plugin-all@workspace:packages/plugins/plugin-all"
   dependencies:
     "@ojkelly/yarn-build-shared": "workspace:^"
+    "@tools/do": "workspace:*"
     "@types/is-ci": "npm:^3.0.4"
     "@types/js-yaml": "npm:^4.0.9"
     "@types/slice-ansi": "npm:^7.1.0"
@@ -2955,6 +3003,7 @@ __metadata:
     "@opentelemetry/sdk-node": "npm:^0.202.0"
     "@opentelemetry/sdk-trace-base": "npm:^2.0.1"
     "@opentelemetry/semantic-conventions": "npm:^1.34.0"
+    "@tools/do": "workspace:*"
     "@types/is-ci": "npm:^3.0.4"
     "@types/js-yaml": "npm:^4.0.9"
     "@types/micromatch": "npm:^4.0.9"
@@ -3003,6 +3052,7 @@ __metadata:
     "@opentelemetry/sdk-node": "npm:^0.202.0"
     "@opentelemetry/sdk-trace-base": "npm:^2.0.1"
     "@opentelemetry/semantic-conventions": "npm:^1.34.0"
+    "@tools/do": "workspace:*"
     "@types/is-ci": "npm:^3.0.4"
     "@types/js-yaml": "npm:^4.0.9"
     "@types/slice-ansi": "npm:^7.1.0"
@@ -3084,6 +3134,7 @@ __metadata:
   resolution: "@yarn.build/yarn-plugin-test@workspace:packages/plugins/plugin-test"
   dependencies:
     "@ojkelly/yarn-build-shared": "workspace:^"
+    "@tools/do": "workspace:*"
     "@types/is-ci": "npm:^3.0.4"
     "@types/js-yaml": "npm:^4.0.9"
     "@types/slice-ansi": "npm:^7.1.0"
@@ -4220,13 +4271,6 @@ __metadata:
   dependencies:
     fill-range: "npm:^7.1.1"
   checksum: 10c0/7c6dfd30c338d2997ba77500539227b9d1f85e388a5f43220865201e407e076783d0881f2d297b9f80951b4c957fcf0b51c1d2d24227631643c3f7c284b0aa04
-  languageName: node
-  linkType: hard
-
-"buffer-from@npm:^1.0.0":
-  version: 1.1.2
-  resolution: "buffer-from@npm:1.1.2"
-  checksum: 10c0/124fff9d66d691a86d3b062eff4663fe437a9d9ee4b47b1b9e97f5a5d14f6d5399345db80f796827be7c95e70a8e765dd404b7c3ff3b3324f98e9b0c8826cc34
   languageName: node
   linkType: hard
 
@@ -8478,6 +8522,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react@npm:^18.2.0":
+  version: 18.3.1
+  resolution: "react@npm:18.3.1"
+  dependencies:
+    loose-envify: "npm:^1.1.0"
+  checksum: 10c0/283e8c5efcf37802c9d1ce767f302dd569dd97a70d9bb8c7be79a789b9902451e0d16334b05d73299b20f048cbc3c7d288bbbde10b701fa194e2089c237dbea3
+  languageName: node
+  linkType: hard
+
 "readable-stream@npm:^3.1.1, readable-stream@npm:^3.4.0":
   version: 3.6.2
   resolution: "readable-stream@npm:3.6.2"
@@ -9230,23 +9283,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-support@npm:*":
-  version: 0.5.21
-  resolution: "source-map-support@npm:0.5.21"
-  dependencies:
-    buffer-from: "npm:^1.0.0"
-    source-map: "npm:^0.6.0"
-  checksum: 10c0/9ee09942f415e0f721d6daad3917ec1516af746a8120bba7bb56278707a37f1eb8642bde456e98454b8a885023af81a16e646869975f06afc1a711fb90484e7d
-  languageName: node
-  linkType: hard
-
-"source-map@npm:^0.6.0":
-  version: 0.6.1
-  resolution: "source-map@npm:0.6.1"
-  checksum: 10c0/ab55398007c5e5532957cb0beee2368529618ac0ab372d789806f5718123cc4367d57de3904b4e6a4170eb5a0b0f41373066d02ca0735a0c4d75c7d328d3e011
-  languageName: node
-  linkType: hard
-
 "sprintf-js@npm:^1.1.3":
   version: 1.1.3
   resolution: "sprintf-js@npm:1.1.3"
@@ -9971,6 +10007,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
+  languageName: node
+  linkType: hard
+
 "undici-types@npm:~7.8.0":
   version: 7.8.0
   resolution: "undici-types@npm:7.8.0"
@@ -10514,7 +10557,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^8.34.1"
     "@yarnpkg/builder": "npm:^4.2.2"
     "@yarnpkg/cli": "npm:^4.9.2"
-    "@yarnpkg/core": "npm:^4.4.2"
+    "@yarnpkg/core": "npm:^4.9.2"
     "@yarnpkg/fslib": "npm:^3.1.2"
     "@yarnpkg/libzip": "npm:^3.2.1"
     "@yarnpkg/parsers": "npm:^3.0.3"

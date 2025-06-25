@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@ojkelly/yarn-build-shared": "workspace:^",
+    "@tools/do": "workspace:*",
     "@types/slice-ansi": "^7.1.0",
     "@yarn.build/yarn-plugin-build": "workspace:^",
     "@yarn.build/yarn-plugin-bundle": "workspace:^",

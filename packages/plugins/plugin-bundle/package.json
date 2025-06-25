@@ -30,6 +30,7 @@
     "@opentelemetry/sdk-node": "^0.202.0",
     "@opentelemetry/sdk-trace-base": "^2.0.1",
     "@opentelemetry/semantic-conventions": "^1.34.0",
+    "@tools/do": "workspace:*",
     "@types/slice-ansi": "^7.1.0",
     "@yarnpkg/fslib": "^3.1.2",
     "@yarnpkg/libzip": "^3.2.1",

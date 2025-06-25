@@ -1,0 +1,41 @@
+{
+  "name": "@internal/lorem-ipsum-docker",
+  "version": "1.0.0",
+  "main": "build/src/index.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": [
+        "./build/src/index.d.ts"
+      ],
+      "default": "./build/src/index.js"
+    },
+    "./*": {
+      "types": [
+        "./build/src/*.d.ts"
+      ],
+      "default": "./build/src/*.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf build",
+    "start": "node build/src/index.js",
+    "build": "tsc",
+    "test": "vitest src",
+    "dev": "ts-node ./src/index.ts"
+  },
+  "dependencies": {
+    "@internal/phrase-lorem-ipsum": "workspace:*",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "ts-node": "^10.9.2",
+    "vitest": "^3.2.4"
+  },
+  "yarn.build": {
+    "input": ".",
+    "output": "dist"
+  }
+}

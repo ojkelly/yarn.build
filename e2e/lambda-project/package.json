@@ -1,12 +1,12 @@
 {
   "name": "lambda-project",
+  "type": "module",
   "packageManager": "yarn@4.9.2",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "start": "node entrypoint.js",
-    "integration": "vitest run --config vitest.config.js"
+    "start": "node entrypoint.js"
   },
   "dependencies": {
     "@types/execa": "^2.0.2",
@@ -14,10 +14,10 @@
     "@types/node": "^24.0.3",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.0",
-    "vitest": "^3.2.4",
     "node-fetch": "^3.0.0",
     "node-stream-zip": "^1.15.0",
     "ts-pnp": "^1.2.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

@@ -24,6 +24,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@tools/do": "workspace:*",
     "@types/slice-ansi": "^7.1.0",
     "@yarnpkg/fslib": "^3.1.2",
     "@yarnpkg/libzip": "^3.2.1",
