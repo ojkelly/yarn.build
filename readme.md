@@ -20,18 +20,6 @@ yarn plugin import https://yarn.build/latest/test
 yarn plugin import https://yarn.build/latest/bundle
 ```
 
-**If you're upgrading the plugin** the install location has changed to be under the `@yarn.build` namespace. If you have any yarn.build plugin previously installed you may need to remove the old one manually from `.yarnrc.yml`:
-
-```yaml
-plugins:
-  - checksum: ...                                 <-- remove this entry if both exist
-    path: .yarn/plugins/@ojkelly/plugin-all.cjs   <--
-    spec: 'https://yarn.build/latest'             <--
-  - checksum: ...
-    path: .yarn/plugins/@yarn.build/plugin-all.cjs
-    spec: 'https://yarn.build/latest'
-```
-
 ## OpenTelemetry Support
 
 <details>

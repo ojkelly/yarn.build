@@ -23,8 +23,8 @@
     "build:plugin": "yarn workspace @yarn.build/yarn-plugin-all build:update",
     "integration": "yarn integration:build && yarn integration:mkdirp && yarn integration:copy",
     "integration:build": "yarn build:plugin && yarn integration:mkdirp && yarn integration:copy",
-    "integration:mkdirp": "shx mkdir -p e2e/lambda-project/.yarn/plugins/@ojkelly",
-    "integration:copy": "shx cp packages/plugins/plugin-all/bundles/@yarnpkg/plugin-all.js e2e/lambda-project/.yarn/plugins/@ojkelly/plugin-all.cjs",
+    "integration:mkdirp": "shx mkdir -p e2e/lambda-project/.yarn/plugins/@yarn.build",
+    "integration:copy": "shx cp packages/plugins/plugin-all/bundles/@yarnpkg/plugin-all.js e2e/lambda-project/.yarn/plugins/@yarn.build/plugin-all.cjs",
     "vitest": "vitest",
     "e": "env",
     "prepare": "husky"
