@@ -2,14 +2,15 @@
   "name": "lambda",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "packageManager": "yarn@4.9.2",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc --project tsconfig.dev.json"
   },
   "dependencies": {
     "@types/aws-lambda": "^8",
-    "@types/node": "16.6.2",
+    "@types/node": "^24.0.3",
     "@workspace/lib": "workspace:*",
-    "typescript": "^4"
+    "typescript": "^5.8.3"
   }
 }

@@ -3,7 +3,7 @@
 module.exports = {
   name: `plugin-do`,
   factory: (require) => {
-    const {   structUtils } = require('@yarnpkg/core');
+    const { structUtils } = require('@yarnpkg/core');
 
     return {
       hooks: {
@@ -32,7 +32,7 @@ module.exports = {
                   w.manifest.name.name,
                 ), '*'), {
               dependencies: {
-                '@tools/do': 'workspace:*',
+                // '@tools/do': 'workspace:*',
                 // You can also add your own dependencies here
                 // 'typescript': '*',
                 // 'eslint': '*',
@@ -68,28 +68,28 @@ function populateEnv(prevEnv) {
 
   };
 
-    const packagePath = prevEnv["INIT_CWD"].replace(prevEnv["PROJECT_CWD"], "");
+  const packagePath = prevEnv["INIT_CWD"].replace(prevEnv["PROJECT_CWD"], "");
   const packageName = prevEnv["npm_package_name"];
   const splitPackageName = packageName.replace("@", "").split("/");
   const packageScope = splitPackageName[0];
   const packageOrdinaryName = splitPackageName[1];
 
-      env.INIT_CWD = prevEnv["INIT_CWD"];
+  env.INIT_CWD = prevEnv["INIT_CWD"];
 
-    env.PROJECT_CWD = prevEnv["PROJECT_CWD"];
+  env.PROJECT_CWD = prevEnv["PROJECT_CWD"];
 
-    // relative path from repository root
-    env.PACKAGE_PATH = packagePath;
+  // relative path from repository root
+  env.PACKAGE_PATH = packagePath;
 
-      env.PACKAGE_BUILD_FOLDER = ".build";
-    // verbatim name of the package
-    env.PACKAGE_RAW_NAME = packageName;
+  env.PACKAGE_BUILD_FOLDER = ".build";
+  // verbatim name of the package
+  env.PACKAGE_RAW_NAME = packageName;
 
-    // package scope
-    env.PACKAGE_SCOPE = packageScope;
+  // package scope
+  env.PACKAGE_SCOPE = packageScope;
 
-    // package name without scope
-    env.PACKAGE_NAME = packageOrdinaryName;
+  // package name without scope
+  env.PACKAGE_NAME = packageOrdinaryName;
 
   return {
     env: {
