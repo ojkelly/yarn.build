@@ -1,7 +1,7 @@
 {
   "name": "@internal/phrase-lorem-ipsum",
   "version": "1.0.0",
-  "main": "build/index.js",
+  "main": "build/src/index.js",
   "license": "UNLICENSED",
   "private": true,
   "exports": {

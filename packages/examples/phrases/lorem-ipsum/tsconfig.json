@@ -6,9 +6,8 @@
     "module": "commonjs",
     "pretty": true,
     "baseUrl": ".",
-    "rootDir": "src",
     "paths": {
-      "@src/*": ["./src/*"]
+      "@src/*": ["src/*"]
     }
   },
   "include": ["src/**/*"],
