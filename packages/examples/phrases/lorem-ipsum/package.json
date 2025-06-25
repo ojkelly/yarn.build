@@ -34,7 +34,7 @@
     "@internal/phrase-in-hac": "workspace:^",
     "@internal/phrase-nullam-risus": "workspace:^",
     "@internal/sit": "workspace:^",
-    "@tools/do": "workspace:*",
+    "@tools/do": "workspace:^",
     "typescript": "^5.8.3"
   },
   "devDependencies": {

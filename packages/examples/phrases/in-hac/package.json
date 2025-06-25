@@ -27,7 +27,7 @@
   "dependencies": {
     "@internal/consectetur": "workspace:^",
     "@internal/elit": "workspace:^",
-    "@tools/do": "workspace:*",
+    "@tools/do": "workspace:^",
     "typescript": "^5.8.3"
   },
   "devDependencies": {

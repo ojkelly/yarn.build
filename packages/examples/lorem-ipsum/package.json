@@ -25,13 +25,16 @@
     "dev": "ts-node ./src/index.ts"
   },
   "dependencies": {
-    "@internal/phrase-lorem-ipsum": "workspace:*",
+    "@internal/phrase-lorem-ipsum": "workspace:^",
     "react": "^18.2.0",
-    "typescript": "^5.3.3",
+    "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "devDependencies": {
-    "@types/node": "^20.11.17",
+    "@types/node": "^24.0.3",
     "ts-node": "^10.9.2"
+  },
+  "engines": {
+    "node": ">=22.2.0"
   }
 }

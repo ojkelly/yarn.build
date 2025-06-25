@@ -23,7 +23,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@tools/do": "workspace:*",
+    "@tools/do": "workspace:^",
     "typescript": "^5.8.3"
   },
   "engines": {

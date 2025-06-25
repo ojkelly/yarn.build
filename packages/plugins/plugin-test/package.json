@@ -10,7 +10,7 @@
     "@types/yup": "^0.32.0",
     "@yarnpkg/builder": "^4.2.2",
     "@yarnpkg/cli": "^4.9.2",
-    "@yarnpkg/core": "^4.4.2",
+    "@yarnpkg/core": "^4.9.2",
     "@yarnpkg/fslib": "^3.1.2",
     "@yarnpkg/libzip": "^3.2.1",
     "@yarnpkg/plugin-pack": "^4.0.2",
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@ojkelly/yarn-build-shared": "workspace:^",
-    "@tools/do": "workspace:*",
+    "@tools/do": "workspace:^",
     "@types/slice-ansi": "^7.1.0",
     "@yarn.build/yarn-plugin-build": "workspace:^",
     "@yarnpkg/fslib": "^3.1.2",
