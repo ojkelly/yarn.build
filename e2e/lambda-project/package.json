@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "node entrypoint.js"
+    "start": "node entrypoint.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "@types/execa": "^2.0.2",

@@ -47,7 +47,7 @@ jobs:
       matrix:
         # os: [macos-latest, windows-latest, ubuntu-latest]
         os: [ubuntu-latest]
-        node: [23.x]
+        node: [22.x]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -69,7 +69,7 @@ jobs:
           path: e2e/lambda-project/.yarn/plugins/@yarn.build
       - name: Install packages
         run: yarn install --immutable --immutable-cache
-      - name: Build plugin
-        run: yarn integration:build
       - name: Run integration tests
-        run: cd e2e/lambda-project && yarn install --immutable --immutable-cache && yarn run integration
+        run: >
+          yarn run integration:setup
+          yarn run integration:test
