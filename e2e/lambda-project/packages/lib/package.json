@@ -2,6 +2,7 @@
   "name": "@workspace/lib",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "type": "module",
   "packageManager": "yarn@4.9.2",
   "scripts": {
     "clean": "rm -rf dist",
@@ -9,6 +10,7 @@
   },
   "devDependencies": {
     "@types/uglify-js": "^3",
+    "source-map": "^0.7.4",
     "typescript": "^5.8.3",
     "uglify-js": "^3"
   }

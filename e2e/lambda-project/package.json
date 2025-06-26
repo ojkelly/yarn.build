@@ -7,7 +7,8 @@
   ],
   "scripts": {
     "start": "node entrypoint.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev": "vitest"
   },
   "dependencies": {
     "@types/execa": "^2.0.2",

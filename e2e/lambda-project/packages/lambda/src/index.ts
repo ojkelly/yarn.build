@@ -1,4 +1,4 @@
-import { handler } from "./api";
+import { handler } from "./api.js";
 
 // When run, this file executes the handler and outputs the result.
 handler()
