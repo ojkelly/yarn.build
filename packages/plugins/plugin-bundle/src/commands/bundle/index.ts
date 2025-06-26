@@ -570,7 +570,7 @@ export default class Bundler extends BaseCommand {
               );
 
               await this.tracer.wrap(
-                { name: "add entrypoint.js", ctx },
+                { name: "add entrypoint", ctx },
                 async () => {
                   for (const workspace of project.workspaces) {
                     workspace.manifest.devDependencies.clear();
@@ -591,9 +591,13 @@ export default class Bundler extends BaseCommand {
                     // https://github.com/yarnpkg/berry/pull/2286
                     const pnp = `.pnp.cjs`;
 
+                    const packageType = workspace?.manifest?.raw?.type;
+                    const entrypointExtension =
+                      packageType === "module" ? ".mjs" : ".js";
+
                     xfs.writeFilePromise(
-                      `${tmpDir}${path.posix.sep}entrypoint.js` as PortablePath,
-                      generateEntrypointFile(mainFile, pnp),
+                      `${tmpDir}${path.posix.sep}entrypoint${entrypointExtension}` as PortablePath,
+                      generateEntrypointFile(mainFile, pnp, packageType),
                     );
                   }
 
@@ -704,8 +708,33 @@ export default class Bundler extends BaseCommand {
 
 // Generates an entrypoint file that's placed at the root of the repository,
 // and can be called to run the bundled package.
-const generateEntrypointFile = (main: string, pnp: string): string => `
-"use strict";
+const generateEntrypointFile = (
+  main: string,
+  pnp: string,
+  packageType?: string,
+): string => {
+  const isESM = packageType === "module";
+
+  if (isESM) {
+    return `import { fileURLToPath } from "url";
+import { dirname, resolve, normalize } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+async function loadModule() {
+  const pnp = await import(normalize(resolve(__dirname, "${pnp}")));
+  pnp.setup();
+
+  const index = await import(normalize(resolve(__dirname, "${main}")));
+  return index.default || index;
+}
+
+export default loadModule();
+`;
+  }
+
+  return `"use strict";
 
 const path = require("path");
 
@@ -717,6 +746,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 exports.default = index;
 `;
+};
 
 /**
  * Resolves a user-given path from native path format to a portable path

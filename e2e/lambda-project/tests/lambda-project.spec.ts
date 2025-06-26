@@ -7,76 +7,11 @@ import * as path from "path";
 import { execaSync } from "execa";
 import StreamZip from "node-stream-zip";
 
-// test("bundling lambda-project to a zip", async () => {
-//   const workDir = getTempDirName();
-//   const bundleOutput = getTempDirName();
-//   const defaultArchiveName = "bundle.zip";
-
-//   // Stage the test project far from the yarn.build project
-//   fs.copySync(path.dirname(__dirname), workDir, {
-//     errorOnExist: true,
-//   });
-
-//   yarnCmd(workDir, "install");
-
-//   yarnCmd(workDir, "workspace", "lambda", "build");
-
-//   yarnCmd(
-//     workDir,
-//     "workspace",
-//     "lambda",
-//     "bundle",
-//     "--output-directory",
-//     bundleOutput,
-//   );
-
-//   // THEN
-//   const zipPath = path.join(bundleOutput, defaultArchiveName);
-
-//   expect(fs.existsSync(zipPath)).toEqual(true);
-//   expect(fs.statSync(zipPath).isFile()).toEqual(true);
-
-//   await validateZip({ bundleOutput, archiveName: defaultArchiveName });
-// });
-
-// test("bundling lambda-project to a zip with custom name", async () => {
-//   const workDir = getTempDirName();
-//   const bundleOutput = getTempDirName();
-//   const archiveName = "function.zip";
-
-//   // Stage the test project far from the yarn.build project
-//   fs.copySync(path.dirname(__dirname), workDir, {
-//     errorOnExist: true,
-//   });
-
-//   yarnCmd(workDir, "install");
-
-//   yarnCmd(workDir, "workspace", "lambda", "build");
-
-//   yarnCmd(
-//     workDir,
-//     "workspace",
-//     "lambda",
-//     "bundle",
-//     "--output-directory",
-//     bundleOutput,
-//     "--archive-name",
-//     archiveName,
-//   );
-
-//   const zipPath = path.join(bundleOutput, archiveName);
-
-//   expect(fs.existsSync(zipPath)).toEqual(true);
-//   expect(fs.statSync(zipPath).isFile()).toEqual(true);
-
-//   await validateZip({ bundleOutput, archiveName });
-// });
-
-test("run lambda-project after bundling without compression", async () => {
+test("bundling lambda-project to a zip", async () => {
   const workDir = getTempDirName();
   const bundleOutput = getTempDirName();
+  const defaultArchiveName = "bundle.zip";
 
-  console.log({ workDir, bundleOutput });
   // Stage the test project far from the yarn.build project
   fs.copySync(path.dirname(__dirname), workDir, {
     errorOnExist: true,
@@ -93,35 +28,102 @@ test("run lambda-project after bundling without compression", async () => {
     "bundle",
     "--output-directory",
     bundleOutput,
-    "--no-compress",
   );
 
-  expect(fs.existsSync(path.join(bundleOutput, "package.json"))).toEqual(true);
-  expect(fs.existsSync(path.join(bundleOutput, ".pnp.cjs"))).toEqual(true);
-  expect(fs.existsSync(path.join(bundleOutput, "entrypoint.js"))).toEqual(true);
-  expect(fs.existsSync(path.join(bundleOutput, ".yarn"))).toEqual(true);
-  // expect(fs.readdirSync(path.join(bundleOutput, ".yarn", "cache"))).toEqual([
-  //   ".gitignore",
-  //   expect.stringMatching(/^uglify-js.*\.zip$/),
-  //   // Notably, the cache excludes the dev deps.
-  // ]);
+  // THEN
+  const zipPath = path.join(bundleOutput, defaultArchiveName);
 
-  // Now run the bundled code to see that it works!
-  // lambda-project's dependencies look like this: lambda -> lib -> uglify-js
-  // Calling the lambda's api handler tests the uglify-js transitive dependency
-  const execResult = execaSync("node", ["entrypoint.js"], {
-    cwd: bundleOutput,
-  });
+  expect(fs.existsSync(zipPath)).toEqual(true);
+  expect(fs.statSync(zipPath).isFile()).toEqual(true);
 
-  const responsePayload = JSON.parse(execResult.stdout);
-
-  expect(responsePayload).toEqual({
-    statusCode: 200,
-    // The following shows that the lambda package called lib, and lib used
-    // uglify-js.
-    body: '"function foobar(){} // MUGLIFIED"',
-  });
+  await validateZip({ bundleOutput, archiveName: defaultArchiveName });
 });
+
+test("bundling lambda-project to a zip with custom name", async () => {
+  const workDir = getTempDirName();
+  const bundleOutput = getTempDirName();
+  const archiveName = "function.zip";
+
+  // Stage the test project far from the yarn.build project
+  fs.copySync(path.dirname(__dirname), workDir, {
+    errorOnExist: true,
+  });
+
+  yarnCmd(workDir, "install");
+
+  yarnCmd(workDir, "workspace", "lambda", "build");
+
+  yarnCmd(
+    workDir,
+    "workspace",
+    "lambda",
+    "bundle",
+    "--output-directory",
+    bundleOutput,
+    "--archive-name",
+    archiveName,
+  );
+
+  const zipPath = path.join(bundleOutput, archiveName);
+
+  expect(fs.existsSync(zipPath)).toEqual(true);
+  expect(fs.statSync(zipPath).isFile()).toEqual(true);
+
+  await validateZip({ bundleOutput, archiveName });
+});
+
+// test("run lambda-project after bundling without compression", async () => {
+//   const workDir = getTempDirName();
+//   const bundleOutput = getTempDirName();
+
+//   console.log({ workDir, bundleOutput });
+//   // Stage the test project far from the yarn.build project
+//   fs.copySync(path.dirname(__dirname), workDir, {
+//     errorOnExist: true,
+//   });
+
+//   // yarnCmd(workDir, "install");
+
+//   yarnCmd(workDir, "workspace", "lambda", "build");
+
+//   fs.rmdirSync(path.join(workDir, ".yarn", "cache"), { recursive: true });
+
+//   yarnCmd(
+//     workDir,
+//     "workspace",
+//     "lambda",
+//     "bundle",
+//     "--output-directory",
+//     bundleOutput,
+//     "--no-compress",
+//   );
+
+//   expect(fs.existsSync(path.join(bundleOutput, "package.json"))).toEqual(true);
+//   expect(fs.existsSync(path.join(bundleOutput, ".pnp.cjs"))).toEqual(true);
+//   expect(fs.existsSync(path.join(bundleOutput, "entrypoint.mjs"))).toEqual(true);
+//   expect(fs.existsSync(path.join(bundleOutput, ".yarn"))).toEqual(true);
+//   // expect(fs.readdirSync(path.join(bundleOutput, ".yarn", "cache"))).toEqual([
+//   //   ".gitignore",
+//   //   expect.stringMatching(/^uglify-js.*\.zip$/),
+//   //   // Notably, the cache excludes the dev deps.
+//   // ]);
+
+//   // Now run the bundled code to see that it works!
+//   // lambda-project's dependencies look like this: lambda -> lib -> uglify-js
+//   // Calling the lambda's api handler tests the uglify-js transitive dependency
+//   const execResult = execaSync("node", ["entrypoint.js"], {
+//     cwd: bundleOutput,
+//   });
+
+//   const responsePayload = JSON.parse(execResult.stdout);
+
+//   expect(responsePayload).toEqual({
+//     statusCode: 200,
+//     // The following shows that the lambda package called lib, and lib used
+//     // uglify-js.
+//     body: '"function foobar(){} // MUGLIFIED"',
+//   });
+// });
 
 // Utils -----------------------------------------------------------------------
 

@@ -22699,7 +22699,7 @@ var plugin = (() => {
                 }
               );
               await this.tracer.wrap(
-                { name: "add entrypoint.js", ctx: ctx2 },
+                { name: "add entrypoint", ctx: ctx2 },
                 async () => {
                   for (const workspace2 of project.workspaces) {
                     workspace2.manifest.devDependencies.clear();
@@ -22710,9 +22710,11 @@ var plugin = (() => {
                   if (workspace?.manifest?.raw?.main) {
                     const mainFile = workspace.relativeCwd + import_path3.default.posix.sep + workspace?.manifest?.raw?.main;
                     const pnp = `.pnp.cjs`;
+                    const packageType = workspace?.manifest?.raw?.type;
+                    const entrypointExtension = packageType === "module" ? ".mjs" : ".js";
                     import_fslib2.xfs.writeFilePromise(
-                      `${tmpDir}${import_path3.default.posix.sep}entrypoint.js`,
-                      generateEntrypointFile(mainFile, pnp)
+                      `${tmpDir}${import_path3.default.posix.sep}entrypoint${entrypointExtension}`,
+                      generateEntrypointFile(mainFile, pnp, packageType)
                     );
                   }
                   this.progress({
@@ -22804,8 +22806,27 @@ var plugin = (() => {
       );
     }
   };
-  var generateEntrypointFile = (main, pnp) => `
-"use strict";
+  var generateEntrypointFile = (main, pnp, packageType) => {
+    const isESM = packageType === "module";
+    if (isESM) {
+      return `import { fileURLToPath } from "url";
+import { dirname, resolve, normalize } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+async function loadModule() {
+  const pnp = await import(normalize(resolve(__dirname, "${pnp}")));
+  pnp.setup();
+
+  const index = await import(normalize(resolve(__dirname, "${main}")));
+  return index.default || index;
+}
+
+export default loadModule();
+`;
+    }
+    return `"use strict";
 
 const path = require("path");
 
@@ -22817,6 +22838,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 exports.default = index;
 `;
+  };
   function resolveNativePath(path4) {
     const portablePath = import_fslib2.npath.toPortablePath(path4);
     return import_fslib2.ppath.resolve(portablePath);

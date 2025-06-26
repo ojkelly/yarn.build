@@ -9,9 +9,11 @@
     "build": "tsc --project tsconfig.dev.json"
   },
   "dependencies": {
+    "@workspace/lib": "workspace:*"
+  },
+  "devDependencies": {
     "@types/aws-lambda": "^8",
     "@types/node": "^24.0.3",
-    "@workspace/lib": "workspace:*",
     "source-map": "^0.7.4",
     "typescript": "^5.8.3"
   }
