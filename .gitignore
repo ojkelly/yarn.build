@@ -1,9 +1,8 @@
 node_modules
 dist
+**/dist
 .dist
 .cache
-build
-**/build
 scratch
 yarn-error.log
 

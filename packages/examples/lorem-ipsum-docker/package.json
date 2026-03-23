@@ -4,24 +4,24 @@
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
-  "main": "build/src/index.js",
+  "main": "dist/src/index.js",
   "exports": {
     ".": {
       "types": [
-        "./build/src/index.d.ts"
+        "./dist/src/index.d.ts"
       ],
-      "default": "./build/src/index.js"
+      "default": "./dist/src/index.js"
     },
     "./*": {
       "types": [
-        "./build/src/*.d.ts"
+        "./dist/src/*.d.ts"
       ],
-      "default": "./build/src/*.js"
+      "default": "./dist/src/*.js"
     }
   },
   "scripts": {
-    "clean": "rm -rf build",
-    "start": "node build/src/index.js",
+    "clean": "rm -rf dist",
+    "start": "node dist/src/index.js",
     "build": "tsc",
     "test": "vitest run",
     "dev": "ts-node ./src/index.ts"

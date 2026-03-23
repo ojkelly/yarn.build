@@ -9,7 +9,7 @@
     "moduleResolution": "Node16",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "build",
+    "outDir": "dist",
     "declaration": true,
     "composite": true,
     "incremental": true,

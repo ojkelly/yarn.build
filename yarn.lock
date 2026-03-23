@@ -468,6 +468,7 @@ __metadata:
   resolution: "@internal/adipiscing@workspace:packages/examples/words/adipiscing"
   dependencies:
     typescript: "npm:^5.8.3"
+    vitest: "npm:^4.1.0"
   languageName: unknown
   linkType: soft
 

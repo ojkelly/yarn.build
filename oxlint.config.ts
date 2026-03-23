@@ -8,7 +8,6 @@ export default defineConfig({
   ignorePatterns: [
     "node_modules/**",
     "dist/**",
-    "build/**",
     "bundles/**",
     ".yarn/**",
     "e2e/lambda-project/.yarn/**",

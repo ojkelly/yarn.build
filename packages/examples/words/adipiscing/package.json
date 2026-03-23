@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
-  "main": "build/src/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
   },
   "engines": {
     "node": ">=22.2.0"
