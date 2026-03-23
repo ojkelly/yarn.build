@@ -11,8 +11,7 @@
       "packages/plugins/*",
       "packages/examples/*",
       "packages/examples/words/*",
-      "packages/examples/phrases/*",
-      "!e2e"
+      "packages/examples/phrases/*"
     ]
   },
   "scripts": {
@@ -21,11 +20,6 @@
     "fmt": "oxfmt --write --ignore-path .gitignore packages/",
     "fmt:check": "oxfmt --check --ignore-path .gitignore packages/",
     "build:plugin": "yarn workspace @yarn.build/yarn-plugin-all build:update",
-    "integration:build": "yarn build:plugin && yarn integration:mkdirp && yarn integration:copy",
-    "integration:mkdirp": "shx mkdir -p e2e/lambda-project/.yarn/plugins/@yarn.build",
-    "integration:copy": "shx cp packages/plugins/plugin-all/bundles/@yarnpkg/plugin-all.js e2e/lambda-project/.yarn/plugins/@yarn.build/yarn-plugin-all.cjs",
-    "integration:setup": "yarn integration:build",
-    "integration:test": "cd e2e/lambda-project && yarn install --immutable --immutable-cache && yarn test",
     "vitest": "vitest",
     "test": "vitest run",
     "prepare": "husky",

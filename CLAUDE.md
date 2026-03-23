@@ -35,9 +35,6 @@ yarn lint                     # oxlint
 yarn fmt                      # oxfmt (write)
 yarn fmt:check                # oxfmt (check only)
 
-# Integration tests
-yarn integration:setup        # Build plugin, copy to e2e directory
-yarn integration:test         # Run e2e tests in e2e/lambda-project
 ```
 
 ## Architecture
