@@ -1,7 +1,6 @@
 {
   "name": "@yarn.build/yarn-plugin-build",
   "version": "0.9.1",
-  "type": "module",
   "homepage": "https://yarn.build",
   "license": "MIT",
   "repository": {
@@ -11,6 +10,7 @@
   "files": [
     "/bundles/**/*"
   ],
+  "type": "module",
   "main": "./src/index.ts",
   "publishConfig": {
     "main": "./bundles/@yarn.build/plugin-build.js"
