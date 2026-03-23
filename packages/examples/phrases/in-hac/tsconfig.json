@@ -3,22 +3,12 @@
   "compilerOptions": {
     "outDir": "dist",
     "target": "es6",
-    "module": "commonjs",
     "pretty": true,
     "baseUrl": ".",
-    "types": [
-      "jest"
-    ],
     "paths": {
-      "@src/*": [
-        "./src/*"
-      ]
+      "@src/*": ["./src/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "src/**/*.spec.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.spec.ts"]
 }

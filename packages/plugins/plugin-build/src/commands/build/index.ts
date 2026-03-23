@@ -123,7 +123,9 @@ export default class Build extends BaseCommand {
   async execute(): Promise<0 | 1> {
     const tracer = new Tracer("yarn.build", "v4.1.0");
 
-    const commandArgIndex = process.argv.findIndex(val => val === this.commandType);
+    const commandArgIndex = process.argv.findIndex(
+      (val) => val === this.commandType,
+    );
     const commandArgs = process.argv.slice(commandArgIndex);
 
     return await tracer.startSpan(
@@ -151,11 +153,11 @@ export default class Build extends BaseCommand {
 
         const configuration = await Configuration.find(
           this.context.cwd,
-          this.context.plugins
+          this.context.plugins,
         );
         const { project, workspace: cwdWorkspace } = await Project.find(
           configuration,
-          this.context.cwd
+          this.context.cwd,
         );
 
         if (!cwdWorkspace)
@@ -197,7 +199,7 @@ export default class Build extends BaseCommand {
 
         if (!!this.excludeCurrent) {
           this.exclude.push(
-            structUtils.stringifyIdent(cwdWorkspace.anchoredLocator)
+            structUtils.stringifyIdent(cwdWorkspace.anchoredLocator),
           );
         }
 
@@ -217,12 +219,12 @@ export default class Build extends BaseCommand {
               (t) =>
                 micromatch.isMatch(
                   structUtils.stringifyIdent(targetWorkspace.anchoredLocator),
-                  t
+                  t,
                 ) ||
                 micromatch.isMatch(
                   targetWorkspace.cwd,
-                  `${configuration.projectCwd}${path.posix.sep}${t}`
-                )
+                  `${configuration.projectCwd}${path.posix.sep}${t}`,
+                ),
             ) ?? false
           );
         };
@@ -238,12 +240,12 @@ export default class Build extends BaseCommand {
             return (
               micromatch.isMatch(
                 structUtils.stringifyIdent(targetWorkspace.anchoredLocator),
-                t
+                t,
               ) ||
               // match on path
               micromatch.isMatch(
                 targetWorkspace.cwd,
-                `${configuration.projectCwd}${path.posix.sep}${t}`
+                `${configuration.projectCwd}${path.posix.sep}${t}`,
               )
             );
           });
@@ -293,7 +295,7 @@ export default class Build extends BaseCommand {
               command: string,
               cwd: PortablePath,
               buildReporter: EventEmitter,
-              prefix: string
+              prefix: string,
             ): Promise<number> => {
               const span = trace.getSpan(ctx);
               const stdout = new miscUtils.BufferStream();
@@ -302,8 +304,8 @@ export default class Build extends BaseCommand {
                 buildReporter?.emit(
                   RunSupervisorReporterEvents.info,
                   prefix,
-                  chunk && chunk.toString()
-                )
+                  chunk && chunk.toString(),
+                ),
               );
 
               const stderr = new miscUtils.BufferStream();
@@ -312,8 +314,8 @@ export default class Build extends BaseCommand {
                 buildReporter?.emit(
                   RunSupervisorReporterEvents.error,
                   prefix,
-                  chunk && chunk.toString()
-                )
+                  chunk && chunk.toString(),
+                ),
               );
               if (this.forceQuit) {
                 stdout.destroy();
@@ -371,7 +373,7 @@ export default class Build extends BaseCommand {
               RunSupervisorReporterEvents.forceQuit,
               () => {
                 this.forceQuit = true;
-              }
+              },
             );
 
             await supervisor.setup();
@@ -394,13 +396,13 @@ export default class Build extends BaseCommand {
                 message: "Build failed",
               });
             }
-          }
+          },
         );
 
         terminateProcess.hasBeenTerminated = true;
 
         return report.exitCode();
-      }
+      },
     );
   }
 }

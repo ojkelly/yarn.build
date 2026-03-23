@@ -311,7 +311,7 @@ export default class Bundler extends BaseCommand {
   async execute(): Promise<0 | 1> {
     const tracer = new Tracer("yarn.build");
 
-    const commandArgIndex = process.argv.findIndex(val => val === `bundle`);
+    const commandArgIndex = process.argv.findIndex((val) => val === `bundle`);
     const commandArgs = process.argv.slice(commandArgIndex);
 
     return await tracer.startSpan(

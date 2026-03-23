@@ -1,21 +1,17 @@
 {
   "name": "@internal/adipiscing",
   "version": "1.0.0",
-  "main": "build/index.js",
-  "license": "UNLICENSED",
   "private": true,
+  "license": "UNLICENSED",
+  "main": "build/src/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "jest --passWithNoTests",
-    "typescript": "^4",
-    "jest": "^26"
-  },
-  "jest": {
-    "preset": "ts-jest"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.2.0"
   }
 }

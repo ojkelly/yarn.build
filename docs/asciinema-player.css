@@ -141,8 +141,8 @@
   border-style: solid;
   cursor: text;
   border-width: 0.5em;
-  font-family: Consolas, Menlo, "Bitstream Vera Sans Mono", monospace,
-    "Powerline Symbols";
+  font-family:
+    Consolas, Menlo, "Bitstream Vera Sans Mono", monospace, "Powerline Symbols";
   line-height: 1.3333333333em;
 }
 .asciinema-terminal .line {

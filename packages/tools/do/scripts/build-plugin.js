@@ -50,10 +50,9 @@ function buildPlugin() {
   }
 }
 
-
 buildPlugin();
 
 module.exports = {
   buildPlugin,
-  bundlePath
+  bundlePath,
 };

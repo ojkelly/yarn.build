@@ -12,9 +12,9 @@
   --color-shadow: #282a2e;
   --color-text: #c5c8c6;
   --color-text-secondary: #969896;
-  --font-family: "IBM Plex Serif", serif, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue",
-    sans-serif;
+  --font-family:
+    "IBM Plex Serif", serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   --font-family-alt: "IBM Plex Sans Condensed", sans-serif;
   --hover-brightness: 1.2;
   --justify-important: center;

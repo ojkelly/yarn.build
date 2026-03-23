@@ -25,15 +25,15 @@ yarn plugin import https://yarn.build/latest/bundle
 ```yaml
 plugins:
   - checksum: ...                                 <-- remove this entry if both exist
-    path: .yarn/plugins/@ojkelly/plugin-all.cjs   <--  
+    path: .yarn/plugins/@ojkelly/plugin-all.cjs   <--
     spec: 'https://yarn.build/latest'             <--
   - checksum: ...
     path: .yarn/plugins/@yarn.build/plugin-all.cjs
     spec: 'https://yarn.build/latest'
 ```
 
-
 ## OpenTelemetry Support
+
 <details>
 
 yarn.build's `build`, `test` and `bundle` commands now come with optional OpenTelemetry (OTEL) instrumentation.
@@ -51,6 +51,7 @@ receivers:
 And set the appropirate envar for example `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` if you are running the collector on the same host as you're running yarn.build.
 
 NOTE: yarn.build doesn't currently support the `grpc` endpoint, becuase bundling the required `.proto` files might need a rework of the yarn plugin bundler, which is out of scope of the intial yarn.build OTEL integration.
+
 </details>
 
 ## Commands
@@ -216,6 +217,7 @@ If you want to customise the input and output folders per package you can setup 
 ```
 
 ## Troubleshooting
+
 <details>
 
 <summary>**The output is interlaced, or mangled, or not useful in CI**</summary>
@@ -237,6 +239,7 @@ Adapted for Docker / BuildKit, the following will set `CI` for the script, but n
 ```
 RUN env CI=true yarn build
 ```
+
 </details>
 
 ---
@@ -339,7 +342,7 @@ yarn.build:
   input: .
   output: .build
 ```
-</details>
----
+
+## </details>
 
 For developing on this repository see [packages/plugins/readme.md](packages/plugins/readme.md)

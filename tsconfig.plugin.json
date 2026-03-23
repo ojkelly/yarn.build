@@ -4,22 +4,13 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": [
-      "esnext",
-      "esnext.asynciterable",
-    ],
+    "lib": ["ESNext", "ESNext.AsyncIterable"],
     "strict": true,
-    // "target": "ES6",
-    // "module": "NodeNext",
-    // "moduleResolution": "NodeNext",
     "declaration": true,
     "allowJs": true,
     "downlevelIteration": true,
     "importHelpers": true,
     "skipLibCheck": true,
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["node"]
   }
 }

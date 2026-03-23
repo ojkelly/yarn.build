@@ -6,7 +6,6 @@ const spawn = require("cross-spawn");
 // TODO: not currently cross platform
 // needs linux, macos, or WSL
 
-
 /**
  * Executes a command with arguments and options.
  *

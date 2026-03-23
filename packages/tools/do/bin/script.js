@@ -2,7 +2,6 @@
 /* eslint-disable no-console */
 // Adapted from https://github.com/facebook/create-react-app/blob/main/packages/react-scripts/bin/react-scripts.js
 
-
 "use strict";
 
 process.on("unhandledRejection", (err) => {
@@ -20,7 +19,7 @@ const help = require("../scripts/util/help");
 const args = process.argv.slice(2);
 
 const scriptIndex = args.findIndex(
-  (x) => x === "build" || x === "eject" || x === "start" || x === "test"
+  (x) => x === "build" || x === "eject" || x === "start" || x === "test",
 );
 const script = scriptIndex === -1 ? args[0] : args[scriptIndex];
 const nodeArgs = scriptIndex > 0 ? args.slice(0, scriptIndex) : [];
@@ -62,7 +61,7 @@ fs.readdir(directoryPath, function (err, files) {
         .concat(require.resolve(directoryPath + script))
         .concat(args.slice(scriptIndex + 1)),
 
-      { stdio: "inherit" }
+      { stdio: "inherit" },
     );
 
     if (result.signal) {
@@ -77,14 +76,14 @@ fs.readdir(directoryPath, function (err, files) {
   } else if (bash.includes(script)) {
     exec(
       `/usr/bin/env bash ${directoryPath}${script}.sh ${args.slice(
-        scriptIndex + 2
+        scriptIndex + 2,
       )}`,
       function (err, stdout, stderr) {
         if (typeof stdout != `undefined` && stdout) {
-            console.log(stdout);
+          console.log(stdout);
         }
         if (typeof stderr != `undefined` && stderr) {
-            console.log(stderr);
+          console.log(stderr);
         }
         if (typeof err != `undefined` && err) {
           console.log(err.message);
@@ -95,7 +94,7 @@ fs.readdir(directoryPath, function (err, files) {
           }
           process.exit(1);
         }
-      }
+      },
     );
   } else {
     console.log('Unknown script "' + script + '".');

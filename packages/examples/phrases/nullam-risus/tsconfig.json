@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "build",
     "target": "es6",
-    "module": "commonjs",
     "pretty": true,
     "baseUrl": ".",
     "paths": {

@@ -8,7 +8,7 @@ const fs = require("fs-extra");
 
 // build the plugin and update it in the workspace
 
-const {bundlePath, buildPlugin} = require("./build-plugin");
+const { bundlePath, buildPlugin } = require("./build-plugin");
 const pluginFolder = `${env.repo.root}/.yarn/plugins/@yarn.build`;
 
 buildPlugin();
@@ -22,10 +22,8 @@ try {
   console.error(err);
 }
 
-
 try {
   fs.copyFileSync(bundlePath, `${pluginFolder}/${env.pkg.name}.cjs`);
-}
-catch (err) {
+} catch (err) {
   console.error(err);
 }

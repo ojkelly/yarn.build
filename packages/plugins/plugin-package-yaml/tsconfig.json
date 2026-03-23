@@ -3,12 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "baseUrl": "./.",
-    "types": [
-      "jest"
-    ]
+    "types": ["jest"]
   },
-  "exclude": [
-    "packages/*/lib",
-    "packages/yarnpkg-doctor/fixtures"
-  ]
+  "exclude": ["packages/*/lib", "packages/yarnpkg-doctor/fixtures"]
 }

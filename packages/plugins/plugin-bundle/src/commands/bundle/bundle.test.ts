@@ -1,3 +1,4 @@
+import { describe, test, expect } from "vitest";
 import { resolveNativePath } from "../bundle";
 import * as os from "os";
 import { npath, ppath } from "@yarnpkg/fslib";

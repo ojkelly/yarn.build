@@ -1,14 +1,16 @@
 {
   "name": "@internal/sit",
   "version": "1.0.0",
-  "main": "build/index.js",
-  "license": "UNLICENSED",
   "private": true,
+  "license": "UNLICENSED",
+  "main": "build/src/index.js",
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "jest": "^29.7.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.2.0"
   }
 }

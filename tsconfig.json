@@ -2,21 +2,18 @@
   "compilerOptions": {
     "jsx": "react",
     "allowSyntheticDefaultImports": true,
-    "allowJs": true,
     "baseUrl": ".",
     "strict": true,
-    "target": "ES6",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "build",
     "declaration": true,
-    "lib": [
-      "dom",
-      "es2017",
-      "esnext",
-      "esnext.asynciterable"
-    ]
+    "composite": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "lib": ["ES2022", "ESNext.AsyncIterable"]
   }
 }

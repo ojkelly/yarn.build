@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+import { test, expect } from "vitest";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as crypto from "crypto";
@@ -24,7 +24,7 @@ test("bundling lambda-project to a zip", async () => {
     "lambda",
     "bundle",
     "--output-directory",
-    bundleOutput
+    bundleOutput,
   );
 
   // THEN
@@ -56,7 +56,7 @@ test("bundling lambda-project to a zip with custom name", async () => {
     "--output-directory",
     bundleOutput,
     "--archive-name",
-    archiveName
+    archiveName,
   );
 
   // THEN
@@ -72,7 +72,7 @@ test("run lambda-project after bundling without compression", async () => {
   const workDir = getTempDirName();
   const bundleOutput = getTempDirName();
 
-console.log({ workDir,bundleOutput });
+  console.log({ workDir, bundleOutput });
   // Stage the test project far from the yarn.build project
   fs.copySync(__dirname, workDir, {
     errorOnExist: true,
@@ -87,7 +87,7 @@ console.log({ workDir,bundleOutput });
     "bundle",
     "--output-directory",
     bundleOutput,
-    "--no-compress"
+    "--no-compress",
   );
 
   // THEN
@@ -131,7 +131,7 @@ function yarnCmd(workDir: string, ...args: string[]) {
 function getTempDirName() {
   return path.join(
     os.tmpdir(),
-    "integ" + crypto.randomBytes(10).toString("hex")
+    "integ" + crypto.randomBytes(10).toString("hex"),
   );
 }
 

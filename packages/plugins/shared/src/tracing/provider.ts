@@ -1,11 +1,16 @@
-import { BasicTracerProvider,Tracer } from "@opentelemetry/sdk-trace-base";
-import { Resource } from "@opentelemetry/resources";
-import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
+import {
+  BasicTracerProvider,
+  BatchSpanProcessor,
+} from "@opentelemetry/sdk-trace-base";
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from "@opentelemetry/semantic-conventions";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { Attributes } from "@opentelemetry/api";
+import type { Tracer, Attributes } from "@opentelemetry/api";
 
-export class TraceProvider   {
+export class TraceProvider {
   // this is setup as a singleton so that it can only be instantiated once,
   // as it's called on many times, but never registed globally.
   // Because it's a plugin, the code might be evaluated but not needed to run.
@@ -18,13 +23,12 @@ export class TraceProvider   {
   // and even if it doesnt the span represents work done by the command, not
   // by yarn.build. So we setup a map of providers, to ensure we can shutdown
   // and flush the traces on exit.
-  private  static providers: Map<string, BasicTracerProvider> = new Map();
+  private static providers: Map<string, BasicTracerProvider> = new Map();
 
   public static get(name: string, version?: string): Tracer {
     if (!this.haveRegisterdExitHandler) {
       TraceProvider.registerExitHandler();
     }
-
 
     return this.getTraceProvider(name, version).getTracer(name, version);
   }
@@ -36,12 +40,15 @@ export class TraceProvider   {
 
     async function exitHandler(evtOrExitCodeOrError: number | string | Error) {
       try {
-        await Promise.all(Array.from(TraceProvider.providers.values()).map((provider) => provider.shutdown()));
+        await Promise.all(
+          Array.from(TraceProvider.providers.values()).map((provider) =>
+            provider.shutdown(),
+          ),
+        );
       } finally {
         process.exit(isNaN(+evtOrExitCodeOrError) ? 1 : +evtOrExitCodeOrError);
       }
     }
-
 
     // Handle all the exit codes so that we can shutdown and flush the traces
     ["beforeExit", "uncaughtException", "SIGINT", "SIGTERM"].forEach((evt) =>
@@ -51,7 +58,10 @@ export class TraceProvider   {
     TraceProvider.haveRegisterdExitHandler = true;
   }
 
-  private static getTraceProvider(name: string, version?: string): BasicTracerProvider {
+  private static getTraceProvider(
+    name: string,
+    version?: string,
+  ): BasicTracerProvider {
     const serviceName = `${name}${version ? `@${version}` : ""}`;
 
     let provider = TraceProvider.providers.get(serviceName);
@@ -61,20 +71,19 @@ export class TraceProvider   {
     }
 
     const resourceOpts: Attributes = {
-        [SemanticResourceAttributes.SERVICE_NAME]: name
-     };
+      [ATTR_SERVICE_NAME]: name,
+    };
 
     if (version) {
-      resourceOpts[SemanticResourceAttributes.SERVICE_VERSION] = version;
+      resourceOpts[ATTR_SERVICE_VERSION] = version;
     }
-
-    provider = new BasicTracerProvider({
-      resource: new Resource(resourceOpts),
-    });
 
     const exporter = new OTLPTraceExporter();
 
-    provider.addSpanProcessor(new BatchSpanProcessor(exporter));
+    provider = new BasicTracerProvider({
+      resource: resourceFromAttributes(resourceOpts),
+      spanProcessors: [new BatchSpanProcessor(exporter)],
+    });
 
     TraceProvider.providers.set(name, provider);
 

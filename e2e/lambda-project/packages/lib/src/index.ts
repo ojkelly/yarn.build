@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-ignore
-import uglify from 'uglify-js';
+import uglify from "uglify-js";
 
 export function muglify(code: string): string {
   const minifyOutput = uglify.minify(code);
@@ -9,5 +9,5 @@ export function muglify(code: string): string {
     throw minifyOutput.error;
   }
 
-  return minifyOutput.code + ' // MUGLIFIED';
+  return minifyOutput.code + " // MUGLIFIED";
 }

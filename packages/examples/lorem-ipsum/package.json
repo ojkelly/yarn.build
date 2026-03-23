@@ -1,0 +1,40 @@
+{
+  "name": "@internal/lorem-ipsum",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "build/src/index.js",
+  "exports": {
+    ".": {
+      "types": [
+        "./build/src/index.d.ts"
+      ],
+      "default": "./build/src/index.js"
+    },
+    "./*": {
+      "types": [
+        "./build/src/*.d.ts"
+      ],
+      "default": "./build/src/*.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf build",
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "ts-node ./src/index.ts"
+  },
+  "dependencies": {
+    "@internal/phrase-lorem-ipsum": "workspace:^",
+    "react": "^18.2.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "ts-node": "^10.9.2"
+  },
+  "engines": {
+    "node": ">=22.2.0"
+  }
+}

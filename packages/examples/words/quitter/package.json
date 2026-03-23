@@ -1,16 +1,19 @@
 {
   "name": "@internal/quitter",
   "version": "1.0.0",
-  "main": "build/index.js",
-  "license": "UNLICENSED",
   "private": true,
+  "license": "UNLICENSED",
+  "main": "build/src/index.js",
   "scripts": {
     "build": "tsc --noEmit"
   },
+  "dependencies": {
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.2.0"
+  },
   "yarn.build": {
     "output": null
-  },
-  "dependencies": {
-    "typescript": "^5.3.3"
   }
 }
