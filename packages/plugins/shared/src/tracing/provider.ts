@@ -39,6 +39,9 @@ export class TraceProvider {
     }
 
     async function exitHandler(evtOrExitCodeOrError: number | string | Error) {
+      if (evtOrExitCodeOrError instanceof Error) {
+        console.error(evtOrExitCodeOrError);
+      }
       try {
         await Promise.all(
           Array.from(TraceProvider.providers.values()).map((provider) =>

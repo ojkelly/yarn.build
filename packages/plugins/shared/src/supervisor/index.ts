@@ -23,7 +23,7 @@ import PLimit, { LimitFunction } from "p-limit";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
 import sliceAnsi from "slice-ansi";
-import { Graph, Node, RunCallback } from "./graph";
+import { CyclicDependencyError, Graph, Node, RunCallback } from "./graph";
 import { Hansi } from "./hansi";
 import { terminateAllChildProcesses } from "./terminate";
 import { SpanStatusCode } from "@opentelemetry/api";
@@ -517,10 +517,17 @@ class RunSupervisor {
     }
 
     // skip if the package does not contain the intended run command
-    if (
-      typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
-    ) {
-      return;
+    try {
+      if (
+        typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`
+      ) {
+        return;
+      }
+    } catch (err) {
+      throw new Error(
+        `Failed to read scripts from workspace at ${workspace.relativeCwd}. Check that its package.json is valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
+      );
     }
 
     // add the workspace to the run graph
@@ -549,44 +556,55 @@ class RunSupervisor {
     let rerunParent = false;
 
     if (this.ignoreDependencies === false) {
-      for (const dependencyType of Manifest.hardDependencies) {
-        for (const descriptor of workspace.manifest
-          .getForScope(dependencyType)
-          .values()) {
-          const depWorkspace =
-            this.project.tryWorkspaceByDescriptor(descriptor);
+      try {
+        for (const dependencyType of Manifest.hardDependencies) {
+          for (const descriptor of workspace.manifest
+            .getForScope(dependencyType)
+            .values()) {
+            const depWorkspace =
+              this.project.tryWorkspaceByDescriptor(descriptor);
 
-          // skip external packages
-          if (
-            depWorkspace === null ||
-            this.excludeWorkspacePredicate(depWorkspace)
-          ) {
-            continue;
-          }
+            // skip external packages
+            if (
+              depWorkspace === null ||
+              this.excludeWorkspacePredicate(depWorkspace)
+            ) {
+              continue;
+            }
 
-          // ignore local workspaces without without the specified run command
-          if (
-            typeof depWorkspace.manifest.scripts.get(this.runCommand) ===
-            `undefined`
-          ) {
-            continue;
-          }
+            // ignore local workspaces without without the specified run command
+            if (
+              typeof depWorkspace.manifest.scripts.get(this.runCommand) ===
+              `undefined`
+            ) {
+              continue;
+            }
 
-          const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
+            const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
 
-          node.addDependency(dep);
+            node.addDependency(dep);
 
-          // this resolve call checks for cyclic dependencies
-          this.runGraph.checkCyclical(dep);
+            // this resolve call checks for cyclic dependencies
+            this.runGraph.checkCyclical(dep);
 
-          const depNeedsRun = await this.plan(dep, depWorkspace);
+            const depNeedsRun = await this.plan(dep, depWorkspace);
 
-          if (depNeedsRun) {
-            this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
-            rerunParent = true;
-            this.removeFromExcluded(depWorkspace);
+            if (depNeedsRun) {
+              this.runGraph.addRunCallback(
+                dep,
+                this.createRunItem(depWorkspace),
+              );
+              rerunParent = true;
+              this.removeFromExcluded(depWorkspace);
+            }
           }
         }
+      } catch (err) {
+        if (err instanceof CyclicDependencyError) throw err;
+        throw new Error(
+          `Failed to read dependencies from workspace at ${workspace.relativeCwd}. Check that its package.json is valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+          { cause: err },
+        );
       }
     }
 

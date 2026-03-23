@@ -118,7 +118,14 @@ that both packages can depend on.
       console.error(msg);
       process.exit(2);
     } else {
-      console.error("An error occured in yarn.build.", err);
+      const workspaceName = targetWorkspace.manifest.name
+        ? `${targetWorkspace.manifest.name.scope ? `@${targetWorkspace.manifest.name.scope}/` : ""}${targetWorkspace.manifest.name.name}`
+        : targetWorkspace.relativeCwd;
+
+      throw new Error(
+        `Failed to process workspace ${workspaceName} (${targetWorkspace.relativeCwd}): ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
+      );
     }
   }
 };
