@@ -727,7 +727,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/adipiscing/",\
         "packageDependencies": [\
           ["@internal/adipiscing", "workspace:packages/examples/words/adipiscing"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
           ["vitest", "virtual:e1d11c6d66f2e4aa7a0c354b88d67b2705bf50d1ced540a36adad837c3cb55afbb273e4d5e83b09f4699b3686ac60a409001dc2f22c5aa15571f7e28bab9f00a#npm:4.1.0"]\
         ],\
@@ -739,7 +738,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/amet/",\
         "packageDependencies": [\
           ["@internal/amet", "workspace:packages/examples/words/amet"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
@@ -750,7 +748,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/consectetur/",\
         "packageDependencies": [\
           ["@internal/consectetur", "workspace:packages/examples/words/consectetur"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
@@ -761,7 +758,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/dolor/",\
         "packageDependencies": [\
           ["@internal/dolor", "workspace:packages/examples/words/dolor"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
@@ -772,7 +768,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/elit/",\
         "packageDependencies": [\
           ["@internal/elit", "workspace:packages/examples/words/elit"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
@@ -783,7 +778,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/ipsum/",\
         "packageDependencies": [\
           ["@internal/ipsum", "workspace:packages/examples/words/ipsum"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
@@ -794,7 +788,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/lorem/",\
         "packageDependencies": [\
           ["@internal/lorem", "workspace:packages/examples/words/lorem"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
@@ -806,7 +799,6 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@internal/lorem-ipsum", "workspace:packages/examples/lorem-ipsum"],\
           ["@internal/phrase-lorem-ipsum", "workspace:packages/examples/phrases/lorem-ipsum"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/node", "npm:24.12.0"],\
           ["react", "npm:18.3.1"],\
           ["ts-node", "virtual:76b4067bcc43516ec2d5f09dbc310935d6fbae92786e6806fb84e2da9353f3990aaccce210542ce883bef2aee3ca0b394e43330bb8e686bf1141bcd867cb0ea1#npm:10.9.2"],\
@@ -822,7 +814,6 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@internal/lorem-ipsum-docker", "workspace:packages/examples/lorem-ipsum-docker"],\
           ["@internal/phrase-lorem-ipsum", "workspace:packages/examples/phrases/lorem-ipsum"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["@types/node", "npm:24.12.0"],\
           ["ts-node", "virtual:76b4067bcc43516ec2d5f09dbc310935d6fbae92786e6806fb84e2da9353f3990aaccce210542ce883bef2aee3ca0b394e43330bb8e686bf1141bcd867cb0ea1#npm:10.9.2"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
@@ -886,7 +877,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/quitter/",\
         "packageDependencies": [\
           ["@internal/quitter", "workspace:packages/examples/words/quitter"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
@@ -897,7 +887,6 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/examples/words/sit/",\
         "packageDependencies": [\
           ["@internal/sit", "workspace:packages/examples/words/sit"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
