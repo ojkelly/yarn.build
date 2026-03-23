@@ -85,8 +85,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
-      "oxlint",
-      "oxfmt --write"
+      "yarn oxlint",
+      "yarn oxfmt --write"
     ]
   },
   "engines": {
