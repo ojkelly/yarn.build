@@ -6,7 +6,7 @@ export const getIgnoreFile = async (fileName: Filename): Promise<string[]> => {
     const data = readFileSync(fileName, "utf-8");
 
     return data.split("\n");
-  } catch (_e) {
+  } catch {
     // File does not exist.
     return [];
   }

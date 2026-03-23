@@ -4,6 +4,7 @@
   "private": true,
   "license": "MIT",
   "author": "Owen Kelly",
+  "type": "module",
   "workspaces": {
     "packages": [
       "packages/tools/*",

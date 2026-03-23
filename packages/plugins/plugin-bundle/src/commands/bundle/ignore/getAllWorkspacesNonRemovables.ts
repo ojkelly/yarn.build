@@ -48,11 +48,9 @@ const getAllWorkspacesNonRemovablesHelper = ({
 }) => {
   return [
     ...new Set(
-      ...[
-        Object.values(NonRemovableFiles)
-          .map((fn) => fn({ cwd, rootDir }))
-          .flat(),
-      ],
+      Object.values(NonRemovableFiles)
+        .map((fn) => fn({ cwd, rootDir }))
+        .flat(),
     ),
   ];
 };

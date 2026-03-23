@@ -46,7 +46,7 @@ export async function GetChangedWorkspaces(
     }, new Set<Workspace>());
 
     return Array.from(allDependents.values());
-  } catch (error) {
+  } catch {
     return [];
   }
 }

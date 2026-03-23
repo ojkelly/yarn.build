@@ -31,9 +31,11 @@ export class Hansi {
   }
 
   static autoWrap(active: boolean): void {
-    active
-      ? process.stdout.write(CSI + `?7h`)
-      : process.stdout.write(CSI + `?7l`);
+    if (active) {
+      process.stdout.write(CSI + `?7h`);
+    } else {
+      process.stdout.write(CSI + `?7l`);
+    }
   }
 
   static clearScreenDown(): void {

@@ -197,7 +197,7 @@ export default class Build extends BaseCommand {
           this.exclude = [];
         }
 
-        if (!!this.excludeCurrent) {
+        if (this.excludeCurrent) {
           this.exclude.push(
             structUtils.stringifyIdent(cwdWorkspace.anchoredLocator),
           );

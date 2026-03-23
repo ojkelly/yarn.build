@@ -68,7 +68,7 @@ async function getConfiguration(
       }
 
       console.warn(errors);
-    } catch (error) {
+    } catch {
       let tip = ``;
 
       if (content.match(/^\s+(?!-)[^:]+\s+\S+/m))
@@ -100,7 +100,7 @@ async function GetPluginConfiguration(
     ...data,
     folders: {
       ...DEFAULT_CONFIG.folders,
-      ...(data.folders ?? {}),
+      ...data.folders,
     },
   };
 }

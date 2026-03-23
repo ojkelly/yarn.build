@@ -276,10 +276,9 @@ export default class Bundler extends BaseCommand {
       if (await xfs.lstatPromise(gitDir)) {
         await xfs.removePromise(gitDir);
       }
-    } catch (e) {}
+    } catch {}
     await Promise.all(
       excluded.map(async (p) => {
-        p as PortablePath;
         if (p.startsWith(yarnDirectory)) {
           return;
         }
@@ -298,7 +297,7 @@ export default class Bundler extends BaseCommand {
             // File might already be deleted. For example if parent folder was deleted first.
             await xfs.removePromise(p as PortablePath);
           }
-        } catch (_e) {
+        } catch {
           // Empty on purpose
         }
       }),
@@ -442,7 +441,7 @@ export default class Bundler extends BaseCommand {
                 if (await xfs.lstatPromise(previousArchive)) {
                   exclude.push(previousArchive);
                 }
-              } catch (e) {}
+              } catch {}
 
               const configuration = await Configuration.find(
                 tmpPackageCwd,

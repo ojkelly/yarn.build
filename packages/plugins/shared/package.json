@@ -1,6 +1,7 @@
 {
   "name": "@ojkelly/yarn-build-shared",
   "version": "1.0.0",
+  "type": "module",
   "main": "dist",
   "scripts": {
     "clean": "rm -rf dist",

@@ -1,6 +1,7 @@
 {
   "name": "@yarn.build/yarn-plugin-package-yaml",
   "version": "0.9.1",
+  "type": "module",
   "homepage": "https://yarn.build",
   "license": "MIT",
   "repository": {

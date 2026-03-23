@@ -126,7 +126,7 @@ export class PortablePackageYamlFS extends BasePortableFakeFS {
 
     let patched = p;
 
-    if (!!this.isPathForManifest(p)) {
+    if (this.isPathForManifest(p)) {
       const manifestName = this.doesManifestExist(p);
 
       if (typeof manifestName !== "undefined") {

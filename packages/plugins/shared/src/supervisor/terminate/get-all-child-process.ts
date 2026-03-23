@@ -36,7 +36,7 @@ export const getAllChildProccess = async (
       .filter(Boolean)
       .map((value) => parseInt(value, 10))
       .filter((value) => !isNaN(value));
-  } catch (e) {
+  } catch {
     // Empty on purpose
   }
 

@@ -87,7 +87,7 @@ fs.readdir(directoryPath, function (err, files) {
         }
         if (typeof err != `undefined` && err) {
           console.log(err.message);
-          if (!!err.code) {
+          if (err.code) {
             process.exit(err.code);
 
             return;

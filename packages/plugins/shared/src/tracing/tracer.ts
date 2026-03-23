@@ -67,13 +67,13 @@ export class Tracer {
       ctx = opts.ctx;
     }
 
-    if (!!opts.propegateFromEnv || opts?.spanOptions?.kind == 4) {
+    if (opts.propegateFromEnv || opts?.spanOptions?.kind == 4) {
       const tp = process.env["TRACEPARENT"];
 
       if (typeof tp == "string") {
         const parent = parseTraceParent(tp ?? "");
 
-        if (!!parent) {
+        if (parent) {
           ctx = trace.setSpanContext(context.active(), parent);
         }
       }

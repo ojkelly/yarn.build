@@ -869,12 +869,13 @@ class RunSupervisor {
 
     // only add default output path if we didn't find anything, yet
     if (outputPaths.size === 0) {
-      Array.isArray(this.pluginConfiguration.folders.output)
-        ? this.pluginConfiguration.folders.output.forEach(
-            (p) => p && outputPaths.add(p),
-          )
-        : typeof this.pluginConfiguration.folders.output === `string` &&
-          outputPaths.add(this.pluginConfiguration.folders.output);
+      if (Array.isArray(this.pluginConfiguration.folders.output)) {
+        this.pluginConfiguration.folders.output.forEach(
+          (p) => p && outputPaths.add(p),
+        );
+      } else if (typeof this.pluginConfiguration.folders.output === `string`) {
+        outputPaths.add(this.pluginConfiguration.folders.output);
+      }
     }
 
     // Traverse the dirs and see if they've been modified
@@ -1171,7 +1172,7 @@ class RunSupervisor {
       if (!thread || !thread.start || thread.done) {
         continue;
       }
-      if (!!this.runReport.runStart) {
+      if (this.runReport.runStart) {
         this.runReport.workspaces[relativePath].runtimeSeconds =
           timestamp - thread.start;
       }
@@ -1542,7 +1543,7 @@ class RunSupervisor {
       totalMs += workspace.runtimeSeconds ?? 0;
     }
 
-    if (!!this.runReport.runStart && this.runGraph.runSize > 1) {
+    if (this.runReport.runStart && this.runGraph.runSize > 1) {
       const cpuTime = totalMs;
       const now = Date.now();
       const wallTime = now - this.runReport.runStart;
@@ -1552,7 +1553,7 @@ class RunSupervisor {
       output += `Saved: ${savedTime}\n`;
     }
 
-    if (!!this.runReport.runStart) {
+    if (this.runReport.runStart) {
       output +=
         `Runtime (wall): ` +
         formatTimestampDifference(Date.now(), this.runReport.runStart) +

@@ -16,7 +16,7 @@ export const getAllFiles = async ({
     })) as Filename[];
 
     return files;
-  } catch (_e) {
+  } catch {
     return [];
   }
 };
