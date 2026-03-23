@@ -9,6 +9,9 @@ import {
   formatUtils,
 } from "@yarnpkg/core";
 import isCI from "is-ci";
+
+const isNonInteractive =
+  isCI || process.env.CLAUDE_CODE === "1" || !process.stdout.isTTY;
 import { cpus } from "os";
 import { Filename, PortablePath, npath, ppath, xfs } from "@yarnpkg/fslib";
 import { getWorkspaceConfiguration, YarnBuildConfiguration } from "../config";
@@ -392,7 +395,7 @@ class RunSupervisor {
 
           const wrk = this.runReport.workspaces[relativeCwd];
 
-          if (isCI) {
+          if (isNonInteractive) {
             const pkg = `✅ ${relativeCwd}`.padEnd(60);
             const timing = formatTimestampDifference(
               0,
@@ -412,7 +415,7 @@ class RunSupervisor {
           this.runReport.workspaces[relativeCwd].skipped = true;
           this.runReport.skipCount++;
 
-          if (isCI) {
+          if (isNonInteractive) {
             const pkg = `⏩ ${relativeCwd} `.padEnd(60);
             const timing = `--`.padStart(19);
 
@@ -432,7 +435,7 @@ class RunSupervisor {
           const wrk = this.runReport.workspaces[relativeCwd];
           const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
 
-          if (isCI) {
+          if (isNonInteractive) {
             const pkg = `[IGNORE${l?.exitCode ? `: ${l?.exitCode}` : ""}] ${
               wrk.name
             } `.padEnd(60);
@@ -457,7 +460,7 @@ class RunSupervisor {
           const wrk = this.runReport.workspaces[relativeCwd];
           const l = this.runLog?.get(`${relativeCwd}#${this.runCommand}`);
 
-          if (isCI) {
+          if (isNonInteractive) {
             const pkg = `❌ ${relativeCwd}`.padEnd(50);
             const timing = `${
               l?.exitCode ? `(exit code: ${l?.exitCode})` : "→"
@@ -1018,11 +1021,11 @@ class RunSupervisor {
 
         this.runReport.runStart = Date.now();
 
-        if (isCI || this.dryRun) {
+        if (isNonInteractive || this.dryRun) {
           output += `${this.formatHeader("Run Order") + "\n"}`;
           output += await this.performDryRun(ctx);
 
-          if (!isCI) {
+          if (!isNonInteractive) {
             output += `${
               this.formatHeader(
                 `Dry Run / Command: ${this.runCommand} / Total: ${this.runGraph.runSize}`,
@@ -1040,11 +1043,11 @@ class RunSupervisor {
         }
 
         // Print our RunReporter output
-        if (!isCI) {
+        if (!isNonInteractive) {
           Hansi.pad(this.concurrency + 3); // ensure we have the space we need (required if we start near the bottom of the display).
         }
 
-        if (isCI) {
+        if (isNonInteractive) {
           process.stdout.write(
             `\n${
               this.formatHeader(
@@ -1065,7 +1068,7 @@ class RunSupervisor {
             : (this.runTargets[0]?.relativeCwd ?? "Nothing to run");
 
         // theres an off by one error in the RunLog
-        if (!isCI) {
+        if (!isNonInteractive) {
           process.stderr.write("\n");
         }
 
@@ -1104,7 +1107,7 @@ class RunSupervisor {
     const waitTime = 90;
     let output = "";
 
-    if (isCI) {
+    if (isNonInteractive) {
       this.updateProgressCI(timestamp);
     } else {
       output = this.generateProgressString(timestamp);
@@ -1314,7 +1317,7 @@ class RunSupervisor {
   };
 
   generateFinalReport = (): string => {
-    if (!isCI) {
+    if (!isNonInteractive) {
       // Cleanup the processing lines
       Hansi.cursorUp(
         Hansi.linesRequired(
@@ -1337,7 +1340,7 @@ class RunSupervisor {
       printOutput = true;
     }
 
-    if (isCI) {
+    if (isNonInteractive) {
       printOutput = true;
     }
 
@@ -1700,7 +1703,7 @@ class RunSupervisor {
                   );
 
                   if (this.failFast === true) {
-                    if (isCI) {
+                    if (isNonInteractive) {
                       process.stdout.write(
                         "--fail-fast is set, terminating all processes\n",
                       );
