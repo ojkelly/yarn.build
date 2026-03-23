@@ -10,7 +10,6 @@
     "dev": "vitest"
   },
   "dependencies": {
-    "@types/execa": "^2.0.2",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.0.3",
     "execa": "^9.6.0",

@@ -40,7 +40,8 @@ module.exports = {
               ),
               {
                 dependencies: {
-                  "@tools/do": "workspace:*",
+                  // TODO: investigate if this is a bug in yarn, whereby this is being applied to the nested workspace
+                  // "@tools/do": "workspace:*",
                   // You can also add your own dependencies here
                   // 'typescript': '*',
                   // 'eslint': '*',

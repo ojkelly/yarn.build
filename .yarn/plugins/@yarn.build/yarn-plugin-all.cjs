@@ -32310,6 +32310,9 @@ var plugin = (() => {
         return;
       }
       async function exitHandler(evtOrExitCodeOrError) {
+        if (evtOrExitCodeOrError instanceof Error) {
+          console.error(evtOrExitCodeOrError);
+        }
         try {
           await Promise.all(
             Array.from(_TraceProvider.providers.values()).map(
@@ -35468,8 +35471,15 @@ exports.default = index;
         this.excluded.add(workspace);
         return;
       }
-      if (typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`) {
-        return;
+      try {
+        if (typeof workspace.manifest.scripts.get(this.runCommand) === `undefined`) {
+          return;
+        }
+      } catch (err) {
+        throw new Error(
+          `Failed to read scripts from workspace at ${workspace.relativeCwd}. Check that its package.json is valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+          { cause: err }
+        );
       }
       const node = this.runGraph.addNode(workspace.relativeCwd);
       await this.plan(node, workspace);
@@ -35489,25 +35499,36 @@ exports.default = index;
       let rerun = false;
       let rerunParent = false;
       if (this.ignoreDependencies === false) {
-        for (const dependencyType of import_core5.Manifest.hardDependencies) {
-          for (const descriptor of workspace.manifest.getForScope(dependencyType).values()) {
-            const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
-            if (depWorkspace === null || this.excludeWorkspacePredicate(depWorkspace)) {
-              continue;
-            }
-            if (typeof depWorkspace.manifest.scripts.get(this.runCommand) === `undefined`) {
-              continue;
-            }
-            const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
-            node.addDependency(dep);
-            this.runGraph.checkCyclical(dep);
-            const depNeedsRun = await this.plan(dep, depWorkspace);
-            if (depNeedsRun) {
-              this.runGraph.addRunCallback(dep, this.createRunItem(depWorkspace));
-              rerunParent = true;
-              this.removeFromExcluded(depWorkspace);
+        try {
+          for (const dependencyType of import_core5.Manifest.hardDependencies) {
+            for (const descriptor of workspace.manifest.getForScope(dependencyType).values()) {
+              const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
+              if (depWorkspace === null || this.excludeWorkspacePredicate(depWorkspace)) {
+                continue;
+              }
+              if (typeof depWorkspace.manifest.scripts.get(this.runCommand) === `undefined`) {
+                continue;
+              }
+              const dep = this.runGraph.addNode(depWorkspace.relativeCwd);
+              node.addDependency(dep);
+              this.runGraph.checkCyclical(dep);
+              const depNeedsRun = await this.plan(dep, depWorkspace);
+              if (depNeedsRun) {
+                this.runGraph.addRunCallback(
+                  dep,
+                  this.createRunItem(depWorkspace)
+                );
+                rerunParent = true;
+                this.removeFromExcluded(depWorkspace);
+              }
             }
           }
+        } catch (err) {
+          if (err instanceof CyclicDependencyError) throw err;
+          throw new Error(
+            `Failed to read dependencies from workspace at ${workspace.relativeCwd}. Check that its package.json is valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+            { cause: err }
+          );
         }
       }
       let hasChanges = false;
@@ -36586,7 +36607,11 @@ that both packages can depend on.
         console.error(msg);
         process.exit(2);
       } else {
-        console.error("An error occured in yarn.build.", err);
+        const workspaceName = targetWorkspace.manifest.name ? `${targetWorkspace.manifest.name.scope ? `@${targetWorkspace.manifest.name.scope}/` : ""}${targetWorkspace.manifest.name.name}` : targetWorkspace.relativeCwd;
+        throw new Error(
+          `Failed to process workspace ${workspaceName} (${targetWorkspace.relativeCwd}): ${err instanceof Error ? err.message : String(err)}`,
+          { cause: err }
+        );
       }
     }
   };

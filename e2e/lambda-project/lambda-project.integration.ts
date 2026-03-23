@@ -3,7 +3,7 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as crypto from "crypto";
 import * as path from "path";
-import * as execa from "execa";
+import { execaSync } from "execa";
 import StreamZip from "node-stream-zip";
 
 test("bundling lambda-project to a zip", async () => {
@@ -104,7 +104,7 @@ test("run lambda-project after bundling without compression", async () => {
   // Now run the bundled code to see that it works!
   // lambda-project's dependencies look like this: lambda -> lib -> uglify-js
   // Calling the lambda's api handler tests the uglify-js transitive dependency
-  const execResult = execa.sync("node", ["entrypoint.js"], {
+  const execResult = execaSync("node", ["entrypoint.js"], {
     cwd: bundleOutput,
   });
 
@@ -121,7 +121,7 @@ test("run lambda-project after bundling without compression", async () => {
 // Utils -----------------------------------------------------------------------
 
 function yarnCmd(workDir: string, ...args: string[]) {
-  execa.sync("yarn", args, {
+  execaSync("yarn", args, {
     cwd: workDir,
     stdout: process.stdout,
     stderr: process.stderr,
