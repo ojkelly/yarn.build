@@ -44,20 +44,6 @@ status = 200
 force = true
 
 
-# plugin-package-yaml
-[[redirects]]
-from = "/yaml"
-to = "https://github.com/ojkelly/yarn.build/releases/download/latest/yarn-plugin-package-yaml.cjs"
-status = 200
-force = true
-
-[[redirects]]
-from = "/release/*/yaml"
-to = "https://github.com/ojkelly/yarn.build/releases/download/*/yarn-plugin-package-yaml.cjs"
-status = 200
-force = true
-
-
 # yarn 2
 [[redirects]]
 from = "/v2"

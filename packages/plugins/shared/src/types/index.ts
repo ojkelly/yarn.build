@@ -4,9 +4,5 @@ export type DeepPartial<T> = {
     : T[P];
 };
 export type Maybe<T> = T | null | undefined;
-export const PackageFiles = [
-  "package.json",
-  "package.yaml",
-  "package.yml",
-] as const;
+export const PackageFiles = ["package.json"] as const;
 export type PackageFile = (typeof PackageFiles)[number];

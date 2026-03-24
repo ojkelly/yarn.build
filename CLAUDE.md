@@ -45,8 +45,7 @@ packages/
     plugin-all/              # Aggregates all plugins into one
     plugin-build/            # `yarn build` command
     plugin-test/             # `yarn test` command
-    plugin-package-yaml/     # Allows package.yaml instead of package.json
-    shared/                  # Shared utilities (@ojkelly/yarn-build-shared)
+shared/                  # Shared utilities (@ojkelly/yarn-build-shared)
       src/supervisor/        # RunSupervisor - core orchestration
       src/tracing/           # Optional OpenTelemetry tracing
   tools/

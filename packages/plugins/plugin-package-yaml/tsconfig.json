@@ -1,9 +1,0 @@
-{
-  "extends": "../../../tsconfig.plugin.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "baseUrl": "./.",
-    "types": ["jest"]
-  },
-  "exclude": ["packages/*/lib", "packages/yarnpkg-doctor/fixtures"]
-}
