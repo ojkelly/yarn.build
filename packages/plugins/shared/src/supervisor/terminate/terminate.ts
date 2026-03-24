@@ -15,6 +15,11 @@ export const terminateAllChildProcesses = async (callId = 0): Promise<void> => {
   const pid = process.pid;
   const childPids = await getAllChildProccess(pid);
 
+  if (childPids.length === 0) {
+    terminateProcess.hasBeenTerminated = true;
+    return;
+  }
+
   childPids.forEach((pid) => {
     try {
       process.kill(pid, "SIGKILL");

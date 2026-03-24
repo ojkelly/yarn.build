@@ -88,7 +88,7 @@ export class TraceProvider {
       spanProcessors: [new BatchSpanProcessor(exporter)],
     });
 
-    TraceProvider.providers.set(name, provider);
+    TraceProvider.providers.set(serviceName, provider);
 
     return provider;
   }

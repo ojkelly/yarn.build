@@ -1,8 +1,8 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import { Workspace } from "@yarnpkg/core";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 interface Options {
   root: Workspace;
@@ -10,15 +10,15 @@ interface Options {
   sinceBranch?: string;
 }
 
-function getCommand(options: Options): string {
+function getArgs(options: Options): string[] {
   const { commit, sinceBranch } = options;
 
   if (commit) {
-    return `git diff --name-only ..${commit}`;
+    return ["diff", "--name-only", `..${commit}`];
   }
 
   if (sinceBranch) {
-    return `git diff --name-only ${sinceBranch}...`;
+    return ["diff", "--name-only", `${sinceBranch}...`];
   }
 
   throw new Error("Unable to determine how to detect changes.");
@@ -28,8 +28,8 @@ export async function GetChangedWorkspaces(
   options: Options,
 ): Promise<Workspace[]> {
   try {
-    const cmd = getCommand(options);
-    const { stdout } = await execAsync(cmd);
+    const args = getArgs(options);
+    const { stdout } = await execFileAsync("git", args);
     const files = stdout.split("\n");
 
     const changedWorkspaces = options.root.project.workspaces.filter(

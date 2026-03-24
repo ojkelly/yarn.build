@@ -1,35 +1,30 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import { getPlatform } from "./get-platform";
 
-const execute = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export const getAllChildProccess = async (
   pid: number | string,
 ): Promise<number[]> => {
   const platform = getPlatform();
-  const command = (({
-    platform,
-    pid,
-  }: {
-    platform: "unix" | "windows";
-    pid: string | number;
-  }) => {
-    switch (platform) {
-      case "unix":
-        return `pgrep "-P ${pid}"`;
-
-      case "windows":
-        return `wmic process where (ParentProcessId=${pid}) get ProcessId`;
-
-      default:
-        throw new Error("Unable to find parent process");
-    }
-  })({ platform, pid });
   let messages: number[] = [];
 
   try {
-    const { stdout } = await execute(command);
+    let stdout: string;
+    if (platform === "unix") {
+      ({ stdout } = await execFileAsync("pgrep", ["-P", String(pid)]));
+    } else if (platform === "windows") {
+      ({ stdout } = await execFileAsync("wmic", [
+        "process",
+        "where",
+        `(ParentProcessId=${pid})`,
+        "get",
+        "ProcessId",
+      ]));
+    } else {
+      throw new Error("Unable to find parent process");
+    }
 
     messages = stdout
       .split(`\n`)

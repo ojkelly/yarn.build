@@ -4,9 +4,12 @@ import * as t from "typanion";
 import { load, JSON_SCHEMA } from "js-yaml";
 import { DeepPartial } from "./types";
 
-const DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME = `.yarnbuildrc.yml` as Filename;
+const DEFAULT_YARN_BUILD_CONFIGURATION_FILENAME =
+  `.yarnbuildrc.yml` as Filename;
 
 const DEFAULT_IGNORE_FILE = ".bundleignore" as Filename;
+
+export const PLUGIN_VERSION = "0.9.1";
 
 const isYarnBuildConfiguration = t.isObject({
   folders: t.isObject({
@@ -48,7 +51,7 @@ async function getConfiguration(
   configuration: Configuration,
 ): Promise<DeepPartial<YarnBuildConfiguration>> {
   // TODO: make this more customisable
-  const rcFilename = DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME;
+  const rcFilename = DEFAULT_YARN_BUILD_CONFIGURATION_FILENAME;
 
   const rcPath = ppath.join(
     configuration.projectCwd || configuration.startingCwd,
@@ -125,7 +128,7 @@ export {
   GetPluginConfiguration,
   GetPartialPluginConfiguration,
   DEFAULT_IGNORE_FILE,
-  DEFAULT_YARN_BUILD_CONFIGRATION_FILENAME,
+  DEFAULT_YARN_BUILD_CONFIGURATION_FILENAME,
   isYarnBuildManifestConfiguration,
   YarnBuildManifestConfiguration,
   getWorkspaceConfiguration,

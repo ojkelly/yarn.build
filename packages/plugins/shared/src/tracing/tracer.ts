@@ -11,20 +11,35 @@ import {
 } from "@opentelemetry/api";
 
 export class Tracer {
+  private static instances: Map<string, Tracer> = new Map();
+
   name: string;
 
   version?: string;
 
   _tracer: OTELTracer;
 
-  constructor(name: string, version?: string) {
+  private constructor(name: string, version?: string) {
     this.name = name;
     this.version = version;
     this._tracer = TraceProvider.get(name, version);
   }
 
+  static getInstance(name: string, version?: string): Tracer {
+    const key = `${name}${version ? `@${version}` : ""}`;
+
+    let instance = Tracer.instances.get(key);
+
+    if (!instance) {
+      instance = new Tracer(name, version);
+      Tracer.instances.set(key, instance);
+    }
+
+    return instance;
+  }
+
   recordException(span: Span, err: string | Error): void {
-    if (typeof typeof err === "string" || err instanceof Error) {
+    if (typeof err === "string" || err instanceof Error) {
       span.recordException(err);
       span.setStatus({
         code: SpanStatusCode.ERROR,
@@ -49,7 +64,7 @@ export class Tracer {
       ctx?: Context;
       supressExceptions?: boolean; // set to true to prevent exceptions bubbling up the stack
       spanOptions?: SpanOptions;
-      propegateFromEnv?: boolean;
+      propagateFromEnv?: boolean;
     },
     fn: F,
   ): Promise<Awaited<ReturnType<F>> | ReturnType<F>> {
@@ -67,10 +82,10 @@ export class Tracer {
       ctx = opts.ctx;
     }
 
-    if (opts.propegateFromEnv || opts?.spanOptions?.kind == 4) {
+    if (opts.propagateFromEnv || opts?.spanOptions?.kind === 4) {
       const tp = process.env["TRACEPARENT"];
 
-      if (typeof tp == "string") {
+      if (typeof tp === "string") {
         const parent = parseTraceParent(tp ?? "");
 
         if (parent) {

@@ -17,7 +17,6 @@ Or install any of the commands individually with
 ```
 yarn plugin import https://yarn.build/latest/build
 yarn plugin import https://yarn.build/latest/test
-yarn plugin import https://yarn.build/latest/bundle
 ```
 
 **If you're upgrading the plugin** the install location has changed to be under the `@yarn.build` namespace. If you have any yarn.build plugin previously installed you may need to remove the old one manually from `.yarnrc.yml`:
@@ -36,7 +35,7 @@ plugins:
 
 <details>
 
-yarn.build's `build`, `test` and `bundle` commands now come with optional OpenTelemetry (OTEL) instrumentation.
+yarn.build's `build` and `test` commands now come with optional OpenTelemetry (OTEL) instrumentation.
 
 <summary>To use it, you need to run an OTEL Collector with a http receiver:</summary>
 
@@ -50,7 +49,7 @@ receivers:
 
 And set the appropirate envar for example `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` if you are running the collector on the same host as you're running yarn.build.
 
-NOTE: yarn.build doesn't currently support the `grpc` endpoint, becuase bundling the required `.proto` files might need a rework of the yarn plugin bundler, which is out of scope of the intial yarn.build OTEL integration.
+NOTE: yarn.build doesn't currently support the `grpc` endpoint.
 
 </details>
 
@@ -129,48 +128,6 @@ Run `yarn build query` from within a package to see the dependency graph of what
 might be built.
 
 _Query doesn't currently show what's cached / needs to be rebuilt._
-
-### `bundle`
-
-Bundle a package and its local dependencies, designed for containers and AWS lambda.
-
-A file `entrypoint.js` is added to the project root, that reexports the file you
-specify as `main` in `package.json`.
-
-_Output `bundle.zip` to a specific folder_
-
-```bash
-# or any path you want to put it in
-yarn bundle --output-directory ../tmp
-```
-
-_Bundle but don't zip_
-
-This is useful when you're building inside a docker container.
-
-Choose an output directory outside your project and pass `--no-compress`.
-
-```bash
-# or any path you want to put it in that's outside your project root
-yarn bundle --no-compress --output-directory /srv/app
-```
-
-See this [Dockerfile](packages/examples/lorem-ipsum-docker/Dockerfile) and [build script](packages/examples/lorem-ipsum-docker/docker-bundle-build.sh) for an example of how you can bundle into a container image.
-
-#### `.bundleignore`
-
-You can set files to be ignored when bundling for even smaller bundles.
-
-Add a `.bundleignore` file with the same format as `.gitignore` next to the
-`package.json` you are bundling.
-
-Optionally put one next to your root `package.json` to apply to all bundles.
-
-You can pass `--ignore-file` to specify a different ignore file.
-
-Or decide at bundle time what to ignore by passing `--exclude` along with the file path to ignore.
-
-See #112 for the original PR.
 
 ### `test`
 

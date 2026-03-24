@@ -17,12 +17,14 @@ to = "https://github.com/ojkelly/yarn.build/releases/download/*/yarn-plugin-buil
 status = 200
 force = true
 
+# Deprecated: plugin-bundle has been removed and is not receiving new versions.
 [[redirects]]
 from = "/latest/bundle"
 to = "https://github.com/ojkelly/yarn.build/releases/download/latest/yarn-plugin-bundle.cjs"
 status = 200
 force = true
 
+# Deprecated: plugin-bundle has been removed and is not receiving new versions.
 [[redirects]]
 from = "/release/*/bundle"
 to = "https://github.com/ojkelly/yarn.build/releases/download/*/yarn-plugin-bundle.cjs"

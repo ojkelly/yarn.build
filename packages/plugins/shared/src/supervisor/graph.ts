@@ -1,7 +1,7 @@
 import { Tracer, Context } from "@ojkelly/yarn-build-shared/src/tracing";
 
 class Graph {
-  tracer: Tracer = new Tracer("yarn.build");
+  tracer: Tracer = Tracer.getInstance("yarn.build");
 
   nodes: NodeGraph = {};
 
@@ -144,7 +144,7 @@ class Graph {
     }
 
     // Check if anything still needs to run
-    if (progress.size != 0) {
+    if (progress.size !== 0) {
       return await this.dryRunLoop(queue, runLog, progress, iteration + 1);
     }
 
@@ -239,7 +239,12 @@ class Graph {
     (dependencies: string[]) =>
     (runLog: RunLog): boolean => {
       return dependencies
-        .map((id) => runLog[id]?.done ?? true)
+        .map((id) => {
+          if (runLog[id]?.success === false && runLog[id]?.done) {
+            return false;
+          }
+          return runLog[id]?.done ?? true;
+        })
         .every((v) => v === true);
     };
 }
@@ -254,6 +259,8 @@ class Node {
 
   dependencies: NodeGraph;
 
+  dependents: NodeGraph;
+
   cancelled = false;
 
   skip = false;
@@ -263,11 +270,13 @@ class Node {
   constructor(id: string) {
     this.id = id;
     this.dependencies = {};
+    this.dependents = {};
   }
 
   addDependency(node: Node): Node {
     if (!this.dependencies[node.id]) {
       this.dependencies[node.id] = node;
+      node.dependents[this.id] = this;
     }
 
     return this;
@@ -293,12 +302,12 @@ class Node {
 
   static cancelDependentJobs(node: Node): () => void {
     return () => {
-      if (typeof node.dependencies === `undefined`) {
+      if (typeof node.dependents === `undefined`) {
         return;
       }
 
-      Object.keys(node.dependencies).forEach((k) => {
-        const v = node.dependencies[k];
+      Object.keys(node.dependents).forEach((k) => {
+        const v = node.dependents[k];
 
         v.cancelled = true;
       });

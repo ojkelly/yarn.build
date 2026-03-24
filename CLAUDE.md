@@ -1,6 +1,6 @@
 # yarn.build
 
-Yarn 4 plugin providing dependency-aware `build`, `test`, and `bundle` commands
+Yarn 4 plugin providing dependency-aware `build` and `test` commands
 for monorepos. Prioritises simplicity, speed, and minimal ceremony.
 
 ## Design
@@ -44,7 +44,6 @@ packages/
   plugins/
     plugin-all/              # Aggregates all plugins into one
     plugin-build/            # `yarn build` command
-    plugin-bundle/           # `yarn bundle` for containers/lambda
     plugin-test/             # `yarn test` command
     plugin-package-yaml/     # Allows package.yaml instead of package.json
     shared/                  # Shared utilities (@ojkelly/yarn-build-shared)
@@ -80,7 +79,6 @@ The project uses its own `@yarn.build/yarn-plugin-all` plugin for builds. Plugin
 - **Pattern**: `**/*.test.ts` files alongside source
 - **Key test files**:
   - `shared/src/supervisor/graph.test.ts` - Graph traversal
-  - `plugin-bundle/src/commands/bundle/bundle.test.ts` - Bundle command
   - `plugin-test/src/commands/test/supervisor.test.ts` - Test supervisor
 
 ## Constraints

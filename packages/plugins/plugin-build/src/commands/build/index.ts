@@ -15,7 +15,10 @@ import micromatch from "micromatch";
 import { cpus } from "os";
 
 import { EventEmitter } from "events";
-import { GetPluginConfiguration } from "@ojkelly/yarn-build-shared/src/config";
+import {
+  GetPluginConfiguration,
+  PLUGIN_VERSION,
+} from "@ojkelly/yarn-build-shared/src/config";
 import RunSupervisor, {
   RunSupervisorReporterEvents,
   RunCommandCli,
@@ -46,10 +49,6 @@ export default class Build extends BaseCommand {
     description: `the command to be run in each package (if available), defaults to "build"`,
   });
 
-  interlaced = Option.Boolean(`-i,--interlaced`, true, {
-    description: `If false it will instead buffer the output from each process and print the resulting buffers only after their source processes have exited. Defaults to false.`,
-  });
-
   verbose = Option.Boolean(`-v,--verbose`, false, {
     description: `more information will be logged to stdout than normal.`,
   });
@@ -75,7 +74,7 @@ export default class Build extends BaseCommand {
   });
 
   exclude = Option.Array(`--exclude`, {
-    description: `exclude specifc packages or glob paths from being built, including their dependencies.`,
+    description: `exclude specific packages or glob paths from being built, including their dependencies.`,
   });
 
   excludeCurrent = Option.Boolean("--exclude-current", false, {
@@ -121,7 +120,7 @@ export default class Build extends BaseCommand {
   commandType: "build" | "test" = "build";
 
   async execute(): Promise<0 | 1> {
-    const tracer = new Tracer("yarn.build", "v4.1.0");
+    const tracer = Tracer.getInstance("yarn.build", PLUGIN_VERSION);
 
     const commandArgIndex = process.argv.findIndex(
       (val) => val === this.commandType,
@@ -129,14 +128,13 @@ export default class Build extends BaseCommand {
     const commandArgs = process.argv.slice(commandArgIndex);
 
     return await tracer.startSpan(
-      { name: `yarn ${commandArgs.join(" ")}`, propegateFromEnv: true },
+      { name: `yarn ${commandArgs.join(" ")}`, propagateFromEnv: true },
       async ({ span: rootSpan, ctx }) => {
         rootSpan.setAttributes({
           [Attribute.YARN_BUILD_FLAGS_OUTPUT_JSON]: this.json,
           [Attribute.YARN_BUILD_FLAGS_ALL]: this.all,
           [Attribute.YARN_BUILD_FLAGS_TARGETS]: this.buildTargets,
           [Attribute.YARN_BUILD_FLAGS_COMMAND]: this.buildCommand,
-          [Attribute.YARN_BUILD_FLAGS_INTERLACED]: this.interlaced,
           [Attribute.YARN_BUILD_FLAGS_VERBOSE]: this.verbose,
           [Attribute.YARN_BUILD_FLAGS_DRY_RUN]: this.dryRun,
           [Attribute.YARN_BUILD_FLAGS_IGNORE_CACHE]: this.ignoreBuildCache,
@@ -170,7 +168,7 @@ export default class Build extends BaseCommand {
         // #203 limit onlyCurrent when isRoot is true
         let isRoot = false;
 
-        if (rootWorkspace == project.topLevelWorkspace) {
+        if (rootWorkspace === project.topLevelWorkspace) {
           isRoot = true;
         }
 
@@ -211,7 +209,7 @@ export default class Build extends BaseCommand {
         const excludeWorkspacePredicate = (targetWorkspace: Workspace) => {
           // #168 limit to only the current workspace
           if (!isRoot && this.onlyCurrent) {
-            return targetWorkspace != cwdWorkspace;
+            return targetWorkspace !== cwdWorkspace;
           }
 
           return (
@@ -232,7 +230,7 @@ export default class Build extends BaseCommand {
         const buildTargetPredicate = (targetWorkspace: Workspace) => {
           // #168 limit to only the current workspace
           if (!isRoot && this.onlyCurrent) {
-            return targetWorkspace == cwdWorkspace;
+            return targetWorkspace === cwdWorkspace;
           }
 
           return this.buildTargets.some((t) => {
@@ -259,7 +257,7 @@ export default class Build extends BaseCommand {
         const pluginConfiguration = await GetPluginConfiguration(configuration);
 
         this.continueOnError =
-          this.continueOnError ?? !!pluginConfiguration.bail;
+          this.continueOnError ?? !pluginConfiguration.bail;
 
         // Safe to run because the input string is validated by clipanion using the schema property
         const maxConcurrency =

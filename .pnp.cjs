@@ -79,10 +79,6 @@ const RAW_RUNTIME_STATE =
       "reference": "workspace:packages/plugins/plugin-build"\
     },\
     {\
-      "name": "@yarn.build/yarn-plugin-bundle",\
-      "reference": "workspace:packages/plugins/plugin-bundle"\
-    },\
-    {\
       "name": "@yarn.build/yarn-plugin-package-yaml",\
       "reference": "workspace:packages/plugins/plugin-package-yaml"\
     },\
@@ -121,7 +117,6 @@ const RAW_RUNTIME_STATE =
     ["@tools/do", ["workspace:packages/tools/do"]],\
     ["@yarn.build/yarn-plugin-all", ["workspace:packages/plugins/plugin-all"]],\
     ["@yarn.build/yarn-plugin-build", ["workspace:packages/plugins/plugin-build"]],\
-    ["@yarn.build/yarn-plugin-bundle", ["workspace:packages/plugins/plugin-bundle"]],\
     ["@yarn.build/yarn-plugin-package-yaml", ["workspace:packages/plugins/plugin-package-yaml"]],\
     ["@yarn.build/yarn-plugin-test", ["workspace:packages/plugins/plugin-test"]],\
     ["yarn.build", ["workspace:."]]\
@@ -1110,7 +1105,6 @@ const RAW_RUNTIME_STATE =
           ["js-yaml", "npm:4.1.0"],\
           ["object-hash", "npm:3.0.0"],\
           ["p-limit", "npm:6.2.0"],\
-          ["p-queue", "npm:8.1.1"],\
           ["replace", "npm:1.2.2"],\
           ["shx", "npm:0.4.0"],\
           ["slice-ansi", "npm:7.1.0"],\
@@ -4363,7 +4357,6 @@ const RAW_RUNTIME_STATE =
           ["@types/yup", "npm:0.32.0"],\
           ["@yarn.build/yarn-plugin-all", "workspace:packages/plugins/plugin-all"],\
           ["@yarn.build/yarn-plugin-build", "workspace:packages/plugins/plugin-build"],\
-          ["@yarn.build/yarn-plugin-bundle", "workspace:packages/plugins/plugin-bundle"],\
           ["@yarn.build/yarn-plugin-test", "workspace:packages/plugins/plugin-test"],\
           ["@yarnpkg/builder", "npm:4.2.3"],\
           ["@yarnpkg/cli", "virtual:bc38ac161bd6ce5f4611ae64ed583a9ec72c0bbb57564a21ce7ebfa45f88b0e9f169d8e12c49057185ee738197a8bdef41b377c6cfa1183232cd003e6da67b31#npm:4.13.0"],\
@@ -4382,7 +4375,6 @@ const RAW_RUNTIME_STATE =
           ["is-ci", "npm:4.1.0"],\
           ["js-yaml", "npm:4.1.0"],\
           ["p-limit", "npm:6.2.0"],\
-          ["p-queue", "npm:8.1.1"],\
           ["replace", "npm:1.2.2"],\
           ["shx", "npm:0.4.0"],\
           ["slice-ansi", "npm:7.1.0"],\
@@ -4434,55 +4426,6 @@ const RAW_RUNTIME_STATE =
           ["is-ci", "npm:4.1.0"],\
           ["js-yaml", "npm:4.1.0"],\
           ["micromatch", "npm:4.0.8"],\
-          ["p-limit", "npm:6.2.0"],\
-          ["p-queue", "npm:8.1.1"],\
-          ["replace", "npm:1.2.2"],\
-          ["shx", "npm:0.4.0"],\
-          ["slice-ansi", "npm:7.1.0"],\
-          ["strip-ansi", "npm:7.1.0"],\
-          ["tslib", "npm:2.8.1"],\
-          ["typanion", "npm:3.14.0"],\
-          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
-          ["vitest", "virtual:a0b60601a13fbbf2b2488cda4c7262ce6348915ad6b9314ce0d3028af9d0268c5e9dcaac734170721334455cec5620f4e5a07ecdea29104a58a2306e06c3ad27#npm:4.1.0"]\
-        ],\
-        "linkType": "SOFT"\
-      }]\
-    ]],\
-    ["@yarn.build/yarn-plugin-bundle", [\
-      ["workspace:packages/plugins/plugin-bundle", {\
-        "packageLocation": "./packages/plugins/plugin-bundle/",\
-        "packageDependencies": [\
-          ["@ojkelly/yarn-build-shared", "workspace:packages/plugins/shared"],\
-          ["@opentelemetry/api", "npm:1.9.0"],\
-          ["@opentelemetry/auto-instrumentations-node", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:0.60.1"],\
-          ["@opentelemetry/core", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:2.6.0"],\
-          ["@opentelemetry/resources", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:2.6.0"],\
-          ["@opentelemetry/sdk-node", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:0.202.0"],\
-          ["@opentelemetry/sdk-trace-base", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:2.6.0"],\
-          ["@opentelemetry/semantic-conventions", "npm:1.40.0"],\
-          ["@tools/do", "workspace:packages/tools/do"],\
-          ["@types/is-ci", "npm:3.0.4"],\
-          ["@types/js-yaml", "npm:4.0.9"],\
-          ["@types/slice-ansi", "npm:7.1.0"],\
-          ["@types/yup", "npm:0.32.0"],\
-          ["@yarn.build/yarn-plugin-bundle", "workspace:packages/plugins/plugin-bundle"],\
-          ["@yarnpkg/builder", "npm:4.2.3"],\
-          ["@yarnpkg/cli", "virtual:bc38ac161bd6ce5f4611ae64ed583a9ec72c0bbb57564a21ce7ebfa45f88b0e9f169d8e12c49057185ee738197a8bdef41b377c6cfa1183232cd003e6da67b31#npm:4.13.0"],\
-          ["@yarnpkg/core", "npm:4.6.0"],\
-          ["@yarnpkg/fslib", "npm:3.1.5"],\
-          ["@yarnpkg/libzip", "virtual:e7412581f0b3bfceff49903016a8352da5c6fe1c61acecee54b581030184ae8b17d390ec254b492660cc3b3920034b4ae29bcf3a71786688238f5c7d4c084057#npm:3.2.2"],\
-          ["@yarnpkg/parsers", "npm:3.0.3"],\
-          ["@yarnpkg/plugin-pack", "virtual:ddb52b6b94d9e53952b3ea1f6dc632fd80463fdbeb3d708e1d64785778f211f4cdf6117e4cfd9cb3bcb555884e990d7f48ca8da7e5eab53d972a95454d1301c7#npm:4.0.4"],\
-          ["@yarnpkg/plugin-pnp", "virtual:ddb52b6b94d9e53952b3ea1f6dc632fd80463fdbeb3d708e1d64785778f211f4cdf6117e4cfd9cb3bcb555884e990d7f48ca8da7e5eab53d972a95454d1301c7#npm:4.1.3"],\
-          ["@yarnpkg/pnp", "npm:4.1.3"],\
-          ["@yarnpkg/pnpify", "npm:4.1.6"],\
-          ["clipanion", "virtual:9dd1fffc332aa48b48bc78251b53fb2d7a190e7c0d355d33f70dd078a43b2221b3e72bc7846a319d99a37e5114608a1cf69867037870d14f638e89a9a6e24cd6#npm:4.0.0-rc.4"],\
-          ["date-fns", "npm:4.1.0"],\
-          ["esprima", "npm:4.0.1"],\
-          ["globby", "npm:14.1.0"],\
-          ["ignore", "npm:7.0.5"],\
-          ["is-ci", "npm:4.1.0"],\
-          ["js-yaml", "npm:4.1.0"],\
           ["p-limit", "npm:6.2.0"],\
           ["p-queue", "npm:8.1.1"],\
           ["replace", "npm:1.2.2"],\

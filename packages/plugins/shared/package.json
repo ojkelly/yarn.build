@@ -38,7 +38,6 @@
     "is-ci": "^4.1.0",
     "object-hash": "^3.0.0",
     "p-limit": "^6.2.0",
-    "p-queue": "^8.1.0",
     "slice-ansi": "^7.1.0",
     "strip-ansi": "^7.1.0",
     "yup": "^1.6.1"

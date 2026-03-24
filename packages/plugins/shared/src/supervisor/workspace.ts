@@ -84,7 +84,7 @@ ${formatUtils.pretty(supervisor.configuration, err.node, "white")} ${topArrow}
 To fix this error you must remove the cyclic dependency.
 
 Workspaces cannot directly or indirectly depend on each other. When running
-the provided command yarn.build uses a parallelsied topological sort. This
+the provided command yarn.build uses a parallelised topological sort. This
 maximises throughput (saving you time) while ensuring dependencies are run in
 the order declared.
 
@@ -98,10 +98,10 @@ first.
 While some tooling may adapt to cyclic dependencies yarn.build cannot. Doing so
 is unsound and unpredictable which goes against the stated goals of the tool.
 
-In most cases this issue occurs by accident when you delcare a dependency on the
+In most cases this issue occurs by accident when you declare a dependency on the
 wrong package.
 
-In some cases yuo may actually want the cyclic dependency. As that's not
+In some cases you may actually want the cyclic dependency. As that's not
 possible, find the parts that are shared and move them to their own package
 that both packages can depend on.
 ---

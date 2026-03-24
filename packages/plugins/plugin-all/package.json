@@ -25,7 +25,6 @@
     "@tools/do": "workspace:^",
     "@types/slice-ansi": "^7.1.0",
     "@yarn.build/yarn-plugin-build": "workspace:^",
-    "@yarn.build/yarn-plugin-bundle": "workspace:^",
     "@yarn.build/yarn-plugin-test": "workspace:^",
     "@yarnpkg/fslib": "^3.1.5",
     "@yarnpkg/libzip": "^3.2.2",
@@ -40,7 +39,6 @@
     "ignore": "^7.0.5",
     "is-ci": "^4.1.0",
     "p-limit": "^6.2.0",
-    "p-queue": "^8.1.0",
     "slice-ansi": "^7.1.0",
     "strip-ansi": "^7.1.0"
   },

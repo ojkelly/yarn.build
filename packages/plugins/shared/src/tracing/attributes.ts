@@ -4,6 +4,7 @@ export const Attribute = {
 
   PACKAGE_NAME: "package.name",
   PACKAGE_SCOPE: "package.scope",
+  PACKAGE_VERSION: "package.version",
   PACKAGE_DIRECTORY: "package.directory",
   PACKAGE_COMMAND: "package.command",
 
@@ -26,7 +27,7 @@ export const Attribute = {
   YARN_BUILD_FLAGS_ALL: "yarn.build.flags.all",
   YARN_BUILD_FLAGS_TARGETS: "yarn.build.flags.targets",
   YARN_BUILD_FLAGS_COMMAND: "yarn.build.flags.command",
-  YARN_BUILD_FLAGS_INTERLACED: "yarn.build.flags.interlaced",
+
   YARN_BUILD_FLAGS_VERBOSE: "yarn.build.flags.verbose",
   YARN_BUILD_FLAGS_DRY_RUN: "yarn.build.flags.dry-run",
   YARN_BUILD_FLAGS_IGNORE_CACHE: "yarn.build.flags.ignore-cache",

@@ -18,7 +18,6 @@ import { getWorkspaceConfiguration, YarnBuildConfiguration } from "../config";
 import { globby } from "globby";
 
 import { EventEmitter } from "events";
-import PQueue from "p-queue";
 import PLimit, { LimitFunction } from "p-limit";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
@@ -113,7 +112,7 @@ type RunCommandCli = (
 ) => Promise<number>;
 
 class RunSupervisor {
-  tracer: Tracer = new Tracer("yarn.build");
+  tracer: Tracer = Tracer.getInstance("yarn.build");
 
   project: Project;
 
@@ -148,8 +147,6 @@ class RunSupervisor {
   concurrency: number;
 
   limit: LimitFunction;
-
-  queue: PQueue;
 
   entrypoints: Set<Node> = new Set<Node>();
 
@@ -233,13 +230,6 @@ class RunSupervisor {
     this.concurrency = resolvedConcurrency;
     this.continueOnError = continueOnError;
     this.limit = PLimit(resolvedConcurrency);
-    this.queue = new PQueue({
-      concurrency: resolvedConcurrency,
-      carryoverConcurrencyCount: true,
-      timeout: 50000, // TODO: make this customisable
-      throwOnTimeout: true,
-      autoStart: true,
-    });
     this.excludeWorkspacePredicate = excludeWorkspacePredicate;
     if (this.verbose) {
       this.errorLogFile = xfs.createWriteStream(this.getRunErrorPath(), {
@@ -364,7 +354,7 @@ class RunSupervisor {
       RunSupervisorReporterEvents.info,
       (relativeCwd: PortablePath, message: string) => {
         this.runReport.mutex(() => {
-          if (typeof message != `undefined`) {
+          if (typeof message !== `undefined`) {
             this.runReport.workspaces[relativeCwd].stdout.push(message);
           }
         });
@@ -375,7 +365,7 @@ class RunSupervisor {
       RunSupervisorReporterEvents.error,
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex(() => {
-          if (typeof error != `undefined`) {
+          if (typeof error !== `undefined`) {
             this.runReport.workspaces[relativeCwd].stderr.push(error);
           }
         });
@@ -450,7 +440,7 @@ class RunSupervisor {
       RunSupervisorReporterEvents.fail,
       (relativeCwd: PortablePath, error: Error) => {
         this.runReport.mutex(() => {
-          if (typeof error != `undefined`) {
+          if (typeof error !== `undefined`) {
             this.runReport.workspaces[relativeCwd].stderr.push(error);
           }
           this.runReport.workspaces[relativeCwd].done = true;
@@ -475,30 +465,6 @@ class RunSupervisor {
       },
     );
   };
-
-  getDependenciesCount = async (workspace: Workspace): Promise<number> => {
-    let value = 0;
-
-    for (const dependencyType of Manifest.hardDependencies) {
-      for (const descriptor of workspace.manifest
-        .getForScope(dependencyType)
-        .values()) {
-        const depWorkspace = this.project.tryWorkspaceByDescriptor(descriptor);
-
-        if (depWorkspace === null) continue;
-
-        value += 1;
-      }
-    }
-
-    return value;
-  };
-
-  removeFromExcluded(workspace: Workspace): void {
-    if (this.excluded.has(workspace)) {
-      this.excluded.delete(workspace);
-    }
-  }
 
   // Add a run target to the run graph
   // we may call this function multiple times per package when discovering the
@@ -595,7 +561,7 @@ class RunSupervisor {
                 this.createRunItem(depWorkspace),
               );
               rerunParent = true;
-              this.removeFromExcluded(depWorkspace);
+              this.excluded.delete(depWorkspace);
             }
           }
         }
@@ -633,7 +599,7 @@ class RunSupervisor {
       );
 
       this.runGraph.addRunCallback(node, this.createRunItem(workspace));
-      this.removeFromExcluded(workspace);
+      this.excluded.delete(workspace);
       this.entrypoints.add(node);
       this.runTargets.push(workspace);
     } else {
@@ -840,12 +806,12 @@ class RunSupervisor {
                 tsConfigAbsoluteDirPath,
                 npath.toPortablePath(file),
               );
-              const realtiveFilePath = ppath.relative(
+              const relativeFilePath = ppath.relative(
                 workspace.cwd,
                 absoluteFilePath,
               );
 
-              inputPaths.add(realtiveFilePath);
+              inputPaths.add(relativeFilePath);
             });
 
             tsconfig.exclude?.forEach((file) => {
@@ -855,12 +821,12 @@ class RunSupervisor {
                 tsConfigAbsoluteDirPath,
                 npath.toPortablePath(file),
               );
-              const realtiveFilePath = ppath.relative(
+              const relativeFilePath = ppath.relative(
                 workspace.cwd,
                 absoluteFilePath,
               );
 
-              ignoredInputPaths.add(realtiveFilePath);
+              ignoredInputPaths.add(relativeFilePath);
             });
           }
 
@@ -992,7 +958,7 @@ class RunSupervisor {
         final: boolean,
       ): string => {
         const joiner = lastLevel ? "└─" : final && lastLevel ? "└─┬─" : "├─";
-        const indent = depth == 0 ? "" : "  ".repeat(depth);
+        const indent = depth === 0 ? "" : "  ".repeat(depth);
 
         return `${indent}${joiner}[${depth}] ${msg}`;
       };
@@ -1003,12 +969,12 @@ class RunSupervisor {
         const depth = parseInt(depthStr);
         const level = tree[depth];
 
-        const finalLevel = i == treekeys.length - 1;
+        const finalLevel = i === treekeys.length - 1;
 
         level.forEach((id, i) => {
           const wrk = this.runGraph.getNode(id);
 
-          output += printer(depth, id, i == level.length - 1, finalLevel);
+          output += printer(depth, id, i === level.length - 1, finalLevel);
 
           if (wrk instanceof Node) {
             if (wrk.skip) {
@@ -1139,7 +1105,7 @@ class RunSupervisor {
       Hansi.clearScreenDown();
     }
 
-    if (typeof output != `undefined` && typeof output === `string`) {
+    if (typeof output !== `undefined` && typeof output === `string`) {
       process.stdout.write(output);
     }
 
@@ -1397,7 +1363,7 @@ class RunSupervisor {
             const lines = m.split("\n");
 
             lines.forEach((line) => {
-              if (typeof line != `undefined` && line.length !== 0) {
+              if (typeof line !== `undefined` && line.length !== 0) {
                 output += `${line + "\n"}`;
               }
             });
@@ -1451,7 +1417,7 @@ class RunSupervisor {
           `${this.runCommand} finished`,
           this.runReport.failCount === 0 ? "green" : "red",
         )}${
-          this.runReport.failCount != 0
+          this.runReport.failCount !== 0
             ? formatUtils.pretty(
                 this.configuration,
                 ` with ${this.runReport.failCount} errors`,
@@ -1597,11 +1563,6 @@ class RunSupervisor {
         : ""
     }${workspace.manifest.name?.name}`;
 
-    const tracer = new Tracer(
-      scopedPackageName,
-      workspace.manifest.version ?? undefined,
-    );
-
     // return a PQueue item
     return async (ctx: Context, cancelDependentJobs: () => void) =>
       // limit to max concurrency
@@ -1609,16 +1570,20 @@ class RunSupervisor {
         // pass an async callback that will execute the run command
         async (): Promise<boolean> =>
           // wrap our callback in an otel span
-          tracer.startSpan(
+          this.tracer.startSpan(
             // NOTE: we update the span name below when we have access to the command
             { name: this.runCommand, ctx },
             // pass one more async callback to the span, this one runs the command
             async ({ span, ctx }) => {
-              const attr = {
-                [Attribute.PACKAGE_NAME]: workspace.anchoredLocator.name,
+              const attr: Record<string, string> = {
+                [Attribute.PACKAGE_NAME]: scopedPackageName,
                 [Attribute.PACKAGE_DIRECTORY]: workspace.relativeCwd,
                 [Attribute.PACKAGE_COMMAND]: this.runCommand,
               };
+
+              if (workspace.manifest.version) {
+                attr[Attribute.PACKAGE_VERSION] = workspace.manifest.version;
+              }
 
               if (typeof workspace.anchoredLocator.scope === "string") {
                 attr[Attribute.PACKAGE_SCOPE] =
@@ -1747,6 +1712,8 @@ class RunSupervisor {
                   RunSupervisorReporterEvents.success,
                   workspace.relativeCwd,
                 );
+
+                return true;
               } catch (err) {
                 this.runReporter.emit(
                   RunSupervisorReporterEvents.fail,
