@@ -227,7 +227,9 @@ describe("Simple dependency graph", () => {
 
     const runLog = await Promise.race([
       graph.run(context.active(), [A]),
-      new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 2000)),
+      new Promise<"timeout">((resolve) =>
+        setTimeout(() => resolve("timeout"), 2000),
+      ),
     ]);
 
     expect(runLog).not.toBe("timeout");
