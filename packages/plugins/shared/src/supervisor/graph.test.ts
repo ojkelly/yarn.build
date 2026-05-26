@@ -208,4 +208,33 @@ describe("Simple dependency graph", () => {
 
     expect(runOrder.sort()).toStrictEqual([...new Set(nodes.map((n) => n.id))]);
   });
+
+  it("does not hang when a failing dependency cancels its dependents", async () => {
+    const graph = new Graph();
+
+    const A = graph.addNode("A").addRunCallback(async () => true);
+    const B = graph.addNode("B").addRunCallback(async () => true);
+    const C = graph
+      .addNode("C")
+      .addRunCallback(async (_ctx, cancelDependentJobs: () => void) => {
+        cancelDependentJobs();
+
+        return false;
+      });
+
+    A.addDependency(B);
+    B.addDependency(C);
+
+    const runLog = await Promise.race([
+      graph.run(context.active(), [A]),
+      new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 2000)),
+    ]);
+
+    expect(runLog).not.toBe("timeout");
+    expect(runLog).toMatchObject({
+      A: { done: true, success: false },
+      B: { done: true, success: false },
+      C: { done: true, success: false },
+    });
+  });
 });
