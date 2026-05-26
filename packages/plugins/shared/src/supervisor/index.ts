@@ -1685,6 +1685,10 @@ class RunSupervisor {
                     },
                   );
 
+                  if (this.continueOnError === false) {
+                    cancelDependentJobs();
+                  }
+
                   if (this.failFast === true) {
                     if (isNonInteractive) {
                       process.stdout.write(

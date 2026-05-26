@@ -160,6 +160,14 @@ class Graph {
   ) {
     if (queue.size !== 0) {
       queue.forEach((q) => {
+        if (q?.node?.cancelled) {
+          runLog[q.node.id] = { success: false, done: true };
+          Node.cancelDependentJobs(q.node)();
+          queue.delete(q);
+
+          return;
+        }
+
         if (q.canStart(runLog)) {
           if (q?.node?.runCallback) {
             q?.node?.runCallback(ctx, runLog);
@@ -289,6 +297,8 @@ class Node {
 
     this.runCallback = (ctx: Context, runLog: RunLog) => {
       if (this.cancelled) {
+        runLog[this.id] = { done: true, success: false };
+
         return;
       }
 
